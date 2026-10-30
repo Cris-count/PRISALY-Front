@@ -1,0 +1,81 @@
+@switch (store.fase()) {
+  @case ('inicio') {
+    <app-pantalla-inicio
+      (consultarSesiones)="store.consultarSesiones()"
+      (explorarDemostracion)="store.explorarDemostracion()"
+    />
+  }
+  @case ('cargando') {
+    <app-estado-carga mensaje="Consultando sesiones disponibles…" />
+  }
+  @case ('error') {
+    <div class="simulador__mensaje">
+      <app-aviso tipo="error" titulo="No se pudo continuar">
+        <p>{{ store.error() }}</p>
+      </app-aviso>
+      <button type="button" class="boton" (click)="store.volverAlInicio()">Volver al inicio</button>
+    </div>
+  }
+  @case ('finalizado') {
+    <div class="simulador__mensaje">
+      <app-aviso tipo="exito" titulo="Demostración finalizada">
+        <p>
+          Respondiste {{ store.respondidas() }} de {{ store.totalPreguntas() }} preguntas de
+          ejemplo. Como eran datos simulados, no se registró ningún intento ni respuesta.
+        </p>
+      </app-aviso>
+      <button type="button" class="boton" (click)="store.volverAlInicio()">Volver al inicio</button>
+    </div>
+  }
+  @default {
+    @if (store.caso(); as caso) {
+      @if (store.esDemostracion()) {
+        <app-aviso tipo="advertencia" titulo="Modo demostración">
+          Datos simulados: no es un caso académico y nada de lo que hagas se guarda.
+        </app-aviso>
+      }
+      <h1 class="simulador__titulo">{{ caso.titulo }}</h1>
+      <div class="simulador">
+        <div class="simulador__escena">
+          <app-escenario-2d [escenario]="caso.escenario" />
+          <app-panel-contexto [escenario]="caso.escenario" />
+        </div>
+        <div class="simulador__panel">
+          <div class="tarjeta simulador__estado">
+            <app-temporizador [segundos]="store.segundosRestantes()" />
+            <app-indicador-progreso
+              [actual]="store.indice() + 1"
+              [total]="store.totalPreguntas()"
+              [respondidas]="store.respondidas()"
+            />
+          </div>
+          @if (store.preguntaActual(); as pregunta) {
+            <app-panel-preguntas
+              [pregunta]="pregunta"
+              [numero]="store.indice() + 1"
+              [seleccion]="store.seleccionActual()"
+              [deshabilitado]="store.fase() === 'confirmando'"
+              (seleccionar)="store.seleccionarOpcion($event)"
+            />
+          }
+          @if (store.fase() === 'confirmando') {
+            <app-confirmacion-finalizacion
+              [respondidas]="store.respondidas()"
+              [total]="store.totalPreguntas()"
+              (confirmar)="store.confirmarFinalizacion()"
+              (cancelar)="store.cancelarFinalizacion()"
+            />
+          } @else {
+            <app-barra-acciones
+              [esPrimera]="store.esPrimera()"
+              [esUltima]="store.esUltima()"
+              (anterior)="store.anterior()"
+              (continuar)="store.siguiente()"
+              (finalizar)="store.solicitarFinalizacion()"
+            />
+          }
+        </div>
+      </div>
+    }
+  }
+}
