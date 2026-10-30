@@ -14,7 +14,9 @@ describe('ParticipacionGateway', () => {
   });
 
   describe('implementación pendiente', () => {
-    const gateway = new ParticipacionPendienteGateway();
+    // Se tipa con la clase abstracta: las pruebas ejercen las firmas del límite
+    // de integración que consume SimuladorStore, no las de la implementación.
+    const gateway: ParticipacionGateway = new ParticipacionPendienteGateway();
     const operaciones: [OperacionParticipacion, () => Observable<unknown>][] = [
       ['consultarSesionesAutorizadas', () => gateway.consultarSesionesAutorizadas()],
       ['iniciarIntento', () => gateway.iniciarIntento('s')],
