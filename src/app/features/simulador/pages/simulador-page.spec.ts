@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NEVER, throwError } from 'rxjs';
 
@@ -66,6 +67,23 @@ describe('SimuladorPage', () => {
 
     await pulsar('Volver al inicio');
     expect(elemento().querySelector('app-pantalla-inicio')).not.toBeNull();
+  });
+
+  it('ofrece reintentar solo cuando el fallo es reintentable', async () => {
+    gateway.consultarSesionesAutorizadas.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 0 })),
+    );
+    await pulsar('Consultar sesiones');
+    expect(boton('Reintentar')).toBeDefined();
+
+    gateway.consultarSesionesAutorizadas.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 401 })),
+    );
+    await pulsar('Reintentar');
+
+    expect(gateway.consultarSesionesAutorizadas).toHaveBeenCalledTimes(2);
+    expect(texto()).toContain('Vuelve a ingresar');
+    expect(boton('Reintentar')).toBeUndefined();
   });
 
   describe('recorrido de demostración', () => {

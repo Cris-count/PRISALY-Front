@@ -13,6 +13,11 @@
       <app-aviso tipo="error" titulo="No se pudo continuar">
         <p>{{ store.error() }}</p>
       </app-aviso>
+      @if (store.reintentable()) {
+        <button type="button" class="boton boton--primario" (click)="store.consultarSesiones()">
+          Reintentar
+        </button>
+      }
       <button type="button" class="boton" (click)="store.volverAlInicio()">Volver al inicio</button>
     </div>
   }

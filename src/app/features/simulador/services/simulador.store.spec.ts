@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { NEVER, of, Subject, throwError } from 'rxjs';
 
@@ -89,6 +90,59 @@ describe('SimuladorStore', () => {
 
       expect(store.fase()).toBe('error');
       expect(store.error()).toContain('No fue posible comunicarse');
+    });
+
+    it('ante falta de conexión informa el fallo y permite reintentar', () => {
+      gateway.consultarSesionesAutorizadas.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 0 })),
+      );
+      store = crearStore();
+
+      store.consultarSesiones();
+
+      expect(store.fase()).toBe('error');
+      expect(store.error()).toContain('No hay conexión');
+      expect(store.reintentable()).toBeTrue();
+
+      store.consultarSesiones();
+      expect(gateway.consultarSesionesAutorizadas).toHaveBeenCalledTimes(2);
+    });
+
+    it('ante una sesión no válida (401) pide volver a ingresar y no ofrece reintentar', () => {
+      gateway.consultarSesionesAutorizadas.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 401 })),
+      );
+      store = crearStore();
+
+      store.consultarSesiones();
+
+      expect(store.error()).toContain('Vuelve a ingresar');
+      expect(store.reintentable()).toBeFalse();
+    });
+
+    it('ante acceso denegado (403) lo informa sin iniciar nada', () => {
+      gateway.consultarSesionesAutorizadas.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 403 })),
+      );
+      store = crearStore();
+
+      store.consultarSesiones();
+
+      expect(store.error()).toContain('No tienes acceso');
+      expect(gateway.iniciarIntento).not.toHaveBeenCalled();
+    });
+
+    it('volver al inicio limpia la posibilidad de reintentar', () => {
+      gateway.consultarSesionesAutorizadas.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 503 })),
+      );
+      store = crearStore();
+      store.consultarSesiones();
+      expect(store.reintentable()).toBeTrue();
+
+      store.volverAlInicio();
+
+      expect(store.reintentable()).toBeFalse();
     });
 
     it('no interpreta respuestas sin contrato aprobado', () => {

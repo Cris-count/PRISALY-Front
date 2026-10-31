@@ -1,4 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
+
+import { clasificarErrorApi } from '../../../core/http/clasificar-error-api';
 
 import { CASO_DEMOSTRACION } from '../demo/caso-demostracion';
 import { CasoVista, FaseSimulador, OrigenDatos, PreguntaVista } from '../models/simulador.models';
@@ -33,6 +36,7 @@ export class SimuladorStore {
   private readonly indiceActual = signal(0);
   private readonly seleccionesActuales = signal<ReadonlyMap<string, string>>(new Map());
   private readonly mensajeError = signal<string | null>(null);
+  private readonly errorReintentable = signal(false);
   private readonly segundos = signal<number | null>(null);
   private temporizador: ReturnType<typeof setInterval> | null = null;
 
@@ -42,6 +46,8 @@ export class SimuladorStore {
   readonly indice = this.indiceActual.asReadonly();
   readonly selecciones = this.seleccionesActuales.asReadonly();
   readonly error = this.mensajeError.asReadonly();
+  /** El último fallo admite reintentar la misma consulta (sin conexión o error del servidor). */
+  readonly reintentable = this.errorReintentable.asReadonly();
   readonly segundosRestantes = this.segundos.asReadonly();
 
   readonly preguntas = computed<readonly PreguntaVista[]>(() => this.casoActual()?.preguntas ?? []);
@@ -74,12 +80,7 @@ export class SimuladorStore {
     this.faseActual.set('cargando');
     this.gateway.consultarSesionesAutorizadas().subscribe({
       next: () => this.fallar(MENSAJE_RESPUESTA_NO_INTERPRETABLE),
-      error: (error: unknown) =>
-        this.fallar(
-          error instanceof ContratoPendienteError
-            ? MENSAJE_CONTRATO_PENDIENTE
-            : MENSAJE_ERROR_GENERICO,
-        ),
+      error: (error: unknown) => this.fallarPor(error),
     });
   }
 
@@ -144,8 +145,20 @@ export class SimuladorStore {
     this.reiniciarEstado();
   }
 
-  private fallar(mensaje: string): void {
+  private fallarPor(error: unknown): void {
+    if (error instanceof ContratoPendienteError) {
+      this.fallar(MENSAJE_CONTRATO_PENDIENTE);
+    } else if (error instanceof HttpErrorResponse) {
+      const fallo = clasificarErrorApi(error);
+      this.fallar(fallo.mensaje, fallo.reintentable);
+    } else {
+      this.fallar(MENSAJE_ERROR_GENERICO);
+    }
+  }
+
+  private fallar(mensaje: string, reintentable = false): void {
     this.mensajeError.set(mensaje);
+    this.errorReintentable.set(reintentable);
     this.faseActual.set('error');
   }
 
@@ -157,6 +170,7 @@ export class SimuladorStore {
     this.indiceActual.set(0);
     this.seleccionesActuales.set(new Map());
     this.mensajeError.set(null);
+    this.errorReintentable.set(false);
     this.segundos.set(null);
   }
 
