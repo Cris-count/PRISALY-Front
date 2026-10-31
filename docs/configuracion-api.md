@@ -42,4 +42,25 @@ Ninguna opción está aprobada todavía. Este repositorio no incluye Dockerfile 
 | reanudarIntento | bloqueada | contrato REST de M5 |
 | finalizarIntento | bloqueada | contrato REST de M5 |
 
-Además, el backend exige autenticación para todo excepto `/health` y M1 aún no la implementa: cualquier llamada real recibiría 401.
+Además, el backend exige autenticación para todo excepto `/health`. M1 implementa por ahora solo la autenticación de personal (provisional); el acceso estudiantil (DD-02) no existe, así que una llamada real del estudiante recibiría 401.
+
+## Errores de la API en el simulador
+
+`clasificarErrorApi` (`src/app/core/http/clasificar-error-api.ts`) traduce un `HttpErrorResponse` a un mensaje para el estudiante. Solo usa semántica ya establecida:
+
+| Estado | Presentación | ¿Reintentar? |
+| --- | --- | --- |
+| 0 (sin conexión) | Revisar la red | Sí |
+| 401 | La sesión no es válida o venció: volver a ingresar | No |
+| 403 | Sin acceso al recurso | No |
+| 404 | El recurso no existe | No |
+| 409 | Conflicto con el estado actual | No |
+| 5xx | Error del servidor | Sí |
+
+401 y 403 siguen el contrato vigente de la cadena de seguridad (`{code, message}` de M1). No se muestran los mensajes del servidor y no se depende de los códigos propuestos para M5, que ARQ-008.3 aún no ratifica. Reintentar repite la misma consulta; nunca inicia un intento.
+
+## Pendiente de contratos
+
+- **Reanudación visual de un intento real:** requiere la consulta de intento de M5, con identidad del estudiante (DD-02) y titularidad (M4).
+- **Persistencia de respuestas:** las selecciones solo existen en la vista hasta que exista `registrarRespuesta` en ARQ-008.3. La demostración nunca se presenta como persistida.
+- **Acceso del estudiante:** M1 responde 501 en su ruta de estudiante (DD-02).
