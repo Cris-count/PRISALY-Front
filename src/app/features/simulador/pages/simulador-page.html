@@ -42,8 +42,12 @@
       <h1 class="simulador__titulo">{{ caso.titulo }}</h1>
       <div class="simulador">
         <div class="simulador__escena">
-          <app-escenario-2d [escenario]="caso.escenario" />
-          <app-panel-contexto [escenario]="caso.escenario" />
+          @if (store.esDemostracion()) {
+            <app-panel-narrativo [pausado]="store.fase() !== 'en-curso'" />
+          } @else {
+            <app-escenario-2d [escenario]="caso.escenario" />
+            <app-panel-contexto [escenario]="caso.escenario" />
+          }
         </div>
         <div class="simulador__panel">
           <div class="tarjeta simulador__estado">

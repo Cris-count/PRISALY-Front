@@ -7,6 +7,7 @@ import { ConfirmacionFinalizacion } from '../components/confirmacion-finalizacio
 import { Escenario2d } from '../components/escenario-2d';
 import { IndicadorProgreso } from '../components/indicador-progreso';
 import { PanelContexto } from '../components/panel-contexto';
+import { PanelNarrativo } from '../components/panel-narrativo';
 import { PanelPreguntas } from '../components/panel-preguntas';
 import { PantallaInicio } from '../components/pantalla-inicio';
 import { Temporizador } from '../components/temporizador';
@@ -26,6 +27,7 @@ import { SimuladorStore } from '../services/simulador.store';
     IndicadorProgreso,
     PanelContexto,
     PanelPreguntas,
+    PanelNarrativo,
     PantallaInicio,
     Temporizador,
   ],

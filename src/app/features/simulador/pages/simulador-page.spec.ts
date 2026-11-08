@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NEVER, throwError } from 'rxjs';
 
 import { ContratoPendienteError, ParticipacionGateway } from '../services/participacion.gateway';
+import { SimuladorStore } from '../services/simulador.store';
 import { SimuladorPage } from './simulador-page';
 
 describe('SimuladorPage', () => {
@@ -130,6 +131,56 @@ describe('SimuladorPage', () => {
       await pulsar('Sí, finalizar');
       expect(texto()).toContain('no se registró ningún intento ni respuesta');
       expect(gateway.finalizarIntento).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('SIM-01: narrativa desacoplada', () => {
+    for (const ruta of ['Conversar primero', 'Observar primero']) {
+      it(`completa la ruta ${ruta} sin cambiar preguntas ni llamar a M5`, async () => {
+        await pulsar('Ver demostración');
+        const store = fixture.debugElement.injector.get(SimuladorStore);
+        elemento().querySelector<HTMLInputElement>('input[type=radio]')!.click();
+        await fixture.whenStable();
+        const caso = store.caso();
+        const selecciones = [...store.selecciones()];
+        await pulsar('Siguiente diálogo'); await pulsar('Siguiente diálogo');
+        await pulsar(ruta);
+        expect(texto()).toContain(ruta === 'Conversar primero' ? 'expresión alegre' : 'expresión atenta');
+        await pulsar('Entrar a la escena');
+        await pulsar('Siguiente diálogo'); await pulsar('Reunir al grupo');
+        await pulsar('Entrar a la escena');
+        expect(texto()).toContain(ruta === 'Conversar primero' ? 'conversación inicial' : 'observación inicial');
+        await pulsar('Siguiente diálogo'); await pulsar('Despedirse');
+        await pulsar('Entrar a la escena'); await pulsar('Siguiente diálogo');
+        expect(texto()).toContain('Historia demostrativa terminada');
+        expect(texto()).toContain('Escenas visitadas: 4 de 6');
+        expect(store.caso()).toBe(caso);
+        expect([...store.selecciones()]).toEqual(selecciones);
+        expect(store.indice()).toBe(0);
+        expect(store.fase()).toBe('en-curso');
+        await pulsar('Reiniciar historia');
+        expect(texto()).toContain('Encuentro de demostración');
+        expect([...store.selecciones()]).toEqual(selecciones);
+        for (const spy of Object.values(gateway)) expect(spy).not.toHaveBeenCalled();
+      });
+    }
+
+    it('pausa la narrativa durante la confirmación y reinicia al salir y volver', async () => {
+      await pulsar('Ver demostración');
+      await pulsar('Siguiente diálogo'); await pulsar('Siguiente diálogo');
+      await pulsar('Conversar primero');
+      await pulsar('Finalizar');
+      expect(boton('Entrar a la escena').closest('fieldset')!.disabled).toBeTrue();
+      await pulsar('Seguir respondiendo');
+      expect(boton('Entrar a la escena').closest('fieldset')!.disabled).toBeFalse();
+      await pulsar('Entrar a la escena');
+      await pulsar('Atrás en la historia');
+      expect(texto()).toContain('Los personajes se acercan para conversar');
+      await pulsar('Finalizar'); await pulsar('Sí, finalizar');
+      await pulsar('Volver al inicio'); await pulsar('Ver demostración');
+      expect(texto()).toContain('Escenas visitadas: 1 de 6');
+      expect(texto()).toContain('expresión serena');
+      for (const spy of Object.values(gateway)) expect(spy).not.toHaveBeenCalled();
     });
   });
 });
