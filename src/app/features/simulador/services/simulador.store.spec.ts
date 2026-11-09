@@ -48,6 +48,43 @@ describe('SimuladorStore', () => {
   });
 
   describe('consultar sesiones', () => {
+    it('volver al inicio cancela la consulta y descarta una respuesta tardía', () => {
+      const respuesta = new Subject<unknown>();
+      gateway.consultarSesionesAutorizadas.and.returnValue(respuesta);
+      store = crearStore();
+      store.consultarSesiones();
+      store.volverAlInicio();
+
+      expect(respuesta.observed).toBeFalse();
+      respuesta.next({ sesiones: [] });
+      expect(store.fase()).toBe('inicio');
+      expect(store.error()).toBeNull();
+    });
+
+    it('entrar a la demostración descarta el fallo tardío de una consulta anterior', () => {
+      jasmine.clock().install();
+      const respuesta = new Subject<unknown>();
+      gateway.consultarSesionesAutorizadas.and.returnValue(respuesta);
+      store = crearStore();
+      store.consultarSesiones();
+      store.explorarDemostracion();
+      respuesta.error(new HttpErrorResponse({ status: 503 }));
+
+      expect(store.fase()).toBe('en-curso');
+      expect(store.caso()).toBe(CASO_DEMOSTRACION);
+      expect(store.error()).toBeNull();
+    });
+
+    it('destruir la vista cancela la consulta pendiente', () => {
+      const respuesta = new Subject<unknown>();
+      gateway.consultarSesionesAutorizadas.and.returnValue(respuesta);
+      store = crearStore();
+      store.consultarSesiones();
+      TestBed.resetTestingModule();
+
+      expect(respuesta.observed).toBeFalse();
+    });
+
     it('muestra el estado de carga mientras espera', () => {
       gateway.consultarSesionesAutorizadas.and.returnValue(NEVER);
       store = crearStore();

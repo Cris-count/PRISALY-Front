@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NEVER, throwError } from 'rxjs';
+import { NEVER, Subject, throwError } from 'rxjs';
 
 import { ContratoPendienteError, ParticipacionGateway } from '../services/participacion.gateway';
 import { SimuladorStore } from '../services/simulador.store';
@@ -52,6 +52,20 @@ describe('SimuladorPage', () => {
     await pulsar('Consultar sesiones');
 
     expect(elemento().querySelector('app-estado-carga [role=status]')).not.toBeNull();
+  });
+
+  it('permite salir de una carga pendiente sin que un fallo tardío sustituya la pantalla inicial', async () => {
+    const respuesta = new Subject<unknown>();
+    gateway.consultarSesionesAutorizadas.and.returnValue(respuesta);
+    await pulsar('Consultar sesiones');
+    await pulsar('Volver al inicio');
+    respuesta.error(new HttpErrorResponse({ status: 503 }));
+    await fixture.whenStable();
+
+    expect(respuesta.observed).toBeFalse();
+    expect(elemento().querySelector('app-pantalla-inicio')).not.toBeNull();
+    expect(elemento().querySelector('[role=alert]')).toBeNull();
+    expect(gateway.iniciarIntento).not.toHaveBeenCalled();
   });
 
   it('muestra el error de contrato pendiente y permite volver', async () => {

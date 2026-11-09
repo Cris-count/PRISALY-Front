@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 
 import { clasificarErrorApi } from '../../../core/http/clasificar-error-api';
 
@@ -39,6 +40,7 @@ export class SimuladorStore {
   private readonly errorReintentable = signal(false);
   private readonly segundos = signal<number | null>(null);
   private temporizador: ReturnType<typeof setInterval> | null = null;
+  private consultaSesiones: Subscription | null = null;
 
   readonly fase = this.faseActual.asReadonly();
   readonly origen = this.origenActual.asReadonly();
@@ -64,7 +66,10 @@ export class SimuladorStore {
   readonly esDemostracion = computed(() => this.origenActual() === 'demostracion');
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.detenerTemporizador());
+    inject(DestroyRef).onDestroy(() => {
+      this.detenerConsulta();
+      this.detenerTemporizador();
+    });
   }
 
   /**
@@ -77,8 +82,10 @@ export class SimuladorStore {
       return;
     }
     this.mensajeError.set(null);
+    this.errorReintentable.set(false);
     this.faseActual.set('cargando');
-    this.gateway.consultarSesionesAutorizadas().subscribe({
+    this.detenerConsulta();
+    this.consultaSesiones = this.gateway.consultarSesionesAutorizadas().subscribe({
       next: () => this.fallar(MENSAJE_RESPUESTA_NO_INTERPRETABLE),
       error: (error: unknown) => this.fallarPor(error),
     });
@@ -163,6 +170,7 @@ export class SimuladorStore {
   }
 
   private reiniciarEstado(): void {
+    this.detenerConsulta();
     this.detenerTemporizador();
     this.faseActual.set('inicio');
     this.origenActual.set(null);
@@ -194,5 +202,10 @@ export class SimuladorStore {
       clearInterval(this.temporizador);
       this.temporizador = null;
     }
+  }
+
+  private detenerConsulta(): void {
+    this.consultaSesiones?.unsubscribe();
+    this.consultaSesiones = null;
   }
 }

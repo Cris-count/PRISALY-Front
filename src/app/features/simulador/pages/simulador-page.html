@@ -6,7 +6,10 @@
     />
   }
   @case ('cargando') {
-    <app-estado-carga mensaje="Consultando sesiones disponibles…" />
+    <div class="simulador__mensaje">
+      <app-estado-carga mensaje="Consultando sesiones disponibles…" />
+      <button type="button" class="boton" (click)="store.volverAlInicio()">Volver al inicio</button>
+    </div>
   }
   @case ('error') {
     <div class="simulador__mensaje">
