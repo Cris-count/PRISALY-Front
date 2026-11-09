@@ -1,0 +1,37 @@
+name: frontend-ci
+
+on:
+  pull_request:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26.13.0'
+          cache: npm
+      - name: Install exact lockfile with declared npm
+        run: npm exec --yes --package=npm@11.17.0 -- npm ci --no-audit --no-fund
+      - name: Check API URLs and TypeScript
+        run: |
+          npm run check:urls
+          node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
+          node node_modules/typescript/bin/tsc --noEmit -p tsconfig.spec.json
+      - name: Test in Chrome Headless
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+      - name: Build production application
+        run: npm run build
+      - name: Preserve production build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-production-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/PRISALY-Front
+          if-no-files-found: error
+          retention-days: 14

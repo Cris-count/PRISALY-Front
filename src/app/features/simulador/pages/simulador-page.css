@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.simulador__titulo {
+  font-size: 1.5rem;
+  margin: var(--espacio-3) 0;
+}
+
+.simulador {
+  display: grid;
+  gap: var(--espacio-3);
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+
+.simulador__escena,
+.simulador__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  min-width: 0;
+}
+
+.simulador__estado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+
+.simulador__mensaje {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0 auto;
+  max-width: 40rem;
+}
+
+@media (max-width: 56rem) {
+  .simulador {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,42 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.saltar {
+  left: var(--espacio-2);
+  position: absolute;
+  top: -3rem;
+}
+
+.saltar:focus {
+  background: var(--color-superficie);
+  padding: var(--espacio-2);
+  top: var(--espacio-2);
+}
+
+.encabezado {
+  align-items: baseline;
+  background: var(--color-primario);
+  color: var(--color-primario-contraste);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-3);
+  padding: var(--espacio-2) var(--espacio-3);
+}
+
+.encabezado__marca {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.encabezado__descripcion {
+  font-size: 0.875rem;
+}
+
+.contenido {
+  margin: 0 auto;
+  max-width: 80rem;
+  padding: var(--espacio-3);
+}

@@ -1,1 +1,120 @@
-/* You can add global styles to this file, and also import other style files */
+/*
+ * Estilos globales de PRISALY.
+ *
+ * Paleta y tipografía NEUTRAS y provisionales: el repositorio no contiene
+ * recursos oficiales de marca (logotipo, colores, tipografía). Cuando existan,
+ * basta con reemplazar estos tokens.
+ */
+:root {
+  --color-fondo: #f6f7f9;
+  --color-superficie: #ffffff;
+  --color-borde: #d5d9e0;
+  --color-texto: #1f2933;
+  --color-texto-suave: #52606d;
+  --color-primario: #2f5d8a;
+  --color-primario-contraste: #ffffff;
+  --color-foco: #f0b429;
+  --color-error: #b42318;
+  --color-error-fondo: #fdecea;
+  --color-aviso: #8a5a00;
+  --color-aviso-fondo: #fff4d6;
+  --color-exito: #1d6b45;
+  --color-exito-fondo: #e6f4ec;
+  --color-escena-pared: #e8edf3;
+  --color-escena-piso: #d3dbe5;
+
+  --radio: 0.5rem;
+  --espacio-1: 0.25rem;
+  --espacio-2: 0.5rem;
+  --espacio-3: 1rem;
+  --espacio-4: 1.5rem;
+  --espacio-5: 2rem;
+
+  --fuente-base: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--fuente-base);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  margin: 0 0 var(--espacio-2);
+}
+
+p {
+  margin: 0 0 var(--espacio-2);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.boton {
+  appearance: none;
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio);
+  background: var(--color-superficie);
+  color: var(--color-primario);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  min-height: 2.75rem;
+  padding: var(--espacio-2) var(--espacio-3);
+}
+
+.boton--primario {
+  background: var(--color-primario);
+  color: var(--color-primario-contraste);
+}
+
+.boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tarjeta {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: var(--espacio-3);
+}
+
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
