@@ -30,19 +30,22 @@ Ninguna opción está aprobada todavía. Este repositorio no incluye Dockerfile 
 
 ## Estado de la integración con M5
 
-`ParticipacionGateway` (`src/app/features/simulador/services/participacion.gateway.ts`) define las operaciones conceptuales del recorrido estudiantil. La implementación actual (`ParticipacionPendienteGateway`) **falla en todas ellas** con `ContratoPendienteError` porque no existen endpoints REST ni OpenAPI aprobados. No simula respuestas del servidor.
+El Backend consolidado ya registra GET `/v1/estudiantes/intentos/{idIntento}` y PUT `/v1/estudiantes/intentos/{idIntento}/respuestas/{idPregunta}`, bajo `/api`. Ambos están protegidos. El acceso estudiantil productivo permanece deshabilitado; un token de personal no equivale a identidad de estudiante.
 
-| Operación | Estado | Bloqueada por |
-| --- | --- | --- |
-| consultarSesionesAutorizadas | bloqueada | contrato REST de M5 y elegibilidad de M4 |
-| iniciarIntento | bloqueada | contrato REST de M5 |
-| consultarIntento | bloqueada | contrato REST de M5 |
-| registrarRespuesta | bloqueada | contrato REST de M5; formato de pregunta/opción de M3 |
-| consultarProgreso | bloqueada | contrato REST de M5 |
-| reanudarIntento | bloqueada | contrato REST de M5 |
-| finalizarIntento | bloqueada | contrato REST de M5 |
+Esto no constituye un contrato operativo completo para SIM-01. `ParticipacionGateway` mantiene la implementación pendiente y no envía HTTP ni simula éxitos:
 
-Además, el backend exige autenticación para todo excepto `/health`. M1 implementa por ahora solo la autenticación de personal (provisional); el acceso estudiantil (DD-02) no existe, así que una llamada real del estudiante recibiría 401.
+| Operación conceptual | Situación comprobada |
+| --- | --- |
+| consultarSesionesAutorizadas | No hay listado estudiantil elegible publicado que este Frontend pueda consumir. |
+| iniciarIntento / reanudarIntento | Servicio interno disponible; POST preparatorio sin registro MVC. Identidad, elegibilidad, límite temporal e idempotencia durable siguen condicionados. |
+| consultarIntento | GET protegido existente; integración visual requiere identidad estudiantil y contenido M3 autorizados. |
+| registrarRespuesta | PUT protegido existente con revisión esperada/CAS; el gateway conceptual todavía no incorpora ese contrato tipado y no se sustituye por un mock exitoso. |
+| consultarProgreso | No se inventa una ruta; requiere respuestas y número de preguntas del contenido autorizado. |
+| finalizarIntento | Servicio interno disponible; POST preparatorio sin registro MVC, pendiente D07. |
+
+No se encontró un documento OpenAPI operativo completo en los dos repositorios locales inspeccionados. No se añadieron endpoints, credenciales, guardias de acceso ficticias ni un adaptador parcial presentado como integración terminada. La ruta pública del simulador solo muestra inicio/demostración; no solicita ni expone datos privados al navegar.
+
+Al abandonar una consulta pendiente se cancela la suscripción; una respuesta tardía no sustituye la pantalla inicial ni la demostración. El estado de carga ofrece volver al inicio. No inicia ni finaliza intentos por reintentar o cancelar.
 
 ## Errores de la API en el simulador
 
