@@ -51,8 +51,21 @@ export function construirUrlApi(config: ApiConfig, ruta: string): string {
   if (/^[a-z][a-z\d+.-]*:/i.test(relativa) || (ruta ?? '').trim().startsWith('//')) {
     throw new Error('La ruta del recurso debe ser relativa a la URL base configurada.');
   }
+  const camino = relativa.split(/[?#]/, 1)[0];
+  let decodificado: string;
+  try {
+    decodificado = decodeURIComponent(camino);
+  } catch {
+    throw new Error('La ruta del recurso contiene una codificación inválida.');
+  }
+  if (
+    /[\\\u0000-\u0020\u007f]/.test(decodificado) ||
+    decodificado.split('/').some((segmento) => segmento === '.' || segmento === '..')
+  ) {
+    throw new Error('La ruta del recurso no puede contener navegación ni separadores ambiguos.');
+  }
   const ultimoSegmento = config.baseUrl.split('/').pop();
-  if (ultimoSegmento && relativa.startsWith(`${ultimoSegmento}/`)) {
+  if (ultimoSegmento && (decodificado === ultimoSegmento || decodificado.startsWith(`${ultimoSegmento}/`))) {
     throw new Error(`La ruta "${ruta}" repite el segmento base "${ultimoSegmento}".`);
   }
   return `${config.baseUrl}/${relativa}`;

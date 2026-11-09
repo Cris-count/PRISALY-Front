@@ -36,6 +36,22 @@ describe('Configuración de API', () => {
     it('rechaza rutas vacías', () => {
       expect(() => construirUrlApi(config, ' ')).toThrowError(/vacía/);
     });
+
+    for (const ruta of ['../health', 'v1/../personal/yo', '%2e%2e/health', 'v1\\..\\health']) {
+      it(`rechaza navegación fuera de la ruta de recurso: ${ruta}`, () => {
+        expect(() => construirUrlApi(config, ruta)).toThrowError(/ruta|relativa/i);
+      });
+    }
+
+    for (const ruta of ['api', 'api?pagina=1']) {
+      it(`rechaza repetir la base sin un segmento posterior: ${ruta}`, () => {
+        expect(() => construirUrlApi(config, ruta)).toThrowError(/repite/);
+      });
+    }
+
+    it('conserva consultas relativas válidas sin interpretar sus valores como rutas', () => {
+      expect(construirUrlApi(config, 'v1/casos?texto=../')).toBe('/api/v1/casos?texto=../');
+    });
   });
 
   describe('API_CONFIG', () => {
