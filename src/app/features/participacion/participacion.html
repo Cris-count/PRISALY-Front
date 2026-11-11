@@ -1,0 +1,61 @@
+<div class="page">
+  <header class="page__head">
+    <p class="eyebrow">Pantalla F · M5 / M6</p>
+    <h1>Participación y evaluación</h1>
+    <p class="lead">
+      Las rutas de M5 exigen identidad estudiantil, que depende de DD-02. Se envían sin credenciales, nunca con el token
+      docente, y el servidor las deniega. Esta pantalla no muestra respuestas correctas ni explicaciones protegidas.
+    </p>
+  </header>
+
+  <form class="grid" [formGroup]="form" novalidate>
+    <app-panel title="Consultar intento propio" [endpoint]="endpoints.intentoConsultar" testId="panel-intento">
+      <div class="form form--inline">
+        <div class="field">
+          <label for="idIntento">Intento (UUID) *</label>
+          <input id="idIntento" formControlName="idIntento" autocomplete="off" data-testid="input-idIntento" />
+          @if (error('idIntento', 'Intento', 'debe ser un UUID en minúsculas.', consultaSubmitted() || guardarSubmitted()); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <button type="button" class="btn btn--ghost" [disabled]="consultar.loading()" data-testid="btn-intento"
+          (click)="consultarIntento()">Consultar</button>
+      </div>
+      <app-result-view [result]="consultar.result()" testId="result-intento" />
+    </app-panel>
+
+    <app-panel title="Guardar respuesta" [endpoint]="endpoints.intentoGuardarRespuesta" testId="panel-respuesta">
+      <div class="form">
+        <p class="field__hint">Usa el intento del panel anterior.</p>
+        <div class="field">
+          <label for="idPregunta">Pregunta (UUID) *</label>
+          <input id="idPregunta" formControlName="idPregunta" autocomplete="off" data-testid="input-idPregunta" />
+          @if (error('idPregunta', 'Pregunta', 'debe ser un UUID en minúsculas.', guardarSubmitted()); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <div class="field">
+          <label for="idOpcion">Opción seleccionada (UUID) *</label>
+          <input id="idOpcion" formControlName="idOpcion" autocomplete="off" data-testid="input-idOpcion" />
+          @if (error('idOpcion', 'Opción', 'debe ser un UUID en minúsculas.', guardarSubmitted()); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <div class="field">
+          <label for="revision">Revisión esperada *</label>
+          <input id="revision" type="number" formControlName="revision" data-testid="input-revision" />
+          @if (error('revision', 'Revisión', 'debe ser un entero ≥ 0.', guardarSubmitted()); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <button type="button" class="btn" [disabled]="guardar.loading()" data-testid="btn-respuesta"
+          (click)="guardarRespuesta()">Guardar respuesta</button>
+      </div>
+      <app-result-view [result]="guardar.result()" testId="result-respuesta" />
+    </app-panel>
+
+    <app-panel title="Operaciones no disponibles" [endpoint]="null" testId="panel-m5m6-pendientes">
+      <app-pending-list [operations]="pendientes" />
+    </app-panel>
+  </form>
+</div>

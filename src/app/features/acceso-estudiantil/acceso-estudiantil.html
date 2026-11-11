@@ -1,0 +1,59 @@
+<div class="page">
+  <header class="page__head">
+    <p class="eyebrow">Pantalla E · M1 · DD-02</p>
+    <h1>Acceso estudiantil</h1>
+    <p class="lead">
+      Muestra el estado real del servidor. Esta interfaz no crea sesiones de estudiante, no simula accesos y no reutiliza
+      el token del personal: la petición se envía sin credenciales.
+    </p>
+  </header>
+
+  <div class="grid">
+    <app-panel title="Validar código de acceso" [endpoint]="endpoints.estudianteValidar" testId="panel-dd02">
+      <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="challengeId">Identificador del reto *</label>
+          <input id="challengeId" formControlName="challengeId" autocomplete="off" data-testid="input-challengeId" />
+          @if (error('challengeId', 'Identificador del reto', 'valor no válido.'); as message) {
+            <p class="field__error">{{ message }}</p>
+          } @else {
+            <p class="field__hint">Lo emitiría el servidor junto con el correo.</p>
+          }
+        </div>
+        <div class="field">
+          <label for="codigo">Código (8 dígitos) *</label>
+          <input id="codigo" formControlName="codigo" autocomplete="one-time-code" inputmode="numeric" data-testid="input-codigo" />
+          @if (error('codigo', 'Código', 'debe tener 8 dígitos.'); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <button type="submit" class="btn" [disabled]="validar.loading()" data-testid="btn-dd02">Consultar al servidor</button>
+      </form>
+      <app-result-view [result]="validar.result()" testId="result-dd02" />
+    </app-panel>
+
+    <app-panel title="Estado de DD-02" [endpoint]="null" testId="panel-dd02-estado">
+      @switch (state()) {
+        @case ('sin-consultar') {
+          <p class="muted">Envía la validación para leer el estado real del servidor.</p>
+        }
+        @case ('bloqueada') {
+          <div class="notice notice--pending" data-testid="dd02-bloqueada">
+            <strong>Acceso estudiantil bloqueado.</strong> El servidor responde 501
+            @if (serverCode(); as code) {(<code>{{ code }}</code>)}. El acceso productivo está pendiente de ratificación
+            formal (DC-RAT-01) y no se concede con datos simulados.
+          </div>
+        }
+        @case ('inesperada') {
+          <div class="notice notice--error" role="alert" data-testid="dd02-inesperada">
+            El servidor aceptó la validación. No es el estado esperado con DD-02 sin ratificar: revisa
+            <code>prisaly.m1.student-access.enabled</code>. Esta interfaz no abre ninguna sesión estudiantil.
+          </div>
+        }
+        @case ('rechazada') {
+          <p class="notice notice--warn">El servidor rechazó la petición antes de evaluar DD-02 (ver detalle).</p>
+        }
+      }
+    </app-panel>
+  </div>
+</div>

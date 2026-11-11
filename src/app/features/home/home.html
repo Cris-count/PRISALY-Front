@@ -1,0 +1,37 @@
+<div class="page" data-testid="home-page">
+  <section class="hero" data-testid="home-hero">
+    <img src="prisaly-logo.png" alt="Logotipo de PRISALY" class="hero__logo" />
+    <div>
+      <p class="eyebrow">Plataforma PRISALY</p>
+      <h1>Entorno local de pruebas funcionales</h1>
+      <p class="lead">
+        Interfaz de integración contra la API real. No sustituye a las pantallas definitivas ni concede accesos que el
+        servidor no autorice.
+      </p>
+      <div class="connection" data-testid="connection">
+        <span [class]="connection().dot" aria-hidden="true"></span>
+        <span data-testid="connection-state">{{ connection().label }}</span>
+        <code>{{ healthUrl }}</code>
+        <button type="button" class="btn btn--ghost" (click)="checkHealth()" [disabled]="health.loading()">Reintentar</button>
+      </div>
+      @if (connection().error; as message) {
+        <p class="notice notice--error" role="alert">{{ message }}</p>
+      }
+    </div>
+  </section>
+
+  <section class="areas" aria-label="Funciones disponibles">
+    @for (area of areas; track area.path) {
+      <a [routerLink]="area.path" class="area" [attr.data-testid]="'area-' + area.path.slice(1)">
+        <span class="area__modules">{{ area.modules.join(' · ') }}</span>
+        <strong>{{ area.title }}</strong>
+        <span class="area__summary">{{ area.summary }}</span>
+        <span class="area__counts">
+          @for (item of area.counts; track item.availability) {
+            <span class="area__count"><app-status-chip [availability]="item.availability" /> {{ item.count }}</span>
+          }
+        </span>
+      </a>
+    }
+  </section>
+</div>

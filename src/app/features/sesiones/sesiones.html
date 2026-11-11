@@ -1,0 +1,210 @@
+<div class="page">
+  <header class="page__head">
+    <p class="eyebrow">Pantalla D · M4</p>
+    <h1>Programación de sesiones</h1>
+    <p class="lead">
+      La identidad docente sale siempre del token: esta interfaz nunca envía la cabecera <code>X-Docente-Id</code>.
+      Las operaciones de escritura exigen <code>GESTIONAR_SESION</code>.
+    </p>
+  </header>
+  <app-requires-session />
+
+  <app-panel title="Sesiones autorizadas" [endpoint]="endpoints.sesionListar" testId="panel-sesiones">
+    <div class="actions">
+      <button type="button" class="btn btn--ghost" [disabled]="listar.loading()" data-testid="btn-sesiones-listar"
+        (click)="listarSesiones()">{{ listar.loading() ? 'Consultando…' : 'Consultar sesiones' }}</button>
+    </div>
+    @if (lista(); as sesiones) {
+      @if (sesiones.length === 0) {
+        <p class="muted">No hay sesiones autorizadas para este usuario.</p>
+      } @else {
+        <div class="table-wrap">
+          <table data-testid="tabla-sesiones">
+            <thead>
+              <tr><th>Título</th><th>Estado</th><th>Inicio</th><th>Fin</th><th><span class="sr-only">Acciones</span></th></tr>
+            </thead>
+            <tbody>
+              @for (sesion of sesiones; track sesion.id) {
+                <tr [class.is-selected]="seleccion()?.id === sesion.id">
+                  <td>{{ sesion.titulo }}</td>
+                  <td><span class="state state--{{ sesion.estado }}">{{ sesion.estado }}</span></td>
+                  <td>{{ formatInstant(sesion.fechaInicio) }}</td>
+                  <td>{{ formatInstant(sesion.fechaFin) }}</td>
+                  <td><button type="button" class="btn btn--small" (click)="seleccionar(sesion)">Abrir</button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+    <app-result-view [result]="listarError()" testId="result-sesiones" />
+  </app-panel>
+
+  <div class="grid">
+    <app-panel title="Crear sesión" [endpoint]="endpoints.sesionCrear" testId="panel-sesion-crear">
+      <form class="form" [formGroup]="crearForm" (ngSubmit)="crearSesion()" novalidate>
+        <div class="field">
+          <label for="casoId">Caso *</label>
+          <input id="casoId" formControlName="casoId" autocomplete="off" data-testid="input-casoId" />
+          @if (error(crearForm, 'casoId', 'Caso', 'debe ser un UUID en minúsculas.', crearSubmitted()); as message) {
+            <p class="field__error">{{ message }}</p>
+          } @else if (casosCreados().length > 0) {
+            <p class="field__hint">Último caso creado: <code>{{ casosCreados()[0] }}</code></p>
+          } @else {
+            <p class="field__hint">UUID de un caso existente y publicado.</p>
+          }
+        </div>
+        <div class="field">
+          <label for="nuevaTitulo">Título *</label>
+          <input id="nuevaTitulo" formControlName="titulo" autocomplete="off" data-testid="input-nuevaTitulo" />
+          @if (error(crearForm, 'titulo', 'Título', 'valor no válido.', crearSubmitted()); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <div class="field">
+          <label for="nuevaMensaje">Mensaje personalizado (opcional)</label>
+          <textarea id="nuevaMensaje" rows="2" formControlName="mensaje"></textarea>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="nuevaInicio">Inicio *</label>
+            <input id="nuevaInicio" type="datetime-local" formControlName="inicio" data-testid="input-nuevaInicio" />
+            @if (error(crearForm, 'inicio', 'Inicio', 'fecha no válida.', crearSubmitted()); as message) {
+              <p class="field__error">{{ message }}</p>
+            }
+          </div>
+          <div class="field">
+            <label for="nuevaFin">Fin *</label>
+            <input id="nuevaFin" type="datetime-local" formControlName="fin" data-testid="input-nuevaFin" />
+            @if (error(crearForm, 'fin', 'Fin', 'fecha no válida.', crearSubmitted()) ?? rangeError(crearForm, crearSubmitted()); as message) {
+              <p class="field__error">{{ message }}</p>
+            }
+          </div>
+        </div>
+        <div class="field">
+          <label for="tiempoMax">Tiempo máximo de participación (s) *</label>
+          <input id="tiempoMax" type="number" formControlName="tiempoMax" data-testid="input-tiempoMax" />
+          @if (error(crearForm, 'tiempoMax', 'Tiempo máximo', 'debe ser un entero mayor que 0.', crearSubmitted()); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <button type="submit" class="btn" [disabled]="crear.loading()" data-testid="btn-sesion-crear">
+          {{ crear.loading() ? 'Creando…' : 'Crear sesión' }}
+        </button>
+      </form>
+      <app-result-view [result]="crear.result()" testId="result-sesion-crear" />
+    </app-panel>
+
+    <app-panel title="Consultar por identificador" [endpoint]="endpoints.sesionConsultar" testId="panel-sesion-consultar">
+      <form class="form form--inline" [formGroup]="consultaForm" (ngSubmit)="consultarSesion()" novalidate>
+        <div class="field">
+          <label for="sesionId">Identificador de sesión *</label>
+          <input id="sesionId" formControlName="sesionId" autocomplete="off" data-testid="input-sesionId" />
+          @if (error(consultaForm, 'sesionId', 'Identificador', 'debe ser un UUID en minúsculas.', consultaSubmitted()); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <button type="submit" class="btn btn--ghost" [disabled]="consultar.loading()" data-testid="btn-sesion-consultar">Consultar</button>
+      </form>
+      <app-result-view [result]="consultarError()" testId="result-sesion-consultar" />
+    </app-panel>
+  </div>
+
+  @if (seleccion(); as sesion) {
+    <section class="selected" data-testid="sesion-seleccionada">
+      <header class="selected__head">
+        <div>
+          <p class="eyebrow">Sesión seleccionada</p>
+          <h2>{{ sesion.titulo }}</h2>
+          <p class="muted"><code>{{ sesion.id }}</code> · caso <code>{{ sesion.casoId }}</code></p>
+        </div>
+        <span class="state state--{{ sesion.estado }}" data-testid="sesion-estado">{{ sesion.estado }}</span>
+      </header>
+      <dl class="facts">
+        <dt>Inicio previsto</dt><dd>{{ formatInstant(sesion.fechaInicio) }}</dd>
+        <dt>Fin previsto</dt><dd>{{ formatInstant(sesion.fechaFin) }}</dd>
+        <dt>Inicio real</dt><dd>{{ formatInstant(sesion.fechaInicioReal) }}</dd>
+        <dt>Fin real</dt><dd>{{ formatInstant(sesion.fechaFinReal) }}</dd>
+        <dt>Tiempo máximo</dt><dd>{{ sesion.tiempoMaximoParticipacionSegundos }} s</dd>
+      </dl>
+
+      <div class="grid">
+        <app-panel title="Modificar programación" [endpoint]="endpoints.sesionActualizar" testId="panel-sesion-actualizar">
+          <form class="form" [formGroup]="editForm" (ngSubmit)="actualizarSesion()" novalidate>
+            <div class="field">
+              <label for="editTitulo">Título *</label>
+              <input id="editTitulo" formControlName="titulo" autocomplete="off" data-testid="input-editTitulo" />
+              @if (error(editForm, 'titulo', 'Título', 'valor no válido.', editSubmitted()); as message) {
+                <p class="field__error">{{ message }}</p>
+              }
+            </div>
+            <div class="field">
+              <label for="editMensaje">Mensaje personalizado</label>
+              <textarea id="editMensaje" rows="2" formControlName="mensaje"></textarea>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label for="editInicio">Inicio *</label>
+                <input id="editInicio" type="datetime-local" formControlName="inicio" />
+              </div>
+              <div class="field">
+                <label for="editFin">Fin *</label>
+                <input id="editFin" type="datetime-local" formControlName="fin" />
+                @if (rangeError(editForm, editSubmitted()); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+            </div>
+            <button type="submit" class="btn" [disabled]="actualizar.loading()" data-testid="btn-sesion-actualizar">Guardar cambios</button>
+          </form>
+          <app-result-view [result]="actualizar.result()" testId="result-sesion-actualizar" />
+        </app-panel>
+
+        <app-panel title="Cambiar estado" [endpoint]="endpoints.sesionEstado" testId="panel-sesion-estado">
+          <form class="form" [formGroup]="estadoForm" (ngSubmit)="cambiarEstado()" novalidate>
+            <div class="field">
+              <label for="nuevoEstado">Nuevo estado</label>
+              <select id="nuevoEstado" formControlName="nuevoEstado" data-testid="select-estado">
+                @for (valor of estados; track valor) {
+                  <option [value]="valor">{{ valor }}</option>
+                }
+              </select>
+            </div>
+            <button type="submit" class="btn" [disabled]="estado.loading()" data-testid="btn-sesion-estado">Aplicar estado</button>
+          </form>
+          <app-result-view [result]="estado.result()" testId="result-sesion-estado" />
+        </app-panel>
+
+        <app-panel title="Convocatorias" [endpoint]="endpoints.convocatoriaListar" testId="panel-convocatorias">
+          @if (convocados(); as lista) {
+            @if (lista.length === 0) {
+              <p class="muted">Sin estudiantes convocados.</p>
+            } @else {
+              <ul class="idlist" data-testid="lista-convocatorias">
+                @for (c of lista; track c.id) {
+                  <li><code>{{ c.estudianteId }}</code> · {{ c.estadoAutorizacion }}@if (c.fechaRetiro !== null) { · retirado }</li>
+                }
+              </ul>
+            }
+          }
+          <app-result-view [result]="convocatoriasError()" testId="result-convocatorias" />
+          <form class="form form--inline" [formGroup]="convocarForm" (ngSubmit)="convocarEstudiante()" novalidate>
+            <div class="field">
+              <label for="estudianteId">Convocar estudiante (UUID) *</label>
+              <input id="estudianteId" formControlName="estudianteId" autocomplete="off" data-testid="input-estudianteId" />
+              @if (error(convocarForm, 'estudianteId', 'Estudiante', 'debe ser un UUID en minúsculas.', convocarSubmitted()); as message) {
+                <p class="field__error">{{ message }}</p>
+              }
+            </div>
+            <button type="submit" class="btn" [disabled]="convocar.loading()" data-testid="btn-convocar">Convocar</button>
+          </form>
+          <p class="panel__route">
+            <span class="method method--post">POST</span><code>{{ endpoints.convocatoriaCrear.path }}</code>
+          </p>
+          <app-result-view [result]="convocar.result()" testId="result-convocar" />
+        </app-panel>
+      </div>
+    </section>
+  }
+</div>

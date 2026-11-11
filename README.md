@@ -1,5 +1,14 @@
 # PRISALYFront
 
+## Arranque local con la API real
+
+Dos terminales (en Git Bash: `cmd //c <archivo>.cmd`):
+
+1. `PRISALY-Backend\iniciar-backend.cmd`: API en http://localhost:8080/api (no crea datos; usuarios de prueba locales en `bruno/scripts/m1-bruno-seed-local.sql`).
+2. `PRISALY-Front\iniciar-frontend.cmd`: interfaz en http://localhost:4200.
+
+La URL de la API está en `src/environments/environment.ts`. Todas las rutas del backend están en `src/app/core/api/catalog.ts` y todas las peticiones pasan por `ApiClient` (`src/app/core/api/api-client.service.ts`). El token del personal se guarda solo en memoria y nunca se envía a las rutas de estudiante.
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.3.
 
 ## Development server

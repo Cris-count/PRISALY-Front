@@ -1,0 +1,89 @@
+<div class="page">
+  <header class="page__head">
+    <p class="eyebrow">Pantalla G</p>
+    <h1>Diagnóstico de integración</h1>
+    <p class="lead">
+      Base de la API: <code>{{ apiUrl }}</code>. El registro guarda solo datos sanitizados: tokens, contraseñas, hashes y
+      códigos se ocultan.
+    </p>
+  </header>
+
+  <app-panel title="Probar una ruta existente" [endpoint]="endpoint()" testId="panel-probador">
+    <form class="form" (ngSubmit)="send()" novalidate>
+      <div class="field">
+        <label for="endpoint">Ruta</label>
+        <select id="endpoint" name="endpoint" data-testid="select-endpoint" [ngModel]="endpointId()" (ngModelChange)="selectEndpoint($event)">
+          @for (item of callable; track item.id) {
+            <option [value]="item.id">{{ item.module }} · {{ item.method }} {{ item.path }}</option>
+          }
+        </select>
+      </div>
+      @for (name of names(); track name) {
+        <div class="field">
+          <label [for]="'param-' + name">{{ name }}</label>
+          <input [id]="'param-' + name" [name]="'param-' + name" autocomplete="off" [attr.data-testid]="'param-' + name"
+            [ngModel]="params()[name] ?? ''" (ngModelChange)="setParam(name, $event)" />
+        </div>
+      }
+      @if (acceptsBody()) {
+        <div class="field">
+          <label for="body">Cuerpo JSON</label>
+          <textarea id="body" name="body" rows="5" spellcheck="false" data-testid="input-body"
+            [ngModel]="bodyText()" (ngModelChange)="bodyText.set($event)"></textarea>
+        </div>
+      }
+      @if (endpoint()?.auth === 'personal') {
+        <label class="check">
+          <input type="checkbox" name="useToken" [ngModel]="useToken()" (ngModelChange)="useToken.set($event)" />
+          Adjuntar el token del personal
+          @if (tokens.token() === null) { (no hay sesión) }
+        </label>
+      } @else {
+        <p class="muted">Esta ruta se envía siempre sin credenciales.</p>
+      }
+      @if (inputError(); as message) {
+        <p class="field__error" role="alert">{{ message }}</p>
+      }
+      <button type="submit" class="btn" [disabled]="loading()" data-testid="btn-probar">Enviar</button>
+    </form>
+    <app-result-view [result]="result()" testId="result-probador" />
+  </app-panel>
+
+  <app-panel title="Registro de peticiones" [endpoint]="null" testId="panel-registro">
+    <div class="actions">
+      <button type="button" class="btn btn--ghost" (click)="log.clear()">Vaciar registro</button>
+    </div>
+    @if (log.records().length === 0) {
+      <p class="muted">Todavía no hay peticiones en esta pestaña.</p>
+    } @else {
+      <div class="table-wrap">
+        <table data-testid="tabla-registro">
+          <thead>
+            <tr><th>#</th><th>Método</th><th>Ruta</th><th>Código</th><th>Duración</th><th>Token</th><th>Resultado</th></tr>
+          </thead>
+          <tbody>
+            @for (record of log.records(); track record.seq) {
+              <tr>
+                <td>{{ record.seq }}</td>
+                <td><span class="method method--{{ record.method.toLowerCase() }}">{{ record.method }}</span></td>
+                <td><code>{{ record.url }}</code></td>
+                <td><strong>{{ record.status === 0 ? '—' : record.status }}</strong></td>
+                <td>{{ record.durationMs }} ms</td>
+                <td>{{ record.withToken ? 'Bearer «oculto»' : 'no' }}</td>
+                <td>
+                  <details>
+                    <summary>{{ record.errorKind === null ? 'Correcto' : kindLabel[record.errorKind] }}</summary>
+                    @if (record.requestBody !== null) {
+                      <pre>{{ record.requestBody | json }}</pre>
+                    }
+                    <pre>{{ record.responseBody | json }}</pre>
+                  </details>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </app-panel>
+</div>

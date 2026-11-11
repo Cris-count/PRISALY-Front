@@ -1,0 +1,82 @@
+<div class="page" data-testid="login-page">
+  <header class="page__head">
+    <p class="eyebrow">Pantalla B · M1</p>
+    <h1>Autenticación del personal</h1>
+    <p class="lead">El token se guarda solo en memoria durante esta pestaña; al recargar se pierde.</p>
+  </header>
+
+  <div class="grid">
+    <app-panel title="Iniciar sesión" [endpoint]="endpoints.personalAutenticar" testId="panel-login">
+      <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="login-form">
+        <div class="field" [class.field--invalid]="error('correo', 'Correo') !== null">
+          <label for="correo">Correo <span aria-hidden="true">*</span></label>
+          <input id="correo" type="email" formControlName="correo" autocomplete="username" data-testid="login-email"
+            [attr.aria-invalid]="error('correo', 'Correo') !== null" />
+          @if (error('correo', 'Correo'); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <div class="field" [class.field--invalid]="error('password', 'Contraseña') !== null">
+          <label for="password">Contraseña <span aria-hidden="true">*</span></label>
+          <input id="password" type="password" formControlName="password" autocomplete="current-password"
+            data-testid="login-password" [attr.aria-invalid]="error('password', 'Contraseña') !== null" />
+          @if (error('password', 'Contraseña'); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <button type="submit" class="btn" [disabled]="loginAction.loading()" data-testid="login-submit">
+          {{ loginAction.loading() ? 'Autenticando…' : 'Autenticar' }}
+        </button>
+      </form>
+      <app-result-view [result]="loginAction.result()" testId="result-login" />
+    </app-panel>
+
+    <app-panel title="Identidad actual" [endpoint]="endpoints.personalMe" testId="panel-me">
+      @if (user(); as profile) {
+        <dl class="profile" data-testid="profile">
+          <dt>Nombre</dt>
+          <dd data-testid="profile-nombre">{{ profile.nombre }}</dd>
+          <dt>Correo</dt>
+          <dd>{{ profile.correo }}</dd>
+          <dt>Rol</dt>
+          <dd data-testid="profile-rol">{{ profile.rol }}</dd>
+          <dt>Permisos</dt>
+          <dd>
+            <ul class="tags" data-testid="profile-permisos">
+              @for (codigo of profile.permisos; track codigo) {
+                <li class="tag">{{ codigo }}</li>
+              } @empty {
+                <li class="tag tag--empty">Sin permisos</li>
+              }
+            </ul>
+          </dd>
+        </dl>
+      } @else {
+        <p class="muted">Sin identidad cargada.</p>
+      }
+      <div class="actions">
+        <button type="button" class="btn btn--ghost" [disabled]="meAction.loading()" data-testid="btn-me" (click)="loadIdentity()">
+          Consultar /me
+        </button>
+      </div>
+      <app-result-view [result]="meAction.result()" testId="result-me" />
+    </app-panel>
+
+    <app-panel title="Permiso CREAR_CASO" [endpoint]="endpoints.personalCrearCaso" testId="panel-permiso">
+      <div class="actions">
+        <button type="button" class="btn btn--ghost" [disabled]="permisoAction.loading()" data-testid="btn-permiso"
+          (click)="checkPermission()">Comprobar permiso</button>
+      </div>
+      <app-result-view [result]="permisoAction.result()" testId="result-permiso" />
+    </app-panel>
+
+    <app-panel title="Cerrar sesión" [endpoint]="endpoints.personalCerrarSesion" testId="panel-logout">
+      <p class="muted">Revoca el token en el servidor y lo borra de la memoria del navegador.</p>
+      <div class="actions">
+        <button type="button" class="btn btn--danger" [disabled]="logoutAction.loading() || !isAuthenticated()"
+          data-testid="btn-logout" (click)="logout()">Cerrar sesión</button>
+      </div>
+      <app-result-view [result]="logoutAction.result()" testId="result-logout" />
+    </app-panel>
+  </div>
+</div>

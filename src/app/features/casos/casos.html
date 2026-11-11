@@ -1,0 +1,68 @@
+<div class="page">
+  <header class="page__head">
+    <p class="eyebrow">Pantalla C · M3</p>
+    <h1>Gestión académica de casos</h1>
+    <p class="lead">Solo existe la creación de casos en borrador. El resto de operaciones no tiene ruta en el backend.</p>
+  </header>
+  <app-requires-session />
+
+  <div class="grid">
+    <app-panel title="Crear caso" [endpoint]="endpoints.casoCrear" testId="panel-caso-crear">
+      <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="idCaso">Identificador del caso *</label>
+          <input id="idCaso" formControlName="idCaso" autocomplete="off" data-testid="input-idCaso" />
+          @if (error('idCaso', 'Identificador', 'debe ser un UUID en minúsculas.'); as message) {
+            <p class="field__error">{{ message }}</p>
+          } @else {
+            <p class="field__hint">Generado en el navegador; lo exige el contrato de M3.</p>
+          }
+        </div>
+        <div class="field">
+          <label for="titulo">Título *</label>
+          <input id="titulo" formControlName="titulo" autocomplete="off" data-testid="input-titulo" />
+          @if (error('titulo', 'Título', 'valor no válido.'); as message) {
+            <p class="field__error">{{ message }}</p>
+          } @else {
+            <p class="field__hint">Máximo 150 caracteres.</p>
+          }
+        </div>
+        <div class="field">
+          <label for="tiempo">Tiempo estimado (segundos) *</label>
+          <input id="tiempo" type="number" formControlName="tiempo" data-testid="input-tiempo" />
+          @if (error('tiempo', 'Tiempo estimado', 'debe ser un entero mayor que 0.'); as message) {
+            <p class="field__error">{{ message }}</p>
+          }
+        </div>
+        <div class="field">
+          <label for="historia">Historia (opcional)</label>
+          <textarea id="historia" rows="3" formControlName="historia" data-testid="input-historia"></textarea>
+        </div>
+        <div class="field">
+          <label for="desarrollo">Desarrollo situacional (opcional)</label>
+          <textarea id="desarrollo" rows="3" formControlName="desarrollo" data-testid="input-desarrollo"></textarea>
+        </div>
+        <button type="submit" class="btn" [disabled]="crear.loading()" data-testid="btn-caso-crear">
+          {{ crear.loading() ? 'Creando…' : 'Crear borrador' }}
+        </button>
+      </form>
+      <app-result-view [result]="crear.result()" testId="result-caso-crear" />
+    </app-panel>
+
+    <app-panel title="Casos creados en esta sesión" [endpoint]="null" testId="panel-casos-sesion">
+      @if (creados().length === 0) {
+        <p class="muted">Ninguno todavía. No hay ruta para listar casos del servidor.</p>
+      } @else {
+        <ul class="idlist" data-testid="casos-creados">
+          @for (id of creados(); track id) {
+            <li><code>{{ id }}</code></li>
+          }
+        </ul>
+      }
+    </app-panel>
+
+    <app-panel title="Operaciones no disponibles" [endpoint]="null" testId="panel-casos-pendientes">
+      <app-pending-list [operations]="pendientes" />
+    </app-panel>
+  </div>
+</div>
