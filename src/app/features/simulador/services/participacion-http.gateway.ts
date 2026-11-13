@@ -6,26 +6,14 @@ import { API_CONFIG, construirUrlApi } from '../../../core/config/api.config';
 import { clasificarErrorApi, FalloApi } from '../../../core/http/clasificar-error-api';
 import { ParticipacionGateway, ParticipacionPendienteGateway } from './participacion.gateway';
 
-/** Estados de un intento tal como los devuelve M5 (`IntentosM5Dto.Intento`). */
-export type EstadoIntentoM5 = 'EnCurso' | 'Finalizado';
-
-/** `IntentosM5Dto.RespuestaGuardada`: respuesta propia con su revisión (D06). */
-export interface RespuestaGuardadaM5 {
-  readonly idPregunta: string;
-  readonly idOpcionSeleccionada: string;
-  readonly revision: number;
-}
-
-/** `IntentosM5Dto.Intento`: solo información de M5 (estado, tiempos y respuestas propias). */
-export interface IntentoM5 {
-  readonly idIntento: string;
-  readonly estado: EstadoIntentoM5;
-  readonly inicio: string;
-  readonly limiteTemporal: string;
-  readonly motivoFinalizacion: string | null;
-  readonly respuestas: readonly RespuestaGuardadaM5[];
-  readonly ahoraServidor: string;
-}
+import { IntentoM5, RespuestaGuardadaM5 } from '../models/participacion.models';
+import { ContenidoIntentoM5 } from '../models/contenido-intento.models';
+import { leerContenidoIntento } from './leer-contenido-intento';
+export type {
+  EstadoIntentoM5,
+  IntentoM5,
+  RespuestaGuardadaM5,
+} from '../models/participacion.models';
 
 /**
  * Fallo de una operación HTTP de participación. Conserva la clasificación
@@ -50,6 +38,7 @@ const CODIGO = /^[A-Z][A-Z0-9_]{2,59}$/;
  * Implementación HTTP de las dos operaciones de M5 publicadas en el Backend:
  * `GET /v1/estudiantes/intentos/{id}` y
  * `PUT /v1/estudiantes/intentos/{id}/respuestas/{idPregunta}`.
+ * Además prepara GET `intentos/{id}/contenido` del PR #88, pendiente de integración.
  *
  * - La identidad estudiantil es la cookie HttpOnly emitida por M1
  *   (`withCredentials`); no se envían cabeceras de identidad ni Bearer.
@@ -70,6 +59,16 @@ export class ParticipacionHttpGateway extends ParticipacionGateway {
     if (url instanceof FalloParticipacionError) return throwError(() => url);
     return this.http.get<unknown>(url, { withCredentials: true }).pipe(
       map((cuerpo) => leerIntento(cuerpo)),
+      catchError((e: unknown) => throwError(() => aFallo(e))),
+    );
+  }
+
+  /** Consumo preparado del PR #88; no activa el proveedor ni almacena el contenido. */
+  consultarContenidoIntento(intentoId: string): Observable<ContenidoIntentoM5> {
+    const url = this.url(['intentos', intentoId, 'contenido']);
+    if (url instanceof FalloParticipacionError) return throwError(() => url);
+    return this.http.get<unknown>(url, { withCredentials: true }).pipe(
+      map((cuerpo) => leerContenidoIntento(cuerpo, intentoId)),
       catchError((e: unknown) => throwError(() => aFallo(e))),
     );
   }
