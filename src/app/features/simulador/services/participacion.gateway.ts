@@ -24,16 +24,23 @@ export class ContratoPendienteError extends Error {
  *
  * Las firmas son PROVISIONALES: parámetros y resultados se tipan como
  * identificadores opacos y `unknown` porque las rutas, los esquemas y los
- * códigos de respuesta de M5 no están aprobados. Cuando exista el contrato,
- * se agregará una implementación HTTP que use `API_CONFIG` y un adaptador
- * hacia los modelos de presentación.
+ * códigos de respuesta de M5 no están aprobados. `ParticipacionHttpGateway`
+ * implementa solo las dos operaciones publicadas (consultar intento y
+ * registrar respuesta) y se activa de forma explícita; el resto sigue
+ * pendiente de contrato.
  */
 @Injectable({ providedIn: 'root', useFactory: () => new ParticipacionPendienteGateway() })
 export abstract class ParticipacionGateway {
   abstract consultarSesionesAutorizadas(): Observable<unknown>;
   abstract iniciarIntento(sesionId: string): Observable<unknown>;
   abstract consultarIntento(intentoId: string): Observable<unknown>;
-  abstract registrarRespuesta(intentoId: string, preguntaId: string, opcionId: string): Observable<unknown>;
+  /** D06: el guardado exige la revisión esperada de la respuesta (0 si aún no existe). */
+  abstract registrarRespuesta(
+    intentoId: string,
+    preguntaId: string,
+    opcionId: string,
+    revisionEsperada: number,
+  ): Observable<unknown>;
   abstract consultarProgreso(intentoId: string): Observable<unknown>;
   abstract reanudarIntento(intentoId: string): Observable<unknown>;
   abstract finalizarIntento(intentoId: string): Observable<unknown>;
