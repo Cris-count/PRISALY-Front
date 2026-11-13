@@ -7,7 +7,7 @@ import { contenidoPrueba, ID_INTENTO_CONTENIDO as ID } from '../testing/contenid
 import { FalloParticipacionError, provideParticipacionHttp } from './participacion-http.gateway';
 import { ParticipacionGateway } from './participacion.gateway';
 
-describe('N9: contenido estudiantil del PR #88', () => {
+describe('N9: contenido estudiantil integrado en bf47bdd3 (#88)', () => {
   let gateway: ParticipacionGateway;
   let http: HttpTestingController;
   beforeEach(() => {
@@ -158,7 +158,6 @@ describe('N9: contenido estudiantil del PR #88', () => {
       req().flush(
         {
           code: status === 409 ? 'CONTENIDO_INTENTO_NO_DISPONIBLE' : 'ERROR_PRUEBA',
-          detail: 'interno',
           message: 'interno',
         },
         { status, statusText: 'Error' },
@@ -170,4 +169,37 @@ describe('N9: contenido estudiantil del PR #88', () => {
       if (status === 409) expect(e.codigo).toBe('CONTENIDO_INTENTO_NO_DISPONIBLE');
     });
   }
+
+  it('conserva el código real de indisponibilidad M4 del contrato integrado', async () => {
+    const pendiente = fallo();
+    req().flush(
+      {
+        code: 'M4-CONSULTA-PROGRAMACION-NO-DISPONIBLE',
+        message: 'La consulta de programación no está disponible; inténtelo más tarde',
+      },
+      { status: 503, statusText: 'Service Unavailable' },
+    );
+    const e = await pendiente;
+    expect(e.codigo).toBe('M4-CONSULTA-PROGRAMACION-NO-DISPONIBLE');
+    expect(e.estado).toBe(503);
+    expect(e.fallo.tipo).toBe('servidor');
+    expect(e.fallo.reintentable).toBeTrue();
+    expect(e.message).not.toContain('programación');
+  });
+
+  it('interpreta el 409 definitivo de dos campos sin depender de ProblemDetail', async () => {
+    const pendiente = fallo();
+    req().flush(
+      {
+        code: 'CONTENIDO_INTENTO_NO_DISPONIBLE',
+        message: 'Contenido académico no disponible para esta lectura',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+    const e = await pendiente;
+    expect(e.codigo).toBe('CONTENIDO_INTENTO_NO_DISPONIBLE');
+    expect(e.fallo.tipo).toBe('conflicto');
+    expect(e.fallo.reintentable).toBeFalse();
+    expect(e.message).not.toContain('esta lectura');
+  });
 });

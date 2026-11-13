@@ -32,13 +32,14 @@ export class FalloParticipacionError extends Error {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const CODIGO = /^[A-Z][A-Z0-9_]{2,59}$/;
+// M5 usa guion bajo; el proveedor M4 publica también códigos con guiones.
+const CODIGO = /^[A-Z][A-Z0-9_-]{2,59}$/;
 
 /**
  * Implementación HTTP de las dos operaciones de M5 publicadas en el Backend:
  * `GET /v1/estudiantes/intentos/{id}` y
  * `PUT /v1/estudiantes/intentos/{id}/respuestas/{idPregunta}`.
- * Además prepara GET `intentos/{id}/contenido` del PR #88, pendiente de integración.
+ * Incluye GET `intentos/{id}/contenido`, integrado en Backend bf47bdd3 (#88).
  *
  * - La identidad estudiantil es la cookie HttpOnly emitida por M1
  *   (`withCredentials`); no se envían cabeceras de identidad ni Bearer.
@@ -63,7 +64,7 @@ export class ParticipacionHttpGateway extends ParticipacionGateway {
     );
   }
 
-  /** Consumo preparado del PR #88; no activa el proveedor ni almacena el contenido. */
+  /** Contrato bf47bdd3 (#88); no activa el proveedor ni almacena el contenido. */
   consultarContenidoIntento(intentoId: string): Observable<ContenidoIntentoM5> {
     const url = this.url(['intentos', intentoId, 'contenido']);
     if (url instanceof FalloParticipacionError) return throwError(() => url);

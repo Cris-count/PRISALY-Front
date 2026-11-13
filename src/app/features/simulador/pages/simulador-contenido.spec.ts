@@ -109,7 +109,10 @@ describe('I5: composición de contenido sin vínculo narrativo', () => {
   it('409 mantiene la vista sin contenido ni operaciones de respuesta', async () => {
     await cargar();
     req().flush(
-      { code: 'CONTENIDO_INTENTO_NO_DISPONIBLE', detail: 'interno' },
+      {
+        code: 'CONTENIDO_INTENTO_NO_DISPONIBLE',
+        message: 'Contenido académico no disponible para esta lectura',
+      },
       { status: 409, statusText: 'Conflict' },
     );
     await fixture.whenStable();
