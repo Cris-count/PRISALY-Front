@@ -21,6 +21,7 @@ describe('ParticipacionGateway', () => {
       ['consultarSesionesAutorizadas', () => gateway.consultarSesionesAutorizadas()],
       ['iniciarIntento', () => gateway.iniciarIntento('s')],
       ['consultarIntento', () => gateway.consultarIntento('i')],
+      ['consultarContenidoIntento', () => gateway.consultarContenidoIntento('i')],
       ['registrarRespuesta', () => gateway.registrarRespuesta('i', 'p', 'o', 0)],
       ['consultarProgreso', () => gateway.consultarProgreso('i')],
       ['reanudarIntento', () => gateway.reanudarIntento('i')],
