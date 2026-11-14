@@ -1,0 +1,17 @@
+/* Mismo escenario final del login, est?tico y compartido por todas las rutas hijas. */
+.fondo-dashboard {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 15% 10%, #e5efff, transparent 50%),
+    radial-gradient(ellipse at 95% 90%, #ffead4, transparent 50%), #f6f8fc;
+}
+.ondas-fondo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}

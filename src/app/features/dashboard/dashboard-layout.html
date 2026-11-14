@@ -1,0 +1,98 @@
+<div class="dashboard">
+  <div class="fondo-dashboard" aria-hidden="true">
+    <svg class="ondas-fondo" viewBox="0 0 1440 900" preserveAspectRatio="none" focusable="false">
+      <defs>
+        <linearGradient id="dashboard-onda-azul" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#10D9F4" stop-opacity=".45" />
+          <stop offset="1" stop-color="#0755D9" stop-opacity=".6" />
+        </linearGradient>
+        <linearGradient id="dashboard-onda-naranja" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#FFD05B" stop-opacity=".65" />
+          <stop offset="1" stop-color="#FF861B" stop-opacity=".45" />
+        </linearGradient>
+      </defs>
+      <path fill="url(#dashboard-onda-azul)" d="M0 630C190 710 330 875 850 900H0Z" />
+      <path fill="url(#dashboard-onda-naranja)" d="M1440 650C1170 660 1040 875 420 900H1440Z" />
+      <path
+        fill="url(#dashboard-onda-azul)"
+        opacity=".6"
+        d="M0 740C340 950 1050 690 1440 805V900H0Z"
+      />
+      <path
+        fill="url(#dashboard-onda-azul)"
+        opacity=".6"
+        d="M1110 0H1440V270C1280 185 1230 90 1110 0Z"
+      />
+    </svg>
+  </div>
+  <aside
+    id="navegacion-dashboard"
+    class="lateral"
+    [class.lateral--abierta]="menuAbierto()"
+    aria-label="Navegación del dashboard"
+  >
+    <a class="marca" routerLink="/dashboard" aria-label="PRISALY: inicio del dashboard">
+      <img src="images/prisaly-logo.png" alt="PRISALY" width="112" height="84" />
+      <span>ESPACIO ACADÉMICO</span>
+    </a>
+    <p class="grupo">EXPLORAR</p>
+    <nav aria-label="Secciones de PRISALY" (click)="cerrarMenu()">
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="activo"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 10 12 3l9 7v11h-7v-7h-4v7H3z" /></svg
+        >Inicio
+      </a>
+      @for (seccion of secciones; track seccion.ruta) {
+        <a
+          [routerLink]="['/dashboard', seccion.ruta]"
+          routerLinkActive="activo"
+          ariaCurrentWhenActive="page"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="seccion.icono" /></svg
+          >{{ seccion.titulo }}
+        </a>
+      }
+    </nav>
+    <div class="lateral-pie">
+      <div class="nota-demo">
+        <span class="punto" aria-hidden="true"></span>Interfaz de demostración
+        <p>Explora las vistas sin iniciar sesión.</p>
+      </div>
+      <a class="volver" routerLink="/login"
+        ><span aria-hidden="true">←</span> Volver al inicio de sesión</a
+      >
+      <button class="cerrar-menu" type="button" (click)="cerrarMenu()">Cerrar menú</button>
+    </div>
+  </aside>
+  <header class="superior">
+    <div class="ubicacion">
+      <button
+        #botonMenu
+        class="abrir-menu"
+        type="button"
+        aria-controls="navegacion-dashboard"
+        [attr.aria-expanded]="menuAbierto()"
+        (click)="menuAbierto.set(!menuAbierto())"
+      >
+        {{ menuAbierto() ? 'Cerrar menú' : 'Abrir menú' }}
+      </button>
+      <div>
+        <p class="contexto">PRISALY <span aria-hidden="true">/</span> Dashboard</p>
+        <p class="titulo-pantalla">{{ titulo() }}</p>
+      </div>
+    </div>
+    <div class="identificacion">
+      <span class="insignia">ENTORNO DE DEMOSTRACIÓN</span>
+      <div class="perfil">
+        <span class="avatar" aria-hidden="true">P</span>
+        <div>Perfil demostrativo<small>Sin sesión autenticada</small></div>
+      </div>
+    </div>
+  </header>
+  <div class="area"><router-outlet /></div>
+</div>

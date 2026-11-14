@@ -10,19 +10,32 @@ describe('Rutas públicas de presentación', () => {
 
   beforeEach(() => {
     gateway = jasmine.createSpyObj<ParticipacionGateway>('ParticipacionGateway', [
-      'consultarSesionesAutorizadas', 'iniciarIntento', 'consultarIntento',
-      'registrarRespuesta', 'consultarProgreso', 'reanudarIntento', 'finalizarIntento',
+      'consultarSesionesAutorizadas',
+      'iniciarIntento',
+      'consultarIntento',
+      'registrarRespuesta',
+      'consultarProgreso',
+      'reanudarIntento',
+      'finalizarIntento',
     ]);
     TestBed.configureTestingModule({
       providers: [provideRouter(routes), { provide: ParticipacionGateway, useValue: gateway }],
     });
   });
 
-  for (const ruta of ['/', '/simulador', '/ruta-inexistente']) {
+  for (const ruta of ['/', '/login', '/dashboard', '/simulador', '/ruta-inexistente']) {
     it(`resuelve ${ruta} hacia el inicio público sin atribuir identidad ni iniciar intentos`, async () => {
       const harness = await RouterTestingHarness.create(ruta);
-      expect(TestBed.inject(Router).url).toBe('/simulador');
-      expect(harness.routeNativeElement?.querySelector('app-pantalla-inicio')).not.toBeNull();
+      const esSimulador = ruta === '/simulador';
+      const esDashboard = ruta === '/dashboard';
+      expect(TestBed.inject(Router).url).toBe(
+        esSimulador ? '/simulador' : esDashboard ? '/dashboard' : '/login',
+      );
+      expect(
+        harness.routeNativeElement?.querySelector(
+          esSimulador ? 'app-pantalla-inicio' : esDashboard ? '#bienvenida-dashboard' : 'form',
+        ),
+      ).not.toBeNull();
       for (const operacion of Object.values(gateway)) {
         expect(operacion).not.toHaveBeenCalled();
       }
