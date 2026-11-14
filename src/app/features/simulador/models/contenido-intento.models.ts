@@ -1,4 +1,4 @@
-/** Proyección estudiantil del PR Backend #88; no contiene guion ni evaluación. */
+/** Proyección estudiantil integrada en Backend bf47bdd3 (#88); sin guion ni evaluación. */
 export interface ContenidoIntentoM5 {
   readonly idIntento: string;
   readonly idSesion: string;

@@ -30,15 +30,15 @@ export class ContratoPendienteError extends Error {
  *
  * Consulta y registro usan los DTO publicados por M5. El resto conserva
  * resultados `unknown` hasta contar con su contrato aprobado.
- * `ParticipacionHttpGateway` conserva consulta/registro y prepara la lectura
- * de contenido del PR #88. Se activa de forma explícita.
+ * `ParticipacionHttpGateway` conserva consulta/registro y la lectura de
+ * contenido integrada en Backend bf47bdd3 (#88). Se activa de forma explícita.
  */
 @Injectable({ providedIn: 'root', useFactory: () => new ParticipacionPendienteGateway() })
 export abstract class ParticipacionGateway {
   abstract consultarSesionesAutorizadas(): Observable<unknown>;
   abstract iniciarIntento(sesionId: string): Observable<unknown>;
   abstract consultarIntento(intentoId: string): Observable<IntentoM5>;
-  /** PR Backend #88: preparado; pendiente de integración y autorización operativa. */
+  /** Contrato Backend bf47bdd3 (#88); la activación del entorno sigue siendo explícita. */
   abstract consultarContenidoIntento(intentoId: string): Observable<ContenidoIntentoM5>;
   /** D06: el guardado exige la revisión esperada de la respuesta (0 si aún no existe). */
   abstract registrarRespuesta(
