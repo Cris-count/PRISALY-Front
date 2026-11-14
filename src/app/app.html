@@ -1,8 +1,13 @@
 <a class="saltar" href="#contenido">Saltar al contenido</a>
-<header class="encabezado">
+<header class="encabezado" [hidden]="esPantallaCompleta()">
   <span class="encabezado__marca">PRISALY</span>
   <span class="encabezado__descripcion">Simulación de casos situacionales</span>
 </header>
-<main id="contenido" class="contenido" tabindex="-1">
+<main
+  id="contenido"
+  class="contenido"
+  [class.contenido--completa]="esPantallaCompleta()"
+  tabindex="-1"
+>
   <router-outlet />
 </main>

@@ -10,6 +10,7 @@
 }
 
 .saltar:focus {
+  z-index: 10;
   background: var(--color-superficie);
   padding: var(--espacio-2);
   top: var(--espacio-2);
@@ -23,6 +24,15 @@
   flex-wrap: wrap;
   gap: var(--espacio-3);
   padding: var(--espacio-2) var(--espacio-3);
+}
+
+.encabezado[hidden] {
+  display: none;
+}
+
+.contenido.contenido--completa {
+  max-width: none;
+  padding: 0;
 }
 
 .encabezado__marca {

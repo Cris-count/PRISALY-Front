@@ -1,0 +1,144 @@
+<section class="login" aria-labelledby="titulo-login" (animationend)="alTerminarEscenario($event)">
+  <div class="ambiente" aria-hidden="true"></div>
+  <div class="escenario-claro" aria-hidden="true">
+    <svg class="ondas" viewBox="0 0 1440 900" preserveAspectRatio="none" focusable="false">
+      <defs>
+        <linearGradient id="onda-azul" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#10D9F4" stop-opacity=".45" />
+          <stop offset="1" stop-color="#0755D9" stop-opacity=".6" />
+        </linearGradient>
+        <linearGradient id="onda-naranja" x1="0" y1="0" x2="1" y2="1">
+          <stop stop-color="#FFD05B" stop-opacity=".65" />
+          <stop offset="1" stop-color="#FF861B" stop-opacity=".45" />
+        </linearGradient>
+      </defs>
+      <path fill="url(#onda-azul)" d="M0 630C190 710 330 875 850 900H0Z" />
+      <path fill="url(#onda-naranja)" d="M1440 650C1170 660 1040 875 420 900H1440Z" />
+      <path fill="url(#onda-azul)" opacity=".6" d="M0 740C340 950 1050 690 1440 805V900H0Z" />
+      <path fill="url(#onda-azul)" opacity=".6" d="M1110 0H1440V270C1280 185 1230 90 1110 0Z" />
+    </svg>
+  </div>
+  <div class="halo-suelo" aria-hidden="true"></div>
+  <svg class="estelas" viewBox="-500 -400 1000 800" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="estela-azul" x1="0" y1="1" x2="1" y2="0">
+        <stop stop-color="#0755D9" />
+        <stop offset="1" stop-color="#10D9F4" />
+      </linearGradient>
+      <linearGradient id="estela-naranja">
+        <stop stop-color="#FF861B" />
+        <stop offset="1" stop-color="#FFD05B" />
+      </linearGradient>
+    </defs>
+    <path
+      class="rastro rastro--azul"
+      pathLength="1"
+      d="M-520 250C-510-100-270-230 80-190C350-150 410 70 160 190C20 245-160 200-210 100"
+    />
+    <path
+      class="rastro rastro--naranja"
+      pathLength="1"
+      d="M-220-240C10-340 380-220 330-30C290 90 160 50 80-40"
+    />
+    <path
+      class="rastro rastro--cian"
+      pathLength="1"
+      d="M-150 110C-50 310 370 300 410 40C440-170 170-250-40-170"
+    />
+  </svg>
+  <button
+    class="omitir"
+    type="button"
+    [hidden]="introduccionTerminada()"
+    (click)="finalizarPresentacion(true)"
+  >
+    Omitir presentación <span aria-hidden="true">→</span>
+  </button>
+  <div class="presentacion">
+    <img class="logo" src="images/prisaly-logo.png" alt="PRISALY" fetchpriority="high" />
+  </div>
+  <div class="tarjeta-login">
+    <div class="interior">
+      <p class="etiqueta">APRENDER · COMPRENDER · TRANSFORMAR</p>
+      <h1 id="titulo-login">Bienvenido a PRISALY</h1>
+      <p class="subtitulo">Plataforma académica de simulación de casos situacionales</p>
+      <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate aria-describedby="nota-demo">
+        <div class="campo">
+          <label for="correo">Correo electrónico</label>
+          <input
+            id="correo"
+            type="email"
+            formControlName="correo"
+            autocomplete="username"
+            placeholder="nombre@universidad.edu"
+            spellcheck="false"
+            [attr.aria-invalid]="
+              formulario.controls.correo.touched && formulario.controls.correo.invalid
+            "
+            [attr.aria-describedby]="
+              formulario.controls.correo.touched && formulario.controls.correo.invalid
+                ? 'error-correo'
+                : null
+            "
+          />
+          @if (formulario.controls.correo.touched && formulario.controls.correo.invalid) {
+            <p class="error" id="error-correo" role="alert">
+              {{
+                formulario.controls.correo.hasError('required')
+                  ? 'Ingresa tu correo electrónico.'
+                  : 'Ingresa un correo electrónico válido.'
+              }}
+            </p>
+          }
+        </div>
+        <div class="campo">
+          <label for="clave">Contraseña</label>
+          <div class="clave">
+            <input
+              id="clave"
+              [type]="mostrarClave() ? 'text' : 'password'"
+              formControlName="clave"
+              autocomplete="current-password"
+              placeholder="Ingresa tu contraseña"
+              [attr.aria-invalid]="
+                formulario.controls.clave.touched && formulario.controls.clave.invalid
+              "
+              [attr.aria-describedby]="
+                formulario.controls.clave.touched && formulario.controls.clave.invalid
+                  ? 'error-clave'
+                  : null
+              "
+            />
+            <button
+              class="mostrar"
+              type="button"
+              (click)="mostrarClave.set(!mostrarClave())"
+              aria-controls="clave"
+              [attr.aria-pressed]="mostrarClave()"
+              [attr.aria-label]="mostrarClave() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            >
+              {{ mostrarClave() ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+          @if (formulario.controls.clave.touched && formulario.controls.clave.invalid) {
+            <p class="error" id="error-clave" role="alert">Ingresa tu contraseña.</p>
+          }
+        </div>
+        <button class="iniciar" type="submit">
+          Iniciar sesión <span aria-hidden="true">↗</span>
+        </button>
+        <p class="nota" id="nota-demo">
+          Demostración visual · La autenticación todavía no está disponible. No ingreses
+          credenciales reales.
+        </p>
+        <p class="aviso" role="status" aria-live="polite">{{ aviso() }}</p>
+      </form>
+      <a class="explorar-demo" routerLink="/dashboard"
+        >Explorar interfaz de demostración <span aria-hidden="true">→</span></a
+      >
+    </div>
+  </div>
+  <p class="pie">
+    PSICOLOGÍA SOCIAL <span aria-hidden="true">/</span> Un espacio para aprender haciendo
+  </p>
+</section>

@@ -1,0 +1,139 @@
+:host {
+  display: block;
+}
+.pagina {
+  max-width: 76rem;
+  margin: 0 auto;
+  --b: 1px solid var(--p-borde);
+}
+.regreso,
+.enlace {
+  display: inline-block;
+  padding: 0.5rem 0;
+  color: var(--p-azul);
+  font-size: var(--t-sm);
+}
+.presentacion-seccion {
+  margin-top: 1.2rem;
+}
+.ceja {
+  margin-bottom: 0.5rem;
+  color: var(--p-azul);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+h1 {
+  font-size: var(--t-titulo);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+.descripcion {
+  max-width: 44rem;
+  margin: 0.75rem 0 1rem;
+  color: var(--p-sec);
+  font-size: var(--t-base);
+  line-height: 1.6;
+}
+.estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.8rem 0;
+  margin: 0.5rem 0 1.25rem;
+  border-bottom: var(--b);
+}
+.estado-marca {
+  color: var(--p-acento);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.estado p {
+  margin: 0;
+  color: var(--p-sec);
+  font-size: var(--t-sm);
+}
+h2 {
+  margin: 0;
+  font-size: var(--t-seccion);
+  font-weight: 700;
+}
+.seccion-cabecera {
+  margin-bottom: 1rem;
+}
+.alcances {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.alcance {
+  padding: 1.2rem;
+  border: var(--b);
+  border-radius: 0.8rem;
+  background: var(--p-fondo);
+}
+.indicador {
+  display: block;
+  width: 1.5rem;
+  height: 3px;
+  margin-bottom: 0.8rem;
+  background: #0755d9;
+}
+h3 {
+  margin: 0 0 0.6rem;
+  font-size: var(--t-card);
+  font-weight: 700;
+}
+.alcance p {
+  margin-bottom: 0.8rem;
+  color: var(--p-sec);
+  font-size: var(--t-base);
+  line-height: 1.55;
+}
+.pendiente {
+  color: var(--p-acento);
+  font-size: var(--t-xs);
+}
+.sin-datos {
+  margin-top: 1.25rem;
+  padding: 1.5rem;
+  border: 1px dashed var(--p-borde);
+  border-radius: 1rem;
+  background: var(--p-fondo);
+  text-align: center;
+}
+svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sin-datos svg {
+  color: var(--p-azul);
+  margin-bottom: 0.8rem;
+}
+.sin-datos p {
+  max-width: 40rem;
+  margin: 0.8rem auto;
+  color: var(--p-sec);
+  font-size: var(--t-base);
+  line-height: 1.55;
+}
+a:focus-visible {
+  outline: 3px solid var(--p-azul);
+  outline-offset: 3px;
+}
+@media (max-width: 1200px) {
+  .alcances {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .alcances {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

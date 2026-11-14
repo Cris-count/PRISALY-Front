@@ -1,0 +1,270 @@
+:host {
+  --duracion-intro: 6.8s;
+  /* Formación anterior: 4.5s × 52% = 2.34s. Ahora +60% y 1s de contemplación. */
+  --duracion-formacion: 3.744s;
+  --inicio-transicion: 4.744s;
+}
+.login {
+  animation: escenario var(--duracion-intro) linear both;
+}
+.ambiente,
+.escenario-claro {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.ambiente {
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at 20% 45%, #0755d933, transparent 55%),
+    radial-gradient(ellipse at 80% 60%, #ff861b1c, transparent 45%);
+  animation: apagar 1.08s var(--inicio-transicion) linear both;
+}
+.escenario-claro {
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 15% 10%, #e5efff, transparent 50%),
+    radial-gradient(ellipse at 95% 90%, #ffead4, transparent 50%), #f6f8fc;
+  animation: aclarar 1.08s var(--inicio-transicion) ease-in-out both;
+}
+.ondas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.halo-suelo {
+  position: absolute;
+  top: calc(50dvh + min(18.75vw, 40dvh));
+  left: 50%;
+  width: min(60vw, 60rem);
+  height: 3px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, #10d9f4, #ffae40, transparent);
+  box-shadow: 0 4px 20px #10d9f4a6;
+  animation: reflejo var(--duracion-intro) ease-in-out both;
+}
+@media (max-width: 600px) {
+  .halo-suelo {
+    top: calc(50dvh + min(30vw, 40dvh));
+    width: 85vw;
+  }
+}
+.estelas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100dvh;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  animation: luces 4.8s linear both;
+}
+.rastro {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 0.45 0.55;
+  transform-origin: 0 0;
+  animation: trazar 4.48s cubic-bezier(0.3, 0, 0.3, 1) both;
+}
+.rastro--azul {
+  stroke: url(#estela-azul);
+  filter: drop-shadow(0 0 6px #10d9f4);
+}
+.rastro--naranja {
+  stroke: url(#estela-naranja);
+  filter: drop-shadow(0 0 6px #ff861b);
+  animation-delay: 0.24s;
+}
+.rastro--cian {
+  stroke: #10d9f4;
+  filter: drop-shadow(0 0 5px #0755d9);
+  animation-delay: 0.48s;
+  stroke-width: 1.5;
+}
+.presentacion {
+  animation: marca 0.63s var(--inicio-transicion) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.presentacion::before {
+  animation: soporte 1.08s var(--inicio-transicion) ease-in-out both;
+}
+.logo {
+  animation: revelar var(--duracion-formacion) ease-in-out both;
+}
+.tarjeta-login {
+  animation: abrir 0.65s 5.824s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.interior {
+  animation: aparecer 0.55s 5.924s ease-out both;
+}
+.pie {
+  animation: aparecer 0.5s 6.174s ease-out both;
+}
+.omitir {
+  position: absolute;
+  z-index: 2;
+  top: 1rem;
+  right: 1rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #526a8b;
+  border-radius: 2rem;
+  background: #12233b;
+  color: #fff;
+  font-size: 0.75rem;
+}
+.omitir[hidden] {
+  display: none;
+}
+:host(:not(.intro-lista)) .login,
+:host(:not(.intro-lista)) .login *,
+:host(:not(.intro-lista)) .presentacion::before {
+  animation-play-state: paused;
+}
+:host(.intro-finalizada) .login,
+:host(.intro-finalizada) .login *,
+:host(.intro-finalizada) .presentacion::before {
+  animation: none;
+}
+@keyframes escenario {
+  0%,
+  69.764706% {
+    background-color: #060b18;
+  }
+  85.647059%,
+  100% {
+    background-color: #f6f8fc;
+  }
+}
+@keyframes aclarar {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes apagar {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes luces {
+  0% {
+    opacity: 0;
+    visibility: visible;
+  }
+  10%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@keyframes trazar {
+  0% {
+    stroke-dashoffset: 1.1;
+    opacity: 0;
+    transform: rotate(-12deg) scale(1.1);
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+    transform: rotate(24deg) scale(0.65);
+  }
+}
+@keyframes marca {
+  from {
+    transform: translate(var(--logo-x, 0px), var(--logo-y, 0px)) scale(var(--logo-escala, 1));
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes revelar {
+  0%,
+  19.230769% {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+  }
+  50%,
+  86.538462% {
+    opacity: 1;
+    clip-path: inset(0 0 16% 0);
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0);
+  }
+}
+@keyframes soporte {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes reflejo {
+  0%,
+  21.176471% {
+    opacity: 0;
+  }
+  44.470588%,
+  69.764706% {
+    opacity: 0.7;
+  }
+  85.647059%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes abrir {
+  from {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(1.5rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+}
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login,
+  .login *,
+  .presentacion::before {
+    animation: none !important;
+  }
+  .omitir {
+    display: none;
+  }
+}

@@ -1,0 +1,11 @@
+:host {
+  --t-xs: 0.75rem;
+  --t-sm: 0.875rem;
+  --t-base: 0.9375rem;
+  --t-card: 1.125rem;
+  --t-seccion: 1.375rem;
+  --t-titulo: clamp(1.75rem, 2.3vw, 2rem);
+  font-size: var(--t-base);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
