@@ -17,9 +17,30 @@ export interface PersonalAutenticarResponse {
   readonly authPrototype: 'TD-M1-AUTH-PROVISIONAL';
 }
 
+/** PersonalSessionController.me, misma revisión Backend: no emite ni renueva el token.
+ * Modelo preparatorio: la extensión /me sigue pendiente de conciliación y no se consume.
+ * No se añade expiresAt: el DTO Backend no publica la expiración.
+ */
+export interface PersonalMeResponse extends Omit<PersonalAutenticarResponse, 'accessToken'> {
+  readonly accessToken: null;
+}
+
 /** Proyección para presentación. Nunca contiene el token ni concede permisos efectivos. */
 export type IdentidadPersonal = Omit<PersonalAutenticarResponse, 'accessToken' | 'tokenType'>;
 
 export type EstadoAccesoPersonal =
-  | { readonly tipo: 'pendiente' | 'cargando' | 'denegado' | 'error' }
-  | { readonly tipo: 'verificado-local'; readonly identidad: IdentidadPersonal };
+  | {
+      readonly tipo:
+        | 'pendiente'
+        | 'cargando'
+        | 'denegado'
+        | 'error'
+        | 'consultando-sesion'
+        | 'sesion-no-verificada'
+        | 'cerrando-sesion'
+        | 'cierre-no-confirmado';
+    }
+  | {
+      readonly tipo: 'verificado-local' | 'sesion-consultada-local';
+      readonly identidad: IdentidadPersonal;
+    };

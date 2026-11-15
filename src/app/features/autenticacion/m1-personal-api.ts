@@ -19,6 +19,8 @@ export class FalloAutenticacionPersonal extends Error {
   constructor(
     readonly tipo: string,
     mensaje: string,
+    /** Valor en segundos publicado por M1 en HTTP 429; no programa reintentos ni sesiones. */
+    readonly reintentarEnSegundos?: number,
   ) {
     super(mensaje);
     this.name = 'FalloAutenticacionPersonal';
@@ -67,9 +69,13 @@ export class M1PersonalApi {
           if (error.status === 401)
             return rechazar('credenciales', 'No fue posible verificar las credenciales.');
           if (error.status === 429)
-            return rechazar(
-              'limite-intentos',
-              'Se alcanzó el límite de intentos. Espera antes de intentarlo de nuevo.',
+            return throwError(
+              () =>
+                new FalloAutenticacionPersonal(
+                  'limite-intentos',
+                  'Se alcanzó el límite de intentos. Espera antes de intentarlo de nuevo.',
+                  leerEsperaM1(error),
+                ),
             );
         }
         const fallo = clasificarErrorApi(error);
@@ -77,6 +83,16 @@ export class M1PersonalApi {
       }),
     );
   }
+}
+
+/** LimiteIntentosExceptionHandler publica un long positivo, no una fecha HTTP.
+ * Si falta o no es representable, no se inventa un tiempo de espera.
+ */
+function leerEsperaM1(error: HttpErrorResponse): number | undefined {
+  const cabecera = error.headers.get('Retry-After');
+  if (!cabecera || !/^\d+$/.test(cabecera)) return undefined;
+  const segundos = Number(cabecera);
+  return Number.isSafeInteger(segundos) && segundos > 0 ? segundos : undefined;
 }
 
 function rechazar(tipo: string, mensaje: string): Observable<never> {

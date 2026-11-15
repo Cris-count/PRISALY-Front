@@ -111,8 +111,40 @@ describe('M1 personal: contrato HTTP local opt-in', () => {
       );
       expect(error instanceof FalloAutenticacionPersonal).toBeTrue();
       expect(error?.tipo).toBe(tipo);
+      expect(error?.reintentarEnSegundos).toBe(estado === 429 ? 60 : undefined);
       expect(JSON.stringify(error)).not.toMatch(/detalle-sensible|secreto|clave-de-prueba/);
       expect(error?.message).not.toContain('detalle-sensible');
+      http.expectNone(() => true);
+    });
+  }
+
+  for (const cabecera of [
+    undefined,
+    '',
+    '0',
+    '-1',
+    '1.5',
+    '1e2',
+    'Infinity',
+    '9007199254740992',
+    'Wed, 21 Oct 2015 07:28:00 GMT',
+  ]) {
+    it(`no inventa una espera cuando Retry-After no corresponde al contrato M1: ${cabecera}`, () => {
+      let error: FalloAutenticacionPersonal | undefined;
+      cliente()
+        .autenticar(solicitud)
+        .subscribe({ error: (e) => (error = e) });
+      http.expectOne(ruta).flush(
+        { code: 'AUTH_RATE_LIMITED', message: 'detalle-interno' },
+        {
+          status: 429,
+          statusText: 'Too Many Requests',
+          headers: cabecera === undefined ? {} : { 'Retry-After': cabecera },
+        },
+      );
+      expect(error?.tipo).toBe('limite-intentos');
+      expect(error?.reintentarEnSegundos).toBeUndefined();
+      expect(error?.message).not.toContain('detalle-interno');
       http.expectNone(() => true);
     });
   }
