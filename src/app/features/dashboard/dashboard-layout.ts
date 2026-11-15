@@ -28,7 +28,13 @@ import { DASHBOARD_NAVEGACION } from './dashboard-secciones';
   imports: [RouterLink, RouterLinkActive, RouterOutlet, EstadoAccesoPersonalPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-layout.html',
-  styleUrls: ['./dashboard-layout.css', './dashboard-fondo.css', './dashboard-tipografia.css'],
+  styleUrls: [
+    './dashboard-layout.css',
+    './dashboard-fondo.css',
+    './dashboard-tipografia.css',
+    './dashboard-identidad.css',
+    './dashboard-menu.css',
+  ],
 })
 export class DashboardLayout {
   protected readonly qaPersonal = inject(M1_PERSONAL_LOCAL);
@@ -59,6 +65,7 @@ export class DashboardLayout {
   private readonly botonMenu = viewChild<ElementRef<HTMLButtonElement>>('botonMenu');
   protected readonly secciones = DASHBOARD_NAVEGACION;
   protected readonly menuAbierto = signal(false);
+  protected readonly menuContraido = signal(false);
   protected readonly titulo = toSignal(
     this.router.events.pipe(
       filter((evento): evento is NavigationEnd => evento instanceof NavigationEnd),

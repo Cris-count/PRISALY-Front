@@ -60,6 +60,31 @@ describe('Dashboard público de demostración', () => {
     expect(raiz().querySelector('img')?.getAttribute('src')).toBe('images/prisaly-logo.png');
   });
 
+  it('contrae y expande conservando nombres accesibles, navegación y estado local', async () => {
+    const guardar = spyOn(Storage.prototype, 'setItem');
+    const boton = raiz().querySelector<HTMLButtonElement>('.contraer-menu')!;
+    expect(boton.getAttribute('aria-expanded')).toBe('true');
+    boton.focus();
+    await pulsar('.contraer-menu');
+    expect(boton.getAttribute('aria-expanded')).toBe('false');
+    expect(boton.getAttribute('aria-label')).toBe('Expandir menú lateral');
+    expect(document.activeElement).toBe(boton);
+    expect(raiz().querySelector('.dashboard--compacto')).not.toBeNull();
+    for (const enlace of raiz().querySelectorAll('nav a')) {
+      expect(enlace.getAttribute('aria-label')?.trim()).toBeTruthy();
+      expect(enlace.getAttribute('title')).toBe(enlace.getAttribute('aria-label'));
+      expect(enlace.querySelector('svg')).not.toBeNull();
+    }
+    await pulsar('nav a[href="/dashboard/usuarios-docentes"]');
+    expect(raiz().querySelector('.dashboard--compacto')).not.toBeNull();
+    expect(raiz().querySelector('nav [aria-current="page"]')?.getAttribute('href')).toBe(
+      '/dashboard/usuarios-docentes',
+    );
+    await pulsar('.contraer-menu');
+    expect(boton.getAttribute('aria-expanded')).toBe('true');
+    expect(guardar).not.toHaveBeenCalled();
+  });
+
   it('permite explorar desde el login sin completar credenciales y regresar', async () => {
     await harness.navigateByUrl('/login');
     await pulsar('.explorar-demo');
@@ -572,6 +597,53 @@ describe('Dashboard público de demostración', () => {
           lateral.classList.add('lateral--abierta');
           expect(ventana.getComputedStyle(lateral).display).toBe('flex');
           expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
+          const contenedor = doc.querySelector<HTMLElement>('.dashboard')!;
+          const principal = doc.querySelector<HTMLElement>('.area')!;
+          const anchoPrincipal = principal.getBoundingClientRect().width;
+          contenedor.classList.add('dashboard--compacto');
+          if (ancho > 800) {
+            expect(lateral.getBoundingClientRect().width).toBeCloseTo(88, 0);
+            expect(principal.getBoundingClientRect().width).toBeGreaterThan(anchoPrincipal);
+            expect(ventana.getComputedStyle(doc.querySelector('.nav-texto')!).clipPath).toBe(
+              'inset(50%)',
+            );
+          } else {
+            expect(ventana.getComputedStyle(doc.querySelector('.contraer-menu')!).display).toBe(
+              'none',
+            );
+            expect(ventana.getComputedStyle(doc.querySelector('.nav-texto')!).position).not.toBe(
+              'absolute',
+            );
+          }
+          expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
+          contenedor.classList.remove('dashboard--compacto');
+          const onda = doc.querySelector<SVGElement>('.ondas-fondo')!;
+          const animacion = ventana.getComputedStyle(onda).animationName;
+          if (ventana.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            expect(animacion).toBe('none');
+          } else {
+            // Angular antepone el ámbito del componente al nombre del keyframe.
+            expect(animacion).toMatch(/oleaje-institucional$/);
+            const capas = Array.from(onda.querySelectorAll('path')).slice(0, 3);
+            const animaciones = onda.getAnimations({ subtree: true });
+            expect(animaciones.length).toBe(4);
+            const duraciones = animaciones.map((animada) => animada.effect!.getTiming().duration);
+            expect(new Set(duraciones).size).toBe(4);
+            // Muestreo determinista: demuestra movimiento real sin esperar frames de Chrome.
+            for (const animada of animaciones) {
+              animada.pause();
+              animada.currentTime = 0;
+            }
+            const iniciales = capas.map((capa) => capa.getBoundingClientRect());
+            for (const animada of animaciones) animada.currentTime = 3000;
+            capas.forEach((capa, indice) => {
+              const final = capa.getBoundingClientRect();
+              expect(Math.hypot(final.x - iniciales[indice].x, final.y - iniciales[indice].y))
+                .withContext(`${ruta} ${ancho}px: movimiento perceptible de capa ${indice + 1}`)
+                .toBeGreaterThan(6);
+            });
+            expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
+          }
           const fondo = doc.querySelector<HTMLElement>('.fondo-dashboard')!;
           expect(ventana.getComputedStyle(fondo).pointerEvents).toBe('none');
           expect(ventana.getComputedStyle(fondo).animationName).toBe('none');
