@@ -7,7 +7,11 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
+import { M1_PERSONAL_LOCAL } from '../autenticacion/m1-personal-http';
+import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
+import { EstadoAccesoPersonalPanel } from '../autenticacion/estado-acceso-personal';
 import {
   ActivatedRoute,
   NavigationEnd,
@@ -21,12 +25,35 @@ import { DASHBOARD_NAVEGACION } from './dashboard-secciones';
 
 @Component({
   selector: 'app-dashboard-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, EstadoAccesoPersonalPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-layout.html',
   styleUrls: ['./dashboard-layout.css', './dashboard-fondo.css', './dashboard-tipografia.css'],
 })
 export class DashboardLayout {
+  protected readonly qaPersonal = inject(M1_PERSONAL_LOCAL);
+  protected readonly sesion = this.qaPersonal ? inject(SesionPersonalM1) : null;
+  private readonly destroyRef = inject(DestroyRef);
+  protected cerrarSesion(): void {
+    this.sesion
+      ?.cerrarSesion()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (estado) => {
+          if (estado.tipo === 'cierre-confirmado') void this.router.navigateByUrl('/login');
+        },
+        error: () => {}, // El servicio conserva el estado seguro; no afirma revocación remota.
+      });
+  }
+
+  protected mostrarContenido(): boolean {
+    // El recorrido estudiantil sigue siendo demostrativo; no usa autoridad de personal.
+    return (
+      !this.qaPersonal ||
+      this.ruta.firstChild?.snapshot.routeConfig?.path === 'estudiante' ||
+      this.sesion?.estado().tipo === 'valida'
+    );
+  }
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
   private readonly botonMenu = viewChild<ElementRef<HTMLButtonElement>>('botonMenu');
