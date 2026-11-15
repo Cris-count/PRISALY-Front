@@ -17,8 +17,8 @@ export interface PersonalAutenticarResponse {
   readonly authPrototype: 'TD-M1-AUTH-PROVISIONAL';
 }
 
-/** PersonalSessionController.me, misma revisión Backend: no emite ni renueva el token.
- * Modelo preparatorio: la extensión /me sigue pendiente de conciliación y no se consume.
+/** PersonalSessionController.me, contrato confirmado para preparación en DC-FE-MAR-I4.
+ * No emite ni renueva el token; el flujo permanece sin activar.
  * No se añade expiresAt: el DTO Backend no publica la expiración.
  */
 export interface PersonalMeResponse extends Omit<PersonalAutenticarResponse, 'accessToken'> {
@@ -38,9 +38,34 @@ export type EstadoAccesoPersonal =
         | 'consultando-sesion'
         | 'sesion-no-verificada'
         | 'cerrando-sesion'
-        | 'cierre-no-confirmado';
+        | 'cierre-no-confirmado'
+        | 'no-autenticada'
+        | 'cierre-confirmado';
     }
   | {
       readonly tipo: 'verificado-local' | 'sesion-consultada-local';
       readonly identidad: IdentidadPersonal;
+    };
+
+export interface FalloSesionPersonal {
+  readonly tipo: string;
+  readonly mensaje: string;
+  readonly reintentarEnSegundos?: number;
+}
+
+/** Solo 'valida' contiene una identidad consultada mediante /me. Ningún estado contiene tokens. */
+export type EstadoSesionPersonal =
+  | { readonly tipo: 'valida'; readonly identidad: IdentidadPersonal }
+  | {
+      readonly tipo:
+        | 'no-autenticada'
+        | 'autenticando'
+        | 'identidad-pendiente'
+        | 'expirada'
+        | 'acceso-denegado'
+        | 'cerrando'
+        | 'cierre-confirmado'
+        | 'cierre-no-confirmado'
+        | 'error-servicio';
+      readonly fallo?: FalloSesionPersonal;
     };

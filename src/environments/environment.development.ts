@@ -8,6 +8,7 @@
  * No incluir credenciales ni secretos.
  */
 export const environment = {
+  personalQaHabilitado: false,
   production: false,
   apiBaseUrl: 'http://localhost:8080/api',
 };

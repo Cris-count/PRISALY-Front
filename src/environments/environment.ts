@@ -10,6 +10,7 @@
  * público del navegador.
  */
 export const environment = {
+  personalQaHabilitado: false,
   production: true,
   apiBaseUrl: '/api',
 };

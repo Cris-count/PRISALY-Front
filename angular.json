@@ -32,9 +32,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.css"
-            ]
+            "styles": ["src/styles.css"]
           },
           "configurations": {
             "production": {
@@ -62,6 +60,17 @@
                   "with": "src/environments/environment.development.ts"
                 }
               ]
+            },
+            "qa": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.qa.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -74,6 +83,9 @@
             },
             "development": {
               "buildTarget": "PRISALY-Front:build:development"
+            },
+            "qa": {
+              "buildTarget": "PRISALY-Front:build:qa"
             }
           },
           "defaultConfiguration": "development"

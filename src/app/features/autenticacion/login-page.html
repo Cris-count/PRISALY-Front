@@ -62,7 +62,13 @@
       <p class="etiqueta">APRENDER · COMPRENDER · TRANSFORMAR</p>
       <h1 id="titulo-login">Bienvenido a PRISALY</h1>
       <p class="subtitulo">Plataforma académica de simulación de casos situacionales</p>
-      <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate aria-describedby="nota-demo">
+      <form
+        [formGroup]="formulario"
+        (ngSubmit)="enviar()"
+        novalidate
+        aria-describedby="nota-demo"
+        [attr.aria-busy]="enviando()"
+      >
         <div class="campo">
           <label for="correo">Correo electrónico</label>
           <input
@@ -124,18 +130,25 @@
             <p class="error" id="error-clave" role="alert">Ingresa tu contraseña.</p>
           }
         </div>
-        <button class="iniciar" type="submit">
-          Iniciar sesión <span aria-hidden="true">↗</span>
+        <button class="iniciar" type="submit" [disabled]="enviando()">
+          {{ enviando() ? 'Verificando sesión…' : 'Iniciar sesión' }}
+          <span aria-hidden="true">↗</span>
         </button>
         <p class="nota" id="nota-demo">
-          Demostración visual · La autenticación todavía no está disponible. No ingreses
-          credenciales reales.
+          @if (qaPersonal) {
+            Entorno QA de personal · Utiliza únicamente credenciales desechables autorizadas.
+          } @else {
+            Demostración visual · La autenticación todavía no está disponible. No ingreses
+            credenciales reales.
+          }
         </p>
         <p class="aviso" role="status" aria-live="polite">{{ aviso() }}</p>
       </form>
-      <a class="explorar-demo" routerLink="/dashboard"
-        >Explorar interfaz de demostración <span aria-hidden="true">→</span></a
-      >
+      @if (!qaPersonal) {
+        <a class="explorar-demo" routerLink="/dashboard"
+          >Explorar interfaz de demostración <span aria-hidden="true">→</span></a
+        >
+      }
     </div>
   </div>
   <p class="pie">

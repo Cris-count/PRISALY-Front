@@ -1,6 +1,10 @@
 import { Routes } from '@angular/router';
 import { DASHBOARD_ESTUDIANTE, DASHBOARD_SECCIONES } from './dashboard-secciones';
 import { VISTAS_DOCENTES } from './docente-vistas';
+import {
+  requiereMapeoPersonalQa,
+  requiereSesionPersonalQa,
+} from '../autenticacion/m1-personal-rutas-qa';
 
 export const DASHBOARD_ROUTES: Routes = [
   {
@@ -10,6 +14,7 @@ export const DASHBOARD_ROUTES: Routes = [
       {
         path: '',
         pathMatch: 'full',
+        canActivate: [requiereSesionPersonalQa],
         title: 'Inicio · Dashboard PRISALY',
         data: { titulo: 'Inicio' },
         loadComponent: () => import('./dashboard-inicio').then((m) => m.DashboardInicio),
@@ -22,6 +27,7 @@ export const DASHBOARD_ROUTES: Routes = [
       },
       ...DASHBOARD_SECCIONES.map((seccion) => ({
         path: seccion.ruta,
+        canActivate: [requiereMapeoPersonalQa],
         title: `${seccion.titulo} · PRISALY`,
         data: { titulo: seccion.titulo, seccion },
         loadComponent:

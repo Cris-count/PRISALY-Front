@@ -69,6 +69,16 @@ export class EstadoAccesoPersonalPanel {
           mensaje:
             'Cierre de sesión no confirmado. No se acredita la revocación del token en el servidor.',
         };
+      case 'no-autenticada':
+        return {
+          estado: 'pendiente' as const,
+          mensaje: 'Sin sesión de personal autenticada. El formulario permanece demostrativo.',
+        };
+      case 'cierre-confirmado':
+        return {
+          estado: 'pendiente' as const,
+          mensaje: 'El servidor confirmó el cierre de la sesión de personal.',
+        };
       default:
         return {
           estado: 'pendiente' as const,

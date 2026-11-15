@@ -22,6 +22,8 @@ describe('Presentación independiente de acceso de personal', () => {
     ['sesion-no-verificada', 'No se deduce si venció, fue revocada o no existe', '[role="status"]'],
     ['cerrando-sesion', 'Esperando confirmación del cierre', '[aria-busy="true"]'],
     ['cierre-no-confirmado', 'No se acredita la revocación', '[role="status"]'],
+    ['no-autenticada', 'Sin sesión de personal autenticada', '[role="status"]'],
+    ['cierre-confirmado', 'El servidor confirmó el cierre', '[role="status"]'],
   ] as const) {
     it(`presenta ${tipo} sin consultar servicios ni atribuir identidad`, () => {
       const fixture = TestBed.createComponent(EstadoAccesoPersonalPanel);

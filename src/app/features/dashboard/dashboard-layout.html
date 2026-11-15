@@ -61,7 +61,27 @@
     <div class="lateral-pie">
       <div class="nota-demo">
         <span class="punto" aria-hidden="true"></span>Interfaz de demostración
-        <p>Explora las vistas sin iniciar sesión.</p>
+        <p>
+          {{
+            qaPersonal
+              ? 'QA de personal. Rutas administrativas y docentes pendientes del mapeo oficial de permisos.'
+              : 'Explora las vistas sin iniciar sesión.'
+          }}
+        </p>
+        @if (sesion) {
+          <button
+            class="volver"
+            type="button"
+            (click)="cerrarSesion()"
+            [disabled]="sesion.estado().tipo === 'cerrando'"
+          >
+            {{
+              sesion.estado().tipo === 'cierre-no-confirmado'
+                ? 'Reintentar cierre'
+                : 'Cerrar sesión de personal'
+            }}
+          </button>
+        }
       </div>
       <a class="volver" routerLink="/login"
         ><span aria-hidden="true">←</span> Volver al inicio de sesión</a
@@ -87,12 +107,32 @@
       </div>
     </div>
     <div class="identificacion">
-      <span class="insignia">ENTORNO DE DEMOSTRACIÓN</span>
+      <span class="insignia">{{ qaPersonal ? 'QA DE PERSONAL' : 'ENTORNO DE DEMOSTRACIÓN' }}</span>
       <div class="perfil">
         <span class="avatar" aria-hidden="true">P</span>
-        <div>Perfil demostrativo<small>Sin sesión autenticada</small></div>
+        @if (sesion?.estado(); as estado) {
+          <div>
+            {{ estado.tipo === 'valida' ? estado.identidad.nombre : 'Sesión no verificada'
+            }}<small>Personal · QA</small>
+          </div>
+        } @else {
+          <div>Perfil demostrativo<small>Sin sesión autenticada</small></div>
+        }
       </div>
     </div>
   </header>
-  <div class="area"><router-outlet /></div>
+  <div class="area">
+    @if (qaPersonal) {
+      <p role="status">
+        QA de personal · Permisos por ruta pendientes de confirmación. Las interfaces
+        administrativas y docentes no están habilitadas.
+      </p>
+    }
+    @if (mostrarContenido()) {
+      <router-outlet />
+    } @else if (sesion) {
+      <app-estado-acceso-personal [estado]="sesion.estadoPanel()" />
+      <a routerLink="/login">Volver al inicio de sesión</a>
+    }
+  </div>
 </div>
