@@ -60,6 +60,66 @@ describe('Dashboard público de demostración', () => {
     expect(raiz().querySelector('img')?.getAttribute('src')).toBe('images/prisaly-logo.png');
   });
 
+  it('contrae y expande conservando nombres accesibles, navegación y estado local', async () => {
+    // Headless puede usar un viewport móvil, donde el control de escritorio está oculto.
+    // Se mueve la instancia real (no un clon) a una vista de escritorio con el CSS original.
+    const frame = document.createElement('iframe');
+    frame.title = 'Prueba del menú de escritorio';
+    frame.style.cssText = 'position:absolute;left:-10000px;width:1440px;height:1000px;border:0';
+    const host = harness.fixture.nativeElement as HTMLElement;
+    const padre = host.parentNode!;
+    const siguiente = host.nextSibling;
+    document.body.appendChild(frame);
+    try {
+      const doc = frame.contentDocument!;
+      const estilo = doc.createElement('style');
+      estilo.textContent = Array.from(document.styleSheets)
+        .flatMap((hoja) => Array.from(hoja.cssRules, (regla) => regla.cssText))
+        .join('\n');
+      doc.head.appendChild(estilo);
+      doc.body.appendChild(host);
+      const guardar = spyOn(Storage.prototype, 'setItem');
+      const boton = raiz().querySelector<HTMLButtonElement>('.contraer-menu')!;
+      expect(frame.contentWindow!.innerWidth).toBe(1440);
+      expect(frame.contentWindow!.getComputedStyle(boton).display).not.toBe('none');
+      expect(boton.getBoundingClientRect().width).toBeGreaterThan(0);
+      expect(boton.disabled).toBeFalse();
+      expect(boton.tabIndex).toBe(0);
+      expect(boton.getAttribute('aria-expanded')).toBe('true');
+      boton.focus({ preventScroll: true });
+      expect(doc.activeElement).toBe(boton);
+      await pulsar('.contraer-menu');
+      expect(boton.getAttribute('aria-expanded')).toBe('false');
+      expect(boton.getAttribute('aria-label')).toBe('Expandir menú lateral');
+      expect(doc.activeElement).toBe(boton);
+      expect(raiz().querySelector('.dashboard--compacto')).not.toBeNull();
+      for (const enlace of raiz().querySelectorAll('nav a')) {
+        expect(enlace.getAttribute('aria-label')?.trim()).toBeTruthy();
+        expect(enlace.getAttribute('title')).toBe(enlace.getAttribute('aria-label'));
+        expect(enlace.querySelector('svg')).not.toBeNull();
+      }
+      const enlace = raiz().querySelector<HTMLAnchorElement>(
+        'nav a[href="/dashboard/usuarios-docentes"]',
+      )!;
+      expect(enlace.tabIndex).toBe(0);
+      enlace.focus({ preventScroll: true });
+      expect(doc.activeElement).toBe(enlace);
+      await pulsar('nav a[href="/dashboard/usuarios-docentes"]');
+      expect(raiz().querySelector('.dashboard--compacto')).not.toBeNull();
+      expect(raiz().querySelector('nav [aria-current="page"]')?.getAttribute('href')).toBe(
+        '/dashboard/usuarios-docentes',
+      );
+      boton.focus({ preventScroll: true });
+      await pulsar('.contraer-menu');
+      expect(boton.getAttribute('aria-expanded')).toBe('true');
+      expect(doc.activeElement).toBe(boton);
+      expect(guardar).not.toHaveBeenCalled();
+    } finally {
+      padre.insertBefore(host, siguiente);
+      frame.remove();
+    }
+  });
+
   it('permite explorar desde el login sin completar credenciales y regresar', async () => {
     await harness.navigateByUrl('/login');
     await pulsar('.explorar-demo');
@@ -572,6 +632,53 @@ describe('Dashboard público de demostración', () => {
           lateral.classList.add('lateral--abierta');
           expect(ventana.getComputedStyle(lateral).display).toBe('flex');
           expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
+          const contenedor = doc.querySelector<HTMLElement>('.dashboard')!;
+          const principal = doc.querySelector<HTMLElement>('.area')!;
+          const anchoPrincipal = principal.getBoundingClientRect().width;
+          contenedor.classList.add('dashboard--compacto');
+          if (ancho > 800) {
+            expect(lateral.getBoundingClientRect().width).toBeCloseTo(88, 0);
+            expect(principal.getBoundingClientRect().width).toBeGreaterThan(anchoPrincipal);
+            expect(ventana.getComputedStyle(doc.querySelector('.nav-texto')!).clipPath).toBe(
+              'inset(50%)',
+            );
+          } else {
+            expect(ventana.getComputedStyle(doc.querySelector('.contraer-menu')!).display).toBe(
+              'none',
+            );
+            expect(ventana.getComputedStyle(doc.querySelector('.nav-texto')!).position).not.toBe(
+              'absolute',
+            );
+          }
+          expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
+          contenedor.classList.remove('dashboard--compacto');
+          const onda = doc.querySelector<SVGElement>('.ondas-fondo')!;
+          const animacion = ventana.getComputedStyle(onda).animationName;
+          if (ventana.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            expect(animacion).toBe('none');
+          } else {
+            // Angular antepone el ámbito del componente al nombre del keyframe.
+            expect(animacion).toMatch(/oleaje-institucional$/);
+            const capas = Array.from(onda.querySelectorAll('path')).slice(0, 3);
+            const animaciones = onda.getAnimations({ subtree: true });
+            expect(animaciones.length).toBe(4);
+            const duraciones = animaciones.map((animada) => animada.effect!.getTiming().duration);
+            expect(new Set(duraciones).size).toBe(4);
+            // Muestreo determinista: demuestra movimiento real sin esperar frames de Chrome.
+            for (const animada of animaciones) {
+              animada.pause();
+              animada.currentTime = 0;
+            }
+            const iniciales = capas.map((capa) => capa.getBoundingClientRect());
+            for (const animada of animaciones) animada.currentTime = 3000;
+            capas.forEach((capa, indice) => {
+              const final = capa.getBoundingClientRect();
+              expect(Math.hypot(final.x - iniciales[indice].x, final.y - iniciales[indice].y))
+                .withContext(`${ruta} ${ancho}px: movimiento perceptible de capa ${indice + 1}`)
+                .toBeGreaterThan(6);
+            });
+            expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
+          }
           const fondo = doc.querySelector<HTMLElement>('.fondo-dashboard')!;
           expect(ventana.getComputedStyle(fondo).pointerEvents).toBe('none');
           expect(ventana.getComputedStyle(fondo).animationName).toBe('none');

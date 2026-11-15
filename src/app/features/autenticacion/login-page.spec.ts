@@ -348,6 +348,16 @@ describe('Login de demostración', () => {
         copia.style.setProperty('--logo-escala', `${anchoInicial / estable.width}`);
         copia.classList.remove('intro-finalizada');
         avanzar(4200, copia);
+        const omitir = copia.querySelector<HTMLButtonElement>('.omitir')!;
+        const estiloOmitir = ventana.getComputedStyle(omitir);
+        expect(estiloOmitir.position).toBe('fixed');
+        expect(parseFloat(estiloOmitir.bottom)).toBeGreaterThanOrEqual(16);
+        expect(parseFloat(estiloOmitir.right)).toBeGreaterThanOrEqual(16);
+        expect(parseFloat(estiloOmitir.minHeight)).toBeGreaterThanOrEqual(44);
+        const cajaOmitir = omitir.getBoundingClientRect();
+        expect(ventana.innerHeight - cajaOmitir.bottom).toBeCloseTo(16, 0);
+        // clientWidth excluye la barra vertical de Windows del área visible.
+        expect(doc.documentElement.clientWidth - cajaOmitir.right).toBeCloseTo(16, 0);
         const inicial = logo.getBoundingClientRect();
         expect(Math.abs(inicial.width - anchoInicial)).toBeLessThan(1);
         expect(Math.abs(inicial.left + inicial.width / 2 - ancho / 2)).toBeLessThan(1);

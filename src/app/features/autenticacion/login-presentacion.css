@@ -107,10 +107,10 @@
   animation: aparecer 0.5s 6.174s ease-out both;
 }
 .omitir {
-  position: absolute;
   z-index: 2;
-  top: 1rem;
-  right: 1rem;
+  position: fixed;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  right: max(1rem, env(safe-area-inset-right));
   min-height: 2.75rem;
   padding: 0.5rem 0.8rem;
   border: 1px solid #526a8b;

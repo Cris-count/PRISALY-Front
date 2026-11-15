@@ -53,14 +53,14 @@ h1 {
   min-height: 2.75rem;
   padding: 0.65rem 1rem;
   border-radius: 0.5rem;
-  background: #ff9b36;
-  color: #201000;
+  background: var(--p-accion);
+  color: var(--p-accion-texto);
   font-size: var(--t-sm);
   font-weight: 700;
   text-decoration: none;
 }
 .accion:hover {
-  background: #ffd05b;
+  background: var(--p-accion-hover);
 }
 .seccion-cabecera {
   display: flex;
