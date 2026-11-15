@@ -28,6 +28,7 @@ import { ContratoPendienteError } from '../services/participacion.gateway';
 import { GuionNarrativo } from '../narrativa/narrativa.models';
 import { PreguntaVista } from '../models/simulador.models';
 import { ContenidoAcademico } from '../components/contenido-academico';
+import { RecorridoMapa } from '../exploracion/recorrido-mapa';
 
 /** Entrada local, no contrato REST ni fuente de autorización. */
 export interface ContextoNarrativoAcademico {
@@ -43,6 +44,7 @@ export interface ContextoNarrativoAcademico {
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [SimuladorStore, ParticipacionCoordinador],
   imports: [
+    RecorridoMapa,
     ContenidoAcademico,
     Aviso,
     BarraAcciones,
@@ -64,6 +66,7 @@ export class SimuladorPage {
   readonly contextoAcademico = input<ContextoNarrativoAcademico | null>(null);
   /** Opt-in local para lectura del PR #88. No se obtiene de parámetros URL. */
   readonly idIntentoContenido = input<string | null>(null);
+  protected readonly mostrarMapa = signal(false);
   protected readonly store = inject(SimuladorStore);
   protected readonly participacion = inject(ParticipacionCoordinador);
   protected readonly enlace = signal<EnlaceNarrativo | null>(null);
@@ -109,6 +112,7 @@ export class SimuladorPage {
         this.enlace.set(null);
         this.errorContenido.set(false);
         this.suspendido.set(false);
+        this.mostrarMapa.set(false);
         if (!contexto && !idContenido) return;
         this.store.volverAlInicio();
         if (idContenido) {
