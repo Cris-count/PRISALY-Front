@@ -46,7 +46,7 @@ export const ESTADOS_PANEL: Readonly<Record<TipoEstadoPanel, PresentacionEstado>
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div [attr.aria-busy]="estado() === 'cargando' ? 'true' : null">
-      <app-aviso [tipo]="presentacion().tipo" [titulo]="presentacion().titulo">
+      <app-aviso [tipo]="presentacion().tipo" [titulo]="titulo() ?? presentacion().titulo">
         <p>{{ mensaje() ?? presentacion().mensaje }}</p>
       </app-aviso>
     </div>
@@ -70,6 +70,7 @@ export const ESTADOS_PANEL: Readonly<Record<TipoEstadoPanel, PresentacionEstado>
 })
 export class EstadoPanel {
   readonly estado = input<TipoEstadoPanel>('pendiente');
+  readonly titulo = input<string>();
   readonly mensaje = input<string>();
   protected readonly presentacion = computed(() => ESTADOS_PANEL[this.estado()]);
 }

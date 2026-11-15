@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { EstadoPanel } from './estado-panel';
+import { EstadoRecorridoEstudiantilPanel } from './estado-recorrido-estudiantil';
 
 /** Panel de presentación sin identidad, intentos ni dependencias de participación. */
 @Component({
   selector: 'app-dashboard-estudiante',
-  imports: [RouterLink, EstadoPanel],
+  imports: [RouterLink, EstadoRecorridoEstudiantilPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-estudiante.html',
   styleUrl: './dashboard-estudiante.css',
