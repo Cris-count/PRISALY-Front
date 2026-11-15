@@ -61,28 +61,63 @@ describe('Dashboard público de demostración', () => {
   });
 
   it('contrae y expande conservando nombres accesibles, navegación y estado local', async () => {
-    const guardar = spyOn(Storage.prototype, 'setItem');
-    const boton = raiz().querySelector<HTMLButtonElement>('.contraer-menu')!;
-    expect(boton.getAttribute('aria-expanded')).toBe('true');
-    boton.focus();
-    await pulsar('.contraer-menu');
-    expect(boton.getAttribute('aria-expanded')).toBe('false');
-    expect(boton.getAttribute('aria-label')).toBe('Expandir menú lateral');
-    expect(document.activeElement).toBe(boton);
-    expect(raiz().querySelector('.dashboard--compacto')).not.toBeNull();
-    for (const enlace of raiz().querySelectorAll('nav a')) {
-      expect(enlace.getAttribute('aria-label')?.trim()).toBeTruthy();
-      expect(enlace.getAttribute('title')).toBe(enlace.getAttribute('aria-label'));
-      expect(enlace.querySelector('svg')).not.toBeNull();
+    // Headless puede usar un viewport móvil, donde el control de escritorio está oculto.
+    // Se mueve la instancia real (no un clon) a una vista de escritorio con el CSS original.
+    const frame = document.createElement('iframe');
+    frame.title = 'Prueba del menú de escritorio';
+    frame.style.cssText = 'position:absolute;left:-10000px;width:1440px;height:1000px;border:0';
+    const host = harness.fixture.nativeElement as HTMLElement;
+    const padre = host.parentNode!;
+    const siguiente = host.nextSibling;
+    document.body.appendChild(frame);
+    try {
+      const doc = frame.contentDocument!;
+      const estilo = doc.createElement('style');
+      estilo.textContent = Array.from(document.styleSheets)
+        .flatMap((hoja) => Array.from(hoja.cssRules, (regla) => regla.cssText))
+        .join('\n');
+      doc.head.appendChild(estilo);
+      doc.body.appendChild(host);
+      const guardar = spyOn(Storage.prototype, 'setItem');
+      const boton = raiz().querySelector<HTMLButtonElement>('.contraer-menu')!;
+      expect(frame.contentWindow!.innerWidth).toBe(1440);
+      expect(frame.contentWindow!.getComputedStyle(boton).display).not.toBe('none');
+      expect(boton.getBoundingClientRect().width).toBeGreaterThan(0);
+      expect(boton.disabled).toBeFalse();
+      expect(boton.tabIndex).toBe(0);
+      expect(boton.getAttribute('aria-expanded')).toBe('true');
+      boton.focus({ preventScroll: true });
+      expect(doc.activeElement).toBe(boton);
+      await pulsar('.contraer-menu');
+      expect(boton.getAttribute('aria-expanded')).toBe('false');
+      expect(boton.getAttribute('aria-label')).toBe('Expandir menú lateral');
+      expect(doc.activeElement).toBe(boton);
+      expect(raiz().querySelector('.dashboard--compacto')).not.toBeNull();
+      for (const enlace of raiz().querySelectorAll('nav a')) {
+        expect(enlace.getAttribute('aria-label')?.trim()).toBeTruthy();
+        expect(enlace.getAttribute('title')).toBe(enlace.getAttribute('aria-label'));
+        expect(enlace.querySelector('svg')).not.toBeNull();
+      }
+      const enlace = raiz().querySelector<HTMLAnchorElement>(
+        'nav a[href="/dashboard/usuarios-docentes"]',
+      )!;
+      expect(enlace.tabIndex).toBe(0);
+      enlace.focus({ preventScroll: true });
+      expect(doc.activeElement).toBe(enlace);
+      await pulsar('nav a[href="/dashboard/usuarios-docentes"]');
+      expect(raiz().querySelector('.dashboard--compacto')).not.toBeNull();
+      expect(raiz().querySelector('nav [aria-current="page"]')?.getAttribute('href')).toBe(
+        '/dashboard/usuarios-docentes',
+      );
+      boton.focus({ preventScroll: true });
+      await pulsar('.contraer-menu');
+      expect(boton.getAttribute('aria-expanded')).toBe('true');
+      expect(doc.activeElement).toBe(boton);
+      expect(guardar).not.toHaveBeenCalled();
+    } finally {
+      padre.insertBefore(host, siguiente);
+      frame.remove();
     }
-    await pulsar('nav a[href="/dashboard/usuarios-docentes"]');
-    expect(raiz().querySelector('.dashboard--compacto')).not.toBeNull();
-    expect(raiz().querySelector('nav [aria-current="page"]')?.getAttribute('href')).toBe(
-      '/dashboard/usuarios-docentes',
-    );
-    await pulsar('.contraer-menu');
-    expect(boton.getAttribute('aria-expanded')).toBe('true');
-    expect(guardar).not.toHaveBeenCalled();
   });
 
   it('permite explorar desde el login sin completar credenciales y regresar', async () => {
