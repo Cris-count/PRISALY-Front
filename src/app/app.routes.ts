@@ -16,7 +16,15 @@ export const routes: Routes = [
     path: 'simulador',
     title: 'Simulador · PRISALY',
     loadComponent: () =>
-      import('./features/simulador/pages/simulador-page').then((m) => m.SimuladorPage),
+      import('./features/simulador/pages/simulador-temporal').then((m) => m.SimuladorTemporal),
+  },
+  {
+    path: 'simulador-integrado',
+    title: 'Simulador Integrado · PRISALY',
+    loadComponent: () =>
+      import('./features/simulador/pages/simulador-integrado-page').then(
+        (m) => m.SimuladorIntegradoPage
+      ),
   },
   { path: '**', redirectTo: 'login' },
 ];

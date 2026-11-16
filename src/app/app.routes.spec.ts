@@ -23,17 +23,18 @@ describe('Rutas públicas de presentación', () => {
     });
   });
 
-  for (const ruta of ['/', '/login', '/dashboard', '/simulador', '/ruta-inexistente']) {
+  for (const ruta of ['/', '/login', '/dashboard', '/simulador', '/simulador-integrado', '/ruta-inexistente']) {
     it(`resuelve ${ruta} hacia el inicio público sin atribuir identidad ni iniciar intentos`, async () => {
       const harness = await RouterTestingHarness.create(ruta);
       const esSimulador = ruta === '/simulador';
+      const esIntegrado = ruta === '/simulador-integrado';
       const esDashboard = ruta === '/dashboard';
       expect(TestBed.inject(Router).url).toBe(
-        esSimulador ? '/simulador' : esDashboard ? '/dashboard' : '/login',
+        esSimulador ? '/simulador' : esIntegrado ? '/simulador-integrado' : esDashboard ? '/dashboard' : '/login',
       );
       expect(
         harness.routeNativeElement?.querySelector(
-          esSimulador ? 'app-pantalla-inicio' : esDashboard ? '#bienvenida-dashboard' : 'form',
+          esSimulador ? '#simulador-titulo' : esIntegrado ? '.pantalla-inicio-integrada' : esDashboard ? '#bienvenida-dashboard' : 'form',
         ),
       ).not.toBeNull();
       for (const operacion of Object.values(gateway)) {
@@ -41,4 +42,14 @@ describe('Rutas públicas de presentación', () => {
       }
     });
   }
+
+  it('presenta la escena técnica sin mapa anterior ni consultas académicas', async () => {
+    const harness = await RouterTestingHarness.create('/simulador');
+    const pantalla = harness.routeNativeElement as HTMLElement;
+    expect(pantalla.textContent).toContain('Ciudad PRISALY');
+    expect(pantalla.textContent).toContain('Selecciona un lugar o camino.');
+    expect(pantalla.querySelector('[role="application"]')).not.toBeNull();
+    expect(pantalla.querySelector('img, svg, app-mapa-interactivo, app-recorrido-mapa')).toBeNull();
+    for (const operacion of Object.values(gateway)) expect(operacion).not.toHaveBeenCalled();
+  });
 });
