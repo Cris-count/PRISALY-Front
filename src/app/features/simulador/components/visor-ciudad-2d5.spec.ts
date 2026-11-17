@@ -45,8 +45,38 @@ describe('VisorCiudad2d5', () => {
   it('se crea correctamente con la lista de edificios accesibles', () => {
     expect(component).toBeTruthy();
     const botones = fixture.nativeElement.querySelectorAll('.boton-destino');
-    // Hospital, Fiscalía, Policía + Punto Inicial
-    expect(botones.length).toBe(MUNDO_PRUEBA.edificios.length + 1);
+    // Hospital, Fiscalía, Policía + Plaza Central + Punto Inicial
+    expect(botones.length).toBe(MUNDO_PRUEBA.edificios.length + 2);
+  });
+
+  it('despliega el botón Iniciar cuestionario al llegar a la Plaza Central y emite la solicitud', () => {
+    let emitido = false;
+    component.iniciarCuestionarioSolicitado.subscribe(() => { emitido = true; });
+
+    adaptador.enPlazaCentral.set(true);
+    adaptador.enCuestionario.set(false);
+    fixture.detectChanges();
+
+    const botonIniciar = fixture.nativeElement.querySelector('.boton-iniciar-cuestionario');
+    expect(botonIniciar).toBeTruthy();
+    expect(botonIniciar.textContent).toContain('Iniciar cuestionario');
+
+    botonIniciar.click();
+    expect(emitido).toBeTrue();
+  });
+
+  it('deshabilita destinos y oculta inicio de cuestionario cuando la fase es en-cuestionario', () => {
+    adaptador.enPlazaCentral.set(true);
+    adaptador.enCuestionario.set(true);
+    fixture.detectChanges();
+
+    const botonIniciar = fixture.nativeElement.querySelector('.boton-iniciar-cuestionario');
+    expect(botonIniciar).toBeNull();
+
+    const botones = fixture.nativeElement.querySelectorAll('.boton-destino');
+    for (const b of Array.from(botones)) {
+      expect((b as HTMLButtonElement).disabled).toBeTrue();
+    }
   });
 
   it('despliega el botón Entrar cuando el avatar alcanza la entrada del Hospital', () => {
@@ -70,6 +100,17 @@ describe('VisorCiudad2d5', () => {
 
     const escenario = fixture.nativeElement.querySelector('.visor-ciudad__escenario');
     expect(escenario.style.display).toBe('none');
+  });
+
+  it('el contenedor y el escenario poseen contención responsive y el canvas limita a max-width 100%', () => {
+    const contenedor = fixture.nativeElement.querySelector('.visor-ciudad');
+    const escenario = fixture.nativeElement.querySelector('.visor-ciudad__escenario');
+    expect(contenedor).not.toBeNull();
+    expect(escenario).not.toBeNull();
+
+    // Verificamos que no tengan anchos fijos desbordantes
+    expect(contenedor.style.width).not.toBe('1229px');
+    expect(escenario.style.width).not.toBe('1229px');
   });
 });
 

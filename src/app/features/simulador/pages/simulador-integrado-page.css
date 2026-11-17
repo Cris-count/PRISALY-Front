@@ -1,36 +1,41 @@
-:host{display:block;width:100%;min-height:100vh;background:#f0f4f8;color:#1a2d3d;font-family:system-ui,sans-serif;box-sizing:border-box}
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.pantalla-inicio-integrada{max-width:850px;margin:2rem auto;padding:1.5rem;background:#fff;border-radius:12px;border:1px solid #d5e2eb}
-.inicio-cabecera{text-align:center;margin-bottom:1.5rem}
-.insignia-fase{display:inline-block;padding:.2rem .5rem;font-size:.75rem;font-weight:700;color:#125b9c;background:#e1eefc;border-radius:99px;margin-bottom:.5rem}
-.pantalla-inicio-integrada h1{font-size:1.6rem;margin:0 0 .5rem;color:#12334c}
-.inicio-subtitulo{font-size:.95rem;color:#4a6375;line-height:1.4;max-width:650px;margin:0 auto}
-.inicio-acciones{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.tarjeta-inicio{display:flex;flex-direction:column;justify-content:space-between;padding:1.2rem;background:#f8fbfe;border:1px solid #cfe0ed;border-radius:8px}
-.tarjeta-inicio h2{font-size:1.1rem;color:#12334c;margin:0 0 .4rem}
-.tarjeta-inicio p{color:#4a6375;font-size:.85rem;line-height:1.4;margin-bottom:1rem}
-.simulador-integrado{display:flex;flex-direction:column;min-height:100vh}
-.hud-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.6rem;padding:.5rem 1rem;background:#fff;border-bottom:1px solid #d5e2eb}
-.hud-caso{display:flex;align-items:center;gap:.5rem}
-.hud-titulo{font-size:1rem;margin:0;color:#12334c;font-weight:700}
-.insignia-demo{padding:.1rem .4rem;background:#fff3cd;color:#856404;border:1px solid #ffeeba;border-radius:4px;font-size:.7rem;font-weight:600}
-.hud-metricas,.hud-acciones{display:flex;align-items:center;gap:.6rem}
-.boton-libreta{padding:.35rem .7rem;background:#fff8e8;color:#8c5700;border:1px solid #ffd488;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer}
-.boton-volver-inicio{padding:.35rem .7rem;background:#edf2f7;color:#4a5568;border:1px solid #cbd5e0;border-radius:6px;font-size:.8rem;cursor:pointer}
-.simulador-integrado__cuerpo{display:grid;grid-template-columns:1.35fr 1fr;gap:.8rem;padding:.8rem;flex:1;box-sizing:border-box}
-.area-exploracion{position:relative;display:flex;flex-direction:column}
-.area-academica{background:#fff;border-radius:8px;border:1px solid #d5e2eb;padding:.8rem;display:flex;flex-direction:column;gap:.8rem}
-.interior-panel{background:#fff;border-radius:8px;border:1px solid #b7d1e2;padding:1rem;display:flex;flex-direction:column;gap:.8rem;min-height:320px}
-.interior-cabecera{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e1ebf2;padding-bottom:.5rem}
-.interior-etiqueta{font-size:.65rem;font-weight:700;color:#1b6d4b}
-.interior-cabecera h2{margin:.2rem 0 0;font-size:1.15rem;color:#12334c}
-.boton-salir-interior{padding:.35rem .7rem;background:#183d53;color:#fff;border:0;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer}
-.interior-cuerpo{display:flex;flex-direction:column;gap:.8rem;font-size:.85rem;line-height:1.45;color:#2c4456}
-.interior-aviso-academico{padding:.6rem .8rem;background:#f0f7fb;border-left:3px solid #125b9c;border-radius:4px;font-size:.8rem;color:#183d53}
-.interior-aviso-academico p{margin:0}
-.boton{padding:.45rem .9rem;font-size:.85rem;font-weight:600;border-radius:6px;border:1px solid transparent;cursor:pointer}
-.boton--primario{background:#125b9c;color:#fff;border-color:#0d4679}
-.boton--secundario{background:#fff;color:#125b9c;border-color:#125b9c}
-.simulador__mensaje{max-width:500px;margin:2rem auto;padding:1.2rem;background:#fff;border-radius:8px;text-align:center;display:flex;flex-direction:column;gap:.8rem;align-items:center}
-.contenedor-academico{max-width:700px;margin:2rem auto;padding:1.2rem;background:#fff;border-radius:8px}
-@media (max-width:1024px){.simulador-integrado__cuerpo,.inicio-acciones{grid-template-columns:1fr}}
+:host{display:block;min-height:100vh;background:#f0f4f8;width:100%}
+.pantalla-inicio-integrada,.contenedor-academico,.simulador__mensaje{max-width:700px;width:calc(100% - 1.6rem);margin:1.5rem auto;padding:1rem;background:#fff;border-radius:8px;border:1px solid #d5e2eb;text-align:center}
+.inicio-acciones{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;text-align:left}
+.tarjeta-inicio,.tarjeta-plaza-acceso{background:#f8fbfe;border:1px solid #cfe0ed;border-radius:8px;padding:1rem;display:flex;flex-direction:column;justify-content:space-between;gap:.4rem;min-width:0}
+.simulador-integrado,.area-exploracion,.area-academica,.interior-panel{display:flex;flex-direction:column;gap:.6rem;min-width:0;width:100%}
+.hud-barra{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.5rem clamp(.5rem,2vw,1rem);background:#fff;border-bottom:1px solid #d5e2eb;flex-wrap:wrap}
+.hud-caso,.hud-metricas,.hud-acciones,.interior-cabecera,.interior-controles,.dialogo-inicio-cuestionario__acciones{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;min-width:0}
+.interior-cabecera{justify-content:space-between;border-bottom:1px solid #d5e2eb}
+.hud-titulo{font-size:1rem;margin:0;color:#12334c;font-weight:700;word-break:break-word}
+.insignia-fase,.insignia-demo,.insignia-estado,.insignia-transicion,.chip-personaje{display:inline-block;padding:.15rem .45rem;border-radius:4px;font-size:.7rem;font-weight:700}
+.insignia-fase,.insignia-estado{color:#125b9c;background:#e1eefc}
+.insignia-demo{color:#856404;background:#fff3cd}
+.insignia-transicion{color:#c2410c;background:#ffedd5}
+.chip-personaje{color:#12334c;background:#f0f7fb}
+.interior-etiqueta,.etiqueta-fase{font-size:.65rem;font-weight:700;color:#125b9c}
+.etiqueta-fase--cuestionario,.cuestionario-bloqueo-nota{color:#b45309}
+.boton-libreta,.boton-volver-inicio,.boton-salir-interior{padding:.35rem .7rem;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer}
+.boton-libreta{background:#fff8e8;color:#8c5700;border:1px solid #ffd488}
+.boton-volver-inicio{background:#edf2f7;color:#4a5568;border:1px solid #cbd5e0}
+.boton-salir-interior{background:#183d53;color:#fff;border:0}
+.simulador-integrado__cuerpo{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:.8rem;padding:clamp(.4rem,2vw,.8rem);flex:1;min-width:0}
+.area-exploracion{position:relative}
+.area-academica,.interior-panel{background:#fff;border-radius:8px;border:1px solid #d5e2eb;padding:clamp(.6rem,2vw,.8rem)}
+.interior-panel{border-color:#b7d1e2;min-height:280px}
+.interior-aviso-academico,.guia-recordatorio,.plaza-alerta-llegada,.advertencia-bloqueo,.advertencia-sin-pistas,.cuestionario-activo-aviso{padding:.4rem .6rem;border-radius:4px;font-size:.8rem}
+.interior-aviso-academico{background:#f0f7fb;border-left:3px solid #125b9c;color:#183d53}
+.guia-recordatorio{background:#fff8e8;border-left:3px solid #f59e0b;color:#78350f}
+.plaza-alerta-llegada{background:#d4edda;color:#155724}
+.advertencia-bloqueo{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.advertencia-sin-pistas{background:#f0f9ff;color:#0369a1;margin:.3rem 0}
+.cuestionario-activo-aviso{background:#fef3c7}
+.dialogo-inicio-cuestionario{position:fixed;inset:0;margin:auto;max-width:440px;width:calc(100% - 1.6rem);padding:1rem;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 4px 16px #0003;z-index:999}
+.dialogo-inicio-cuestionario::backdrop{background:#0f172a88}
+.dialogo-inicio-cuestionario__acciones{justify-content:flex-end;margin-top:.8rem}
+.lista-personajes-interior{display:flex;flex-wrap:wrap;gap:.4rem;padding:0;margin:.3rem 0;list-style:none}
+.interior-dialogo-caja{background:#f8fbfe;border:1px solid #d0e3f0;border-radius:6px;padding:.6rem;color:#183d53}
+.interior-dialogo-caja strong{color:#125b9c}
+.dialogo-transicion{color:#0369a1}
+.dialogo-concluido{color:#15803d}
+.nota-demo{font-size:.76rem;color:#64748b}
+@media (max-width:1024px){.simulador-integrado__cuerpo,.inicio-acciones{grid-template-columns:minmax(0,1fr)}}

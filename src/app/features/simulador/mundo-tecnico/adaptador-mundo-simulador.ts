@@ -28,6 +28,8 @@ export class AdaptadorMundoSimulador {
   readonly destino = signal<Punto | null>(null);
   readonly entradaActual = signal<EdificioTecnico | null>(null);
   readonly interiorActivo = signal<EdificioTecnico | null>(null);
+  readonly enPlazaCentral = signal(false);
+  readonly enCuestionario = signal(false);
   readonly mensaje = signal<string>('Inicializando visor de exploración…');
 
   /**
@@ -48,18 +50,21 @@ export class AdaptadorMundoSimulador {
       case 'listo':
         this.listo.set(true);
         this.posicion.set(evento.posicion);
+        this.verificarPlazaCentral(evento.posicion);
         this.mensaje.set('Ciudad lista para explorar. Selecciona un lugar o camino.');
         break;
 
       case 'moviendo':
         this.destino.set(evento.destino);
         this.entradaActual.set(null);
+        this.enPlazaCentral.set(false);
         this.mensaje.set('Caminando hacia el destino…');
         break;
 
       case 'llegada':
         this.posicion.set(evento.posicion);
         this.destino.set(null);
+        this.verificarPlazaCentral(evento.posicion, evento.puntoAccesoId);
         if (evento.entradaId && this.mundoActual) {
           const edificio = this.mundoActual.edificios.find((e) => e.id === evento.entradaId) ?? null;
           this.entradaActual.set(edificio);
@@ -70,7 +75,11 @@ export class AdaptadorMundoSimulador {
           }
         } else {
           this.entradaActual.set(null);
-          this.mensaje.set('Llegaste al punto seleccionado.');
+          if (this.enPlazaCentral()) {
+            this.mensaje.set('Llegaste a la Plaza Central PRISALY. Punto de acceso al cuestionario.');
+          } else {
+            this.mensaje.set('Llegaste al punto seleccionado.');
+          }
         }
         break;
 
@@ -88,7 +97,7 @@ export class AdaptadorMundoSimulador {
    * Solicita al personaje caminar hacia un nodo o entrada de edificio.
    */
   caminarA(nodoId: string): void {
-    if (this.suspendida() || !this.control) {
+    if (this.enCuestionario() || this.suspendida() || !this.control) {
       return;
     }
     this.control.irA(nodoId);
@@ -99,6 +108,7 @@ export class AdaptadorMundoSimulador {
    * Suspende explícitamente la interacción en Phaser y abre el interior.
    */
   solicitarEntrada(edificio: EdificioTecnico): boolean {
+    if (this.enCuestionario()) return false;
     const configurado = this.mundoActual?.edificios.find((e) => e.id === edificio.id);
     const entrada = this.mundoActual?.nodos.find((n) => n.id === configurado?.entrada)?.posicion;
     const posicion = this.posicion();
@@ -114,6 +124,37 @@ export class AdaptadorMundoSimulador {
     this.aplicarSuspension();
     this.mensaje.set(`Dentro de: ${configurado.nombre}`);
     return true;
+  }
+
+  /**
+   * Bloqueo irreversible para la sesión demostrativa:
+   * Al iniciar el cuestionario, se congela el mundo y se rechazan nuevas caminatas o entradas.
+   */
+  bloquearPorCuestionario(): void {
+    this.enCuestionario.set(true);
+    this.entradaActual.set(null);
+    this.interiorActivo.set(null);
+    this.suspender(true);
+    this.mensaje.set('Exploración cerrada. Cuestionario evaluativo en curso.');
+  }
+
+  /**
+   * Restablece el bloqueo de cuestionario (usado al reiniciar la demostración).
+   */
+  desbloquearCuestionario(): void {
+    this.enCuestionario.set(false);
+    this.suspender(false);
+  }
+
+  private verificarPlazaCentral(pos: Punto, puntoAccesoId?: string | null): void {
+    if (!this.mundoActual?.plazaCentral) {
+      this.enPlazaCentral.set(false);
+      return;
+    }
+    const plaza = this.mundoActual.plazaCentral;
+    const enPlaza = puntoAccesoId === plaza.id ||
+      Math.hypot(pos.x - plaza.posicion.x, pos.y - plaza.posicion.y) <= plaza.radioInteraccion;
+    this.enPlazaCentral.set(enPlaza);
   }
 
   /**
@@ -163,5 +204,7 @@ export class AdaptadorMundoSimulador {
     this.destino.set(null);
     this.entradaActual.set(null);
     this.interiorActivo.set(null);
+    this.enPlazaCentral.set(false);
+    this.enCuestionario.set(false);
   }
 }

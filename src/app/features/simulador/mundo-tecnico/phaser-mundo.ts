@@ -109,6 +109,26 @@ export function iniciarMundoPhaser(contenedor: HTMLElement, mundo: MundoTecnico,
         const entradaPantalla = aPantalla(entrada);
         this.add.text(entradaPantalla.x, entradaPantalla.y + 20, 'ENTRADA', { color: '#124f3d', fontSize: '15px' }).setOrigin(.5);
       }
+      if (mundo.plazaCentral) {
+        const p = aPantalla(mundo.plazaCentral.posicion);
+        grafico.fillStyle(0xddaf5b, 0.35).fillCircle(p.x, p.y, 28);
+        grafico.fillStyle(0xf8f3dc, 0.9).fillCircle(p.x, p.y, 20);
+        grafico.lineStyle(2, 0xb8860b, 0.8).strokeCircle(p.x, p.y, 20);
+        grafico.fillStyle(0x183d53).fillCircle(p.x, p.y, 4);
+
+        const plazaInteractiva = this.add.circle(p.x, p.y, 28, 0x000000, 0)
+          .setInteractive({ useHandCursor: true });
+        plazaInteractiva.on('pointerdown', (_ptr: unknown, _x: number, _y: number, evt: Phaser.Types.Input.EventData) => {
+          evt.stopPropagation();
+          this.irA(mundo.plazaCentral!.nodo);
+        });
+
+        this.add.text(p.x, p.y + 26, 'PLAZA CENTRAL\nPRISALY', {
+          color: '#6e4401',
+          fontSize: '11px',
+          align: 'center',
+        }).setOrigin(0.5);
+      }
       for (const nodo of mundo.nodos) {
         const pantalla = aPantalla(nodo.posicion);
         grafico.fillStyle(mundo.edificios.some(e => e.entrada === nodo.id) ? 0x25805e : 0x4b7185).fillCircle(pantalla.x, pantalla.y, 7);
@@ -216,7 +236,22 @@ export function iniciarMundoPhaser(contenedor: HTMLElement, mundo: MundoTecnico,
         const entrada = mundo.nodos.find(n => n.id === e.entrada)!.posicion;
         return Math.hypot(entrada.x - this.posicion.x, entrada.y - this.posicion.y) < 1;
       });
-      emitir({ tipo: 'llegada', posicion: { ...this.posicion }, entradaId: edificio?.id ?? null });
+      const enPlaza = mundo.plazaCentral
+        ? Math.hypot(mundo.plazaCentral.posicion.x - this.posicion.x, mundo.plazaCentral.posicion.y - this.posicion.y) <= mundo.plazaCentral.radioInteraccion
+        : false;
+      const evento: EventoMundo = enPlaza && mundo.plazaCentral
+        ? {
+            tipo: 'llegada',
+            posicion: { ...this.posicion },
+            entradaId: edificio?.id ?? null,
+            puntoAccesoId: mundo.plazaCentral.id,
+          }
+        : {
+            tipo: 'llegada',
+            posicion: { ...this.posicion },
+            entradaId: edificio?.id ?? null,
+          };
+      emitir(evento);
     }
   }
 

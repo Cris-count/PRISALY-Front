@@ -136,4 +136,42 @@ describe('AdaptadorMundoSimulador', () => {
     adaptador.desconectar(); adaptador.desconectar();
     expect(mockControl.destruir).toHaveBeenCalledTimes(1);
   });
+
+  it('detecta la llegada a la Plaza Central y actualiza el estado enPlazaCentral', () => {
+    expect(adaptador.enPlazaCentral()).toBeFalse();
+
+    adaptador.procesarEvento({
+      tipo: 'llegada',
+      posicion: { x: 450, y: 400 },
+      entradaId: null,
+      puntoAccesoId: 'plaza-central',
+    });
+
+    expect(adaptador.enPlazaCentral()).toBeTrue();
+    expect(adaptador.mensaje()).toContain('Plaza Central');
+
+    // Al iniciar movimiento fuera de la plaza, se desactiva
+    adaptador.procesarEvento({ tipo: 'moviendo', destino: { x: 260, y: 400 } });
+    expect(adaptador.enPlazaCentral()).toBeFalse();
+  });
+
+  it('bloquearPorCuestionario bloquea permanentemente la interacción y desactiva caminarA', () => {
+    adaptador.bloquearPorCuestionario();
+
+    expect(adaptador.enCuestionario()).toBeTrue();
+    expect(adaptador.suspendida()).toBeTrue();
+    expect(mockControl.suspenderInteraccion).toHaveBeenCalledWith(true);
+
+    adaptador.caminarA('inicio');
+    expect(mockControl.irA).not.toHaveBeenCalled();
+
+    const hospital = MUNDO_PRUEBA.edificios[0];
+    const entradaPermitida = adaptador.solicitarEntrada(hospital);
+    expect(entradaPermitida).toBeFalse();
+
+    // Desbloquear
+    adaptador.desbloquearCuestionario();
+    expect(adaptador.enCuestionario()).toBeFalse();
+    expect(adaptador.suspendida()).toBeFalse();
+  });
 });

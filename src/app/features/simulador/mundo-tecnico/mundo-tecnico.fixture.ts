@@ -13,17 +13,26 @@ export const MUNDO_PRUEBA: MundoTecnico = {
     { id: 'norte-este', posicion: { x: 640, y: 90 } },
     { id: 'este', posicion: { x: 640, y: 400 } },
     { id: 'entrada', posicion: { x: 795, y: 300 } },
+    { id: 'plaza-central', posicion: { x: 450, y: 400 } },
   ],
   caminos: [
     { desde: 'inicio', hasta: 'oeste' }, { desde: 'oeste', hasta: 'fiscalia-entrada' },
     { desde: 'fiscalia-entrada', hasta: 'norte-oeste' },
     { desde: 'norte-oeste', hasta: 'norte-este' }, { desde: 'norte-este', hasta: 'este' },
     { desde: 'este', hasta: 'entrada' },
+    { desde: 'oeste', hasta: 'plaza-central' },
   ],
   edificios: [
     { id: 'hospital-prueba', nombre: 'Hospital', plantillaVisual: 'hospital', area: { x: 745, y: 150, ancho: 110, alto: 105 }, entrada: 'entrada', salida: 'entrada' },
     { id: 'fiscalia-prueba', nombre: 'Fiscalía', plantillaVisual: 'fiscalia', area: { x: 120, y: 145, ancho: 105, alto: 90 }, entrada: 'fiscalia-entrada', salida: 'fiscalia-entrada' },
     { id: 'policia-prueba', nombre: 'Policía', plantillaVisual: 'policia', area: { x: 515, y: 435, ancho: 95, alto: 60 }, entrada: 'este', salida: 'este' },
   ],
-  inicio: 'inicio', puntosSeguros: ['inicio', 'entrada'],
+  inicio: 'inicio', puntosSeguros: ['inicio', 'entrada', 'plaza-central'],
+  plazaCentral: {
+    id: 'plaza-central',
+    nombre: 'Plaza Central PRISALY',
+    nodo: 'plaza-central',
+    posicion: { x: 450, y: 400 },
+    radioInteraccion: 24,
+  },
 };
