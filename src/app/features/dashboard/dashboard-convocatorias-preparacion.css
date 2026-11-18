@@ -1,0 +1,114 @@
+.preparacion-convocatorias {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #b8cce8;
+  border-radius: 1rem;
+  background: #f7faff;
+}
+summary {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  color: #173957;
+  cursor: pointer;
+}
+.preparacion-convocatorias h2 {
+  margin-top: 0.8rem;
+}
+.preparacion-convocatorias p {
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: #344968;
+}
+.acciones-docentes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0.8rem 0;
+}
+.acciones-docentes button {
+  padding: 0.6rem;
+  border: 1px solid #94aac5;
+  border-radius: 0.7rem;
+  color: #344968;
+  background: #f2f5fa;
+  font-size: var(--t-sm);
+  cursor: not-allowed;
+}
+.acciones-docentes span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: var(--t-xs);
+}
+fieldset {
+  min-width: 0;
+  margin-top: 0.8rem;
+  padding: 1rem;
+  border: 1px solid #a2b9d4;
+  border-radius: 0.8rem;
+}
+legend {
+  font-size: var(--t-sm);
+  color: #344968;
+}
+fieldset label {
+  margin-top: 0.5rem;
+}
+.pie-convocatorias {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #b8cce8;
+  border-radius: 1rem;
+  background: #edf4ff;
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: #243f63;
+}
+a:focus-visible,
+summary:focus-visible,
+.tabla-convocatorias:focus-visible {
+  outline: 3px solid #0755b8;
+  outline-offset: 3px;
+}
+:host ::ng-deep .integracion-convocatorias .aviso {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.4rem 1rem 0.4rem 3rem;
+  margin: 0;
+  border-radius: 1rem;
+}
+:host ::ng-deep .integracion-convocatorias .aviso::before {
+  content: 'i';
+  position: absolute;
+  inset-inline-start: 0.8rem;
+  color: #b75b00;
+  font-size: 1.1rem;
+  line-height: 1.35rem;
+  width: 1.35rem;
+  text-align: center;
+  font-weight: 700;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+:host ::ng-deep .integracion-convocatorias .aviso p {
+  margin: 0;
+  font-size: var(--t-sm);
+}
+:host ::ng-deep .listado-convocatorias .aviso {
+  padding: 0.45rem 0.6rem;
+  margin-top: 0.4rem;
+  border-radius: 0.8rem;
+}
+:host ::ng-deep .listado-convocatorias .aviso p {
+  margin: 0;
+  font-size: var(--t-xs);
+}
+@container (max-width: 36rem) {
+  .acciones-docentes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  :host ::ng-deep .integracion-convocatorias .aviso {
+    display: block;
+  }
+}

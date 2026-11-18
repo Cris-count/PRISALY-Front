@@ -1,0 +1,219 @@
+﻿/* Presentación exclusiva de Configuración. */
+:host {
+  display: grid;
+  flex: 1;
+}
+.configuracion.pagina {
+  width: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-rows: auto auto auto auto auto minmax(min-content, 1fr);
+  --t-sm: 0.90625rem;
+  --t-xs: 0.78125rem;
+  --vista-titulo: clamp(1.875rem, 2.4vw, 2.125rem);
+  --vista-banner-min: 12rem;
+  --vista-banner-arte: 10rem;
+  max-width: none;
+  container-type: inline-size;
+}
+.contexto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: var(--t-xs);
+  color: #385374;
+  margin: 0 0 0.2rem;
+}
+.config-hero.modulo-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.3fr);
+  align-items: center;
+  padding: 0;
+  min-height: var(--vista-banner-min);
+  background: linear-gradient(105deg, #052650, #0755b8 65%, #a9dbfa);
+  border-radius: var(--vista-banner-radio);
+  border: 1px solid #c7d5e8;
+  box-shadow: 0 10px 25px #123c7326;
+}
+.hero-texto {
+  padding: 0.8rem 0 0.8rem 1.7rem;
+  position: relative;
+  z-index: 1;
+}
+.config-hero .ceja {
+  letter-spacing: 0.18em;
+  font-size: var(--t-xs);
+  margin: 0 0 0.4rem;
+}
+.config-hero h1 {
+  font-size: var(--vista-titulo);
+  line-height: 1.12;
+  margin: 0.25rem 0;
+}
+.config-hero h1 span {
+  color: #ffba50;
+}
+.config-hero .descripcion {
+  margin: var(--vista-aviso-gap) 0;
+  font-size: var(--t-base);
+  line-height: 1.5;
+}
+.hero-linea {
+  display: block;
+  width: 5rem;
+  height: 0.2rem;
+  background: #ffb52e;
+  border-radius: 1rem;
+}
+.config-ilustracion {
+  display: block;
+  width: 78%;
+  justify-self: end;
+  height: var(--vista-banner-arte);
+  fill: none;
+  stroke: none;
+  pointer-events: none;
+}
+.configuracion .estado {
+  padding: 0.4rem 1rem;
+  margin: 0.4rem 0 0.5rem;
+  border-radius: 1.1rem;
+  background: #edf5ff;
+}
+.configuracion .seccion-cabecera {
+  margin: 0 0 0.4rem;
+}
+.configuracion .seccion-cabecera .ceja {
+  margin: 0.1rem 0;
+  color: #064795;
+}
+.configuracion .seccion-cabecera h2 {
+  font-size: var(--t-card);
+}
+.configuracion .alcances {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--vista-gap);
+}
+.config-tarjeta {
+  --tono: #0755b8;
+  --suave: #dff1ff;
+  display: grid;
+  grid-template-columns: 4.25rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  position: relative;
+  overflow: hidden;
+  padding: 0.875rem 1rem;
+  border-radius: var(--vista-panel-radio);
+  background: #f8fbff;
+  box-shadow: 0 8px 18px #123c731c;
+}
+.config-tarjeta::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  width: 70%;
+  height: 2.1rem;
+  bottom: -0.9rem;
+  right: -6%;
+  border-radius: 70% 20% 0 0;
+  transform: rotate(-8deg);
+  background: var(--suave);
+  box-shadow: 0 -0.5rem color-mix(in srgb, var(--suave) 50%, transparent);
+}
+.config-tarjeta > * {
+  position: relative;
+  z-index: 1;
+}
+.config-tarjeta[data-tono='naranja'] {
+  --tono: #975000;
+  --suave: #fff0dc;
+}
+.config-tarjeta[data-tono='violeta'] {
+  --tono: #6334b4;
+  --suave: #ebe5ff;
+}
+.config-tarjeta[data-tono='verde'] {
+  --tono: #08734b;
+  --suave: #ddf4e8;
+}
+.config-tarjeta[data-tono='cian'] {
+  --tono: #006880;
+  --suave: #dcf7ff;
+}
+.config-icono {
+  display: grid;
+  place-items: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 1.1rem;
+  color: var(--tono);
+  background: var(--suave);
+}
+.config-icono svg {
+  width: 2.8rem;
+  height: 2.8rem;
+}
+.config-tarjeta h3 {
+  font-size: var(--vista-tarjeta-titulo);
+  line-height: 1.2;
+  margin: 0 0 0.25rem;
+}
+.config-tarjeta p {
+  font-size: var(--t-sm);
+  line-height: 1.45;
+  margin: 0 0 0.35rem;
+}
+.config-tarjeta .pendiente {
+  color: #385374;
+  font-size: var(--t-xs);
+}
+.flecha {
+  font-size: var(--vista-titulo);
+  line-height: 1;
+  color: var(--tono);
+}
+@container (max-width: 55rem) {
+  .config-hero.modulo-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero-texto {
+    padding: 1.3rem;
+  }
+  .config-ilustracion {
+    width: 100%;
+  }
+}
+@container (max-width: 35rem) {
+  .config-tarjeta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .flecha {
+    display: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .configuracion .alcances {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .configuracion .alcances {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.config-ilustracion {
+  mask-image: linear-gradient(90deg, transparent, #000 10%);
+}
+
+.configuracion .regreso {
+  padding-block: 0.1rem;
+}
+
+/* Al apilar el banner, el texto permanece sobre la zona azul de alto contraste. */
+@container (max-width: 55rem) {
+  .config-hero.modulo-hero {
+    background: linear-gradient(110deg, #052650, #0755b8);
+  }
+}

@@ -1,0 +1,89 @@
+.casos {
+  .referencia-estados {
+    margin: 0;
+    padding: 0.9rem 1.2rem;
+    border: 1px solid var(--p-borde);
+    border-radius: var(--vista-panel-radio);
+    background: #f8fbff;
+    box-shadow: var(--modulo-sombra);
+  }
+  .referencia-estados h3 {
+    font-size: var(--vista-panel-titulo);
+    margin: 0;
+  }
+  .referencia-estados p {
+    font-size: var(--t-xs);
+    margin: 0.35rem 0;
+  }
+  .referencia-estados ul {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0.65rem 0 0;
+  }
+  .referencia-estados li {
+    border: 0;
+    padding: 0.6rem 0.3rem;
+    text-align: center;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .referencia-estados li::before {
+    content: '\270e';
+    margin-right: 0.4rem;
+  }
+  .publicado::before {
+    content: '\2713' !important;
+  }
+  .archivado {
+    color: #246536;
+    background: #e2f5e7;
+  }
+  .archivado::before {
+    content: '\25a3' !important;
+  }
+  .acciones-docentes {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin: 0.8rem 0 0.5rem;
+    gap: 0.7rem;
+  }
+  .acciones-docentes button {
+    position: relative;
+    border-radius: 1.3rem;
+    background: linear-gradient(125deg, #fff, #eaf3ff);
+    padding: 0.9rem 0.65rem 0.9rem 2.6rem;
+    box-shadow: var(--modulo-sombra);
+    color: #173957;
+    font-weight: 700;
+  }
+  .acciones-docentes button::before {
+    content: '+';
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.7rem;
+    color: #0763bd;
+  }
+  .acciones-docentes button:nth-child(2)::before {
+    content: '\270e';
+  }
+  .acciones-docentes button:nth-child(3)::before {
+    content: '\2315';
+  }
+  .acciones-docentes button:nth-child(4)::before {
+    content: '\27a4';
+  }
+  .acciones-docentes button:nth-child(5)::before {
+    content: '\25a3';
+  }
+  .acciones-docentes button:first-child {
+    border-color: #d3881c;
+  }
+  .acciones-docentes button span {
+    font-weight: 400;
+  }
+  .nota {
+    font-size: var(--t-xs);
+  }
+}

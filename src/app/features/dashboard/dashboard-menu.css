@@ -63,3 +63,95 @@
     display: none;
   }
 }
+
+/* Decoración y superficies del shell: no agrega controles ni modifica navegación. */
+.lateral {
+  isolation: isolate;
+}
+.lateral::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 18rem;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 0 100%, #10d9f477, transparent 65%),
+    radial-gradient(ellipse at 100% 100%, #ff861b66, transparent 60%);
+  border-radius: 65% 0 0;
+  border-top: 2px solid #57dfff;
+}
+.lateral .nota-demo {
+  background: #062650;
+  border-color: #4270a1;
+  color: #e1efff;
+}
+.lateral .nota-demo p,
+.lateral a.volver {
+  color: #d2e9ff;
+}
+.lateral a.volver:hover {
+  color: #fff;
+}
+.lateral a:focus-visible,
+.lateral button:focus-visible {
+  outline-color: #83e8ff;
+}
+.perfil {
+  padding: 0.65rem 1rem;
+  border-radius: 1.2rem 0.4rem 1.2rem 1.2rem;
+  background: #073575;
+  color: #fff;
+  box-shadow: 0 4px 16px #07357522;
+}
+.perfil small {
+  color: #d2e9ff;
+}
+.perfil .avatar {
+  flex-shrink: 0;
+  background: #eaf6ff;
+}
+.superior {
+  box-shadow: 0 3px 20px #103c7010;
+}
+.contexto {
+  letter-spacing: 0.04em;
+}
+@media (max-width: 800px) {
+  .lateral::before {
+    display: none;
+  }
+}
+
+/* Sidebar institucional único: independiente de la sección activa. */
+@media (min-width: 801px) {
+  .lateral {
+    background: linear-gradient(155deg, #052650, #073575), #052650;
+    padding-top: 1rem;
+  }
+  .lateral::before {
+    height: 17rem;
+    bottom: 7rem;
+    border-radius: 50% 0 0;
+    background:
+      linear-gradient(0deg, #073575, transparent 45%),
+      url('/images/inicio-ciudad.webp') center/cover;
+  }
+  .lateral::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 7rem;
+    pointer-events: none;
+    background: radial-gradient(ellipse at -10% -30%, #ffb52e 0, #ff861b 45%, transparent 46%);
+  }
+  nav a {
+    border-radius: 2rem;
+  }
+  .grupo {
+    margin-top: 1.4rem;
+  }
+}

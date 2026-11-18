@@ -1,5 +1,18 @@
 :host {
   /* Identidad compartida de Mariana: se hereda solo dentro del Dashboard. */
+  /* Presentacion compartida del Dashboard; comportamiento conservado. */
+  --vista-banner-min: 11.25rem;
+  --vista-banner-radio: 1.5rem;
+  --vista-panel-radio: 1.25rem;
+  --vista-panel-padding: 1rem;
+  --vista-gap: 1rem;
+  --vista-aviso-gap: 0.75rem;
+  --vista-aviso-padding: 0.5rem 1rem;
+  --vista-titulo: clamp(1.75rem, 2.3vw, 2rem);
+  --vista-panel-titulo: 1.25rem;
+  --vista-tarjeta-titulo: 1.0625rem;
+  --vista-descripcion: 0.9375rem;
+  --vista-banner-arte: 9.25rem;
   --p-texto: #172b4d;
   --p-sec: #344968;
   --p-azul: #0755b8;
@@ -22,4 +35,11 @@ button:not(:disabled):hover {
 }
 button:disabled {
   cursor: not-allowed;
+}
+/* Estas vistas reparten su alto libre sin alterar las demás rutas. */
+.dashboard:has(nav .activo[href='/dashboard/rubricas']) .area,
+.dashboard:has(nav .activo[href='/dashboard/configuracion']) .area,
+.dashboard:has(nav .activo[href='/dashboard/estudiante']) .area {
+  display: flex;
+  flex-direction: column;
 }

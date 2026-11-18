@@ -1,0 +1,86 @@
+/* Solo Inicio, determinado por el enlace activo existente. Sin lógica de sesión. */
+.busqueda-inicio {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #abc5e9;
+  border-radius: 3rem;
+  background: #e8f2ff;
+  color: #284564;
+  font-size: var(--t-sm);
+}
+.notificaciones-inicio {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  color: #173957;
+}
+.notificaciones-inicio svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.notificaciones-inicio small {
+  font-size: var(--t-xs);
+}
+.busqueda-inicio svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  flex: none;
+}
+.busqueda-inicio small {
+  display: block;
+  font-size: var(--t-xs);
+}
+.dashboard:has(nav .activo[href='/dashboard']) .superior {
+  gap: 0.7rem;
+  padding: 0.7rem 1.2rem;
+  background: linear-gradient(110deg, #fff, #e4efff), #fff;
+}
+.dashboard:has(nav .activo[href='/dashboard']) .ubicacion {
+  flex: 1 1 17rem;
+  gap: 0.6rem;
+}
+.dashboard:has(nav .activo[href='/dashboard']) .identificacion {
+  gap: 0.6rem;
+}
+.dashboard:has(nav .activo[href='/dashboard']) .insignia {
+  max-width: 10rem;
+  font-size: 0.625rem;
+}
+.dashboard:has(nav .activo[href='/dashboard']) .area {
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1.75rem 1.5rem;
+}
+.dashboard:has(nav .activo[href='/dashboard']) .fondo-dashboard {
+  background: radial-gradient(ellipse at 80% 70%, #d0e8ff, transparent 70%), #eef5ff;
+}
+.dashboard:has(nav .activo[href='/dashboard']) .ondas-fondo {
+  opacity: 0.32;
+}
+@media (max-width: 1100px) {
+  .busqueda-inicio {
+    order: 3;
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 1000px) {
+  .dashboard:has(nav .activo[href='/dashboard']) .area {
+    padding-inline: 1.5rem;
+  }
+}
+@media (max-width: 800px) {
+  .dashboard:has(nav .activo[href='/dashboard']) .area {
+    padding-inline: 1rem;
+  }
+}

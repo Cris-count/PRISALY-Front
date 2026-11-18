@@ -1,0 +1,164 @@
+/* Sistema de módulos: únicamente presentación; estados y acciones permanecen intactos. */
+:host {
+  --modulo-acento: #0755b8;
+  --modulo-suave: #e7f3ff;
+  --modulo-sombra: 0 8px 24px #123c7315;
+}
+.modulo-admin,
+[data-modulo='casos-academicos'] {
+  --modulo-acento: #975000;
+  --modulo-suave: #fff0df;
+}
+[data-modulo='rubricas'],
+.modulo-estudiante {
+  --modulo-acento: #6334b4;
+  --modulo-suave: #eee8ff;
+}
+[data-modulo='convocatorias'] {
+  --modulo-acento: #087365;
+  --modulo-suave: #e1f5ef;
+}
+.modulo-hero {
+  position: relative;
+  isolation: isolate;
+  padding: 1.75rem clamp(1rem, 3vw, 2rem);
+  padding-right: clamp(1rem, 18vw, 220px);
+  border: 1px solid var(--p-borde);
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(ellipse at 100% 0, #10d9f433, transparent 65%),
+    linear-gradient(110deg, #052650, #0755b8), #052650;
+  color: #fff;
+  box-shadow: var(--modulo-sombra);
+}
+.modulo-hero > div:not(.modulo-arte):not(.etiqueta-demo) {
+  min-width: 0;
+  flex: 1 1 28rem;
+}
+.modulo-hero p,
+.modulo-hero .etiqueta-demo span,
+.modulo-hero .sello-demo span {
+  color: #e7f3ff;
+}
+.modulo-hero .ceja {
+  color: #d5f4ff;
+}
+.modulo-hero h1 {
+  margin: 0.5rem 0;
+  color: #fff;
+}
+.modulo-hero .sello-demo,
+.modulo-hero .etiqueta-demo,
+.modulo-hero .identidad {
+  background: #062650;
+  color: #e7f3ff;
+  border-color: #6c94c2;
+  border-radius: 0.8rem;
+}
+.modulo-hero .modulo-arte {
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%) rotate(-6deg);
+  width: clamp(96px, 12vw, 160px);
+  height: clamp(96px, 12vw, 160px);
+  display: grid;
+  place-items: center;
+  margin: 0;
+  border: 1px solid #91dfff99;
+  border-bottom: 4px solid var(--p-naranja);
+  border-radius: 40% 40% 20% 20%;
+  background: linear-gradient(135deg, #ffffff22, #10d9f411);
+  color: #fff;
+  pointer-events: none;
+}
+.modulo-arte svg {
+  width: 55%;
+  height: 55%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.modulo-panel {
+  border-radius: var(--vista-panel-radio);
+  background: radial-gradient(ellipse at 100% 110%, var(--modulo-suave), transparent 65%), #fff;
+  box-shadow:
+    var(--modulo-sombra),
+    inset 0 -2px var(--modulo-acento);
+}
+.modulo-panel h2 {
+  letter-spacing: -0.025em;
+}
+.modulo-panel .numero,
+.modulo-panel .icono,
+.modulo-panel .avatar-estudiantil {
+  background: var(--modulo-suave);
+  color: var(--modulo-acento);
+}
+.modulo-panel .numero {
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+.modulo-panel .icono {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+}
+.modulo-panel button,
+.modulo-panel input,
+.modulo-panel select,
+.modulo-panel textarea {
+  border-radius: 0.8rem;
+}
+.modulo-panel th {
+  background: #e4efff;
+}
+.modulo-panel fieldset,
+.modulo-panel .catalogos > div {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #f5f9ff;
+}
+.modulo-panel .acciones-admin,
+.modulo-panel .acciones-docentes {
+  padding-top: 1rem;
+  border-top: 1px solid var(--p-borde);
+}
+.modulo-configuracion .estado {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: var(--modulo-sombra);
+}
+.modulo-configuracion .indicador {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: var(--modulo-suave);
+  color: var(--modulo-acento);
+}
+.modulo-configuracion .alcance:nth-child(2n) {
+  --modulo-acento: #975000;
+  --modulo-suave: #fff0df;
+}
+.modulo-estudiante .entrada-academica {
+  --modulo-acento: #975000;
+  --modulo-suave: #fff0df;
+}
+@media (max-width: 1000px) {
+  .modulo-hero {
+    padding: 1.5rem;
+  }
+  .modulo-hero .modulo-arte {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .modulo-hero {
+    padding: 1.2rem;
+  }
+}

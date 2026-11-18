@@ -1,0 +1,97 @@
+/* Ajustes visuales de EstadoPanel: anclados al host administrativo; no cambian estados. */
+:host ::ng-deep .aviso-integracion .aviso {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.4rem 1rem;
+  border-radius: 1.2rem;
+  padding: var(--vista-aviso-padding);
+  font-size: var(--t-sm);
+}
+:host ::ng-deep .aviso-integracion .aviso p {
+  margin: 0;
+  font-size: var(--t-sm);
+  line-height: 1.4;
+}
+:host ::ng-deep .aviso-integracion .aviso__titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+:host ::ng-deep .aviso-integracion .aviso__titulo::before {
+  content: '';
+  width: 1.3rem;
+  height: 1.3rem;
+  flex: none;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 28%, currentColor 0 1px, transparent 2px),
+    linear-gradient(currentColor, currentColor) center 65% / 2px 7px no-repeat;
+}
+:host ::ng-deep .fila-vacia .aviso {
+  border: 0;
+  border-radius: 0 0 0.7rem 0.7rem;
+  padding: 0.6rem 0.8rem;
+  font-size: var(--t-sm);
+}
+:host ::ng-deep .fila-vacia .aviso p {
+  margin: 0.2rem 0 0;
+  font-size: var(--t-sm);
+  line-height: 1.4;
+}
+@container (max-width:58rem) {
+  .areas-admin {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@container (max-width:38rem) {
+  .cabecera-admin > div:not(.campus-admin),
+  .cabecera-admin.modulo-hero .sello-demo {
+    max-width: none;
+  }
+  .campus-admin {
+    position: relative;
+    width: 100%;
+    height: auto;
+    max-width: 26rem;
+    margin: auto;
+  }
+  .campus-admin > svg {
+    height: auto;
+  }
+  .filtros-admin,
+  .acciones-admin {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .vista-previa th,
+  .vista-previa td {
+    padding: 0.5rem 0.2rem;
+    font-size: var(--t-xs);
+  }
+  :host ::ng-deep .aviso-integracion .aviso {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.chip-ejemplo,
+.chip-tipo,
+.chip-pendiente {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 2rem;
+  font-size: var(--t-xs);
+}
+.chip-ejemplo,
+.chip-tipo {
+  color: #124b88;
+  background: #e1edff;
+  border: 1px solid #c7d5e8;
+}
+.chip-pendiente {
+  color: #774100;
+  background: #ffe5b8;
+}
+.estados-demo {
+  margin-top: 0.8rem;
+}

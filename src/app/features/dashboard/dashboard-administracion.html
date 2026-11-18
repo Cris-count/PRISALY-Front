@@ -1,26 +1,48 @@
-<div class="administracion">
+<div class="administracion modulo-admin">
   <a class="regreso" routerLink="/dashboard">← Volver al dashboard</a>
-  <header class="cabecera-admin">
+  <header class="cabecera-admin modulo-hero">
     <div>
       <p class="ceja">COMUNIDAD ACADÉMICA / ADMINISTRACIÓN</p>
-      <h1 id="titulo-administracion">Gestión de usuarios y docentes</h1>
+      <h1 id="titulo-administracion">Gestión de <span>usuarios y docentes</span></h1>
       <p class="descripcion">
         Un espacio para organizar la información docente, sus responsabilidades y la futura consulta
         de roles y permisos institucionales.
       </p>
     </div>
+    <div class="campus-admin" aria-hidden="true">
+      <svg viewBox="0 0 1000 667" preserveAspectRatio="xMidYMid meet" focusable="false">
+        <image
+          href="images/inicio-campus.webp"
+          width="1000"
+          height="667"
+          preserveAspectRatio="xMidYMid meet"
+        />
+        <image
+          href="images/prisaly-logo.png"
+          x="400"
+          y="126"
+          width="190"
+          height="143"
+          preserveAspectRatio="xMidYMid meet"
+        />
+      </svg>
+    </div>
     <p class="sello-demo">ENTORNO DEMOSTRATIVO<span>Sin sesión administrativa autenticada</span></p>
   </header>
 
   <app-estado-panel
+    class="aviso-integracion"
     estado="pendiente"
     mensaje="Interfaz de presentación. La gestión de usuarios, docentes, roles y permisos está pendiente de integración; no permite operaciones administrativas."
   />
 
   <div class="areas-admin">
-    <section class="panel-admin docentes" aria-labelledby="titulo-docentes">
+    <section class="panel-admin modulo-panel docentes" aria-labelledby="titulo-docentes">
       <div class="cabecera-panel">
-        <span class="numero" aria-hidden="true">01</span>
+        <span class="numero icono-docentes" aria-hidden="true"
+          ><svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 9 12 4l10 5-10 5L2 9M6 11v6c4 3 8 3 12 0v-6M22 9v8" /></svg
+        ></span>
         <div>
           <p class="ceja">INFORMACIÓN INSTITUCIONAL</p>
           <h2 id="titulo-docentes">Gestión de docentes</h2>
@@ -59,18 +81,25 @@
             <th scope="col">Responsabilidades</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <tr class="fila-vacia">
+            <td colspan="3">
+              <app-estado-panel
+                estado="sin-datos"
+                mensaje="Esta demostración no consulta ni contiene registros docentes. La información estará disponible tras su integración institucional."
+              />
+            </td>
+          </tr>
+        </tbody>
       </table>
-      <app-estado-panel
-        estado="sin-datos"
-        mensaje="Esta demostración no consulta ni contiene registros docentes. La información estará disponible tras su integración institucional."
-      />
       <div class="acciones-admin" aria-describedby="nota-acciones-docentes">
         <button type="button" disabled aria-describedby="nota-acciones-docentes">
-          Registrar docente <span>Pendiente</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg
+          ><span class="accion-texto">Registrar docente <small>Pendiente</small></span>
         </button>
         <button type="button" disabled aria-describedby="nota-acciones-docentes">
-          Editar información <span>Pendiente</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-1 5 5-1L21 7l-4-4Z" /></svg
+          ><span class="accion-texto">Editar información <small>Pendiente</small></span>
         </button>
       </div>
       <p class="nota" id="nota-acciones-docentes">
@@ -78,9 +107,12 @@
       </p>
     </section>
 
-    <section class="panel-admin roles" aria-labelledby="titulo-roles">
+    <section class="panel-admin modulo-panel roles" aria-labelledby="titulo-roles">
       <div class="cabecera-panel">
-        <span class="numero" aria-hidden="true">02</span>
+        <span class="numero icono-roles" aria-hidden="true"
+          ><svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2 3 6v6c0 5 9 10 9 10s9-5 9-10V6z" /></svg
+        ></span>
         <div>
           <p class="ceja">ACCESO INSTITUCIONAL</p>
           <h2 id="titulo-roles">Roles y permisos</h2>
@@ -92,11 +124,22 @@
       </p>
       <dl class="catalogos">
         <div>
-          <dt>Roles</dt>
+          <dt>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0M17 3a4 4 0 0 1 0 8"
+              /></svg
+            >Roles
+          </dt>
           <dd>Catálogo pendiente de integración.</dd>
         </div>
         <div>
-          <dt>Permisos</dt>
+          <dt>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 4a6 6 0 1 1-4 10L3 21H1v-3l7-7a6 6 0 0 1 6-7Z" />
+              <circle cx="16" cy="8" r="1" /></svg
+            >Permisos
+          </dt>
           <dd>Consulta pendiente de integración.</dd>
         </div>
       </dl>
@@ -105,10 +148,14 @@
       </p>
       <div class="acciones-admin" aria-describedby="nota-acciones-roles">
         <button type="button" disabled aria-describedby="nota-acciones-roles">
-          Administrar roles <span>Pendiente</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M10 15v6" /></svg
+          ><span class="accion-texto">Administrar roles <small>Pendiente</small></span>
         </button>
         <button type="button" disabled aria-describedby="nota-acciones-roles">
-          Consultar permisos <span>Pendiente</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" /></svg
+          ><span class="accion-texto">Consultar permisos <small>Pendiente</small></span>
         </button>
       </div>
       <p class="nota" id="nota-acciones-roles">
@@ -117,8 +164,35 @@
     </section>
   </div>
 
-  <details class="panel-admin estados-demo">
-    <summary>Vista previa de estados <span>Ejemplos de diseño</span></summary>
+  <section class="panel-admin modulo-panel vista-previa" aria-labelledby="titulo-vista-previa">
+    <div class="cabecera-panel">
+      <h2 id="titulo-vista-previa">Vista previa de estados</h2>
+      <span class="chip-ejemplo">Ejemplo de diseño</span>
+    </div>
+    <table aria-describedby="nota-vista-previa">
+      <caption id="nota-vista-previa">
+        Ejemplo visual estático · No corresponde a una cuenta ni a un registro docente.
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Nombre</th>
+          <th scope="col">Tipo</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Última actualización</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Docente de ejemplo</td>
+          <td><span class="chip-tipo">Docente · ilustrativo</span></td>
+          <td><span class="chip-pendiente">Pendiente · ejemplo</span></td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+  <details class="panel-admin modulo-panel estados-demo">
+    <summary>Otros ejemplos de estados <span>Ejemplos de diseño</span></summary>
     <p>
       Estos ejemplos muestran presentaciones futuras. No representan consultas, errores ni
       decisiones de acceso ocurridos en esta demostración.

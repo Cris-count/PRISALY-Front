@@ -1,0 +1,222 @@
+.gestion-convocatorias {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr);
+  gap: 0.8rem;
+}
+.panel-docente {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid #b2d0f3;
+  border-radius: 1.4rem;
+  background: linear-gradient(125deg, #fff, #f0f6ff);
+  box-shadow:
+    0 7px 16px #123c7317,
+    inset 0 -2px #ffbf59;
+}
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.45rem;
+  color: #10254a;
+  font-size: 1.3rem;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+h2 svg {
+  color: #0755b8;
+}
+.cabecera-listado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.filtros-convocatorias {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: min(100%, 25rem);
+}
+label {
+  display: block;
+  font-size: var(--t-xs);
+  color: #344968;
+  font-weight: 600;
+}
+input,
+select,
+textarea {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  margin-top: 0.2rem;
+  border: 1px solid #94aac5;
+  border-radius: 0.75rem;
+  background: #f5f8ff;
+  color: #344968;
+  font-size: var(--t-sm);
+  min-height: 2.5rem;
+  cursor: not-allowed;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #344968;
+  opacity: 1;
+}
+.nota {
+  margin: 0.45rem 0;
+  font-size: var(--t-xs);
+  color: #344968;
+  line-height: 1.5;
+}
+.tabla-convocatorias {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #bed3ee;
+  border-radius: 0.8rem;
+}
+table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--t-sm);
+  color: #173957;
+}
+caption {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  color: #344968;
+  background: #f5f9ff;
+  font-size: var(--t-xs);
+}
+th,
+td {
+  padding: 0.3rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid #ccdaef;
+  overflow-wrap: anywhere;
+}
+thead {
+  background: #deebff;
+}
+th:first-child {
+  width: 27%;
+}
+th:nth-child(2) {
+  width: 16%;
+}
+th:nth-child(3),
+th:nth-child(4) {
+  width: 11%;
+}
+th:nth-child(5) {
+  width: 15%;
+}
+th:last-child {
+  width: 20%;
+}
+tbody th {
+  font-weight: 600;
+}
+.tipo-demo,
+.estado-demo {
+  display: inline-block;
+  padding: 0.2rem 0.35rem;
+  border-radius: 1rem;
+  font-size: var(--t-xs);
+  line-height: 1.4;
+}
+.tipo-demo {
+  color: #0755a2;
+  background: #ddecff;
+}
+.estado-demo[data-estado='curso'] {
+  color: #216137;
+  background: #dcf2e4;
+}
+.estado-demo[data-estado='finalizada'] {
+  color: #344968;
+  background: #e1e7f2;
+}
+.estado-demo[data-estado='proxima'] {
+  color: #6334b4;
+  background: #eee4ff;
+}
+.acciones-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+.acciones-fila button {
+  display: grid;
+  place-items: center;
+  padding: 0.15rem;
+  border: 1px solid #b8c9e4;
+  border-radius: 0.3rem;
+  background: #f5f8ff;
+  color: #40547b;
+  cursor: not-allowed;
+}
+.acciones-fila svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.opciones-convocatoria {
+  display: grid;
+  gap: 0.3rem;
+}
+.opciones-convocatoria button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+  text-align: left;
+  border: 1px solid #c1d2e9;
+  border-radius: 0.9rem;
+  background: #f5f8ff;
+  color: #173957;
+  font-size: var(--t-sm);
+  cursor: not-allowed;
+}
+.opciones-convocatoria button > svg {
+  padding: 0.2rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  color: #0755b8;
+  background: #e0efff;
+}
+.opciones-convocatoria button:first-child > svg {
+  color: #a14d00;
+  background: #fff1dc;
+}
+.opciones-convocatoria small {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: var(--t-xs);
+  line-height: 1.4;
+}
+.flecha {
+  font-size: 1.5rem;
+}
+@container (max-width: 58rem) {
+  .gestion-convocatorias {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@container (max-width: 36rem) {
+  .filtros-convocatorias {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .opciones-convocatoria button {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .flecha {
+    display: none;
+  }
+}
