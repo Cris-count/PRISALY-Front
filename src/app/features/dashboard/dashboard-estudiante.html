@@ -1,117 +1,185 @@
-<div class="panel-estudiantil">
+<div class="panel-estudiantil modulo-estudiante">
   <a class="regreso" routerLink="/dashboard">← Volver al dashboard</a>
-  <header class="bienvenida-estudiante">
-    <div>
+  <header class="bienvenida-estudiante modulo-hero">
+    <div class="hero-texto">
       <p class="ceja">RECORRIDO ESTUDIANTIL</p>
-      <h1>Mi espacio de aprendizaje</h1>
+      <h1>Mi espacio de <span>aprendizaje</span></h1>
       <p class="descripcion">
         Un espacio para conocer tus futuras sesiones, convocatorias y participaciones académicas.
         Cada experiencia comenzará cuando exista una participación autorizada por tu institución.
       </p>
+      <span class="linea-estudiante" aria-hidden="true"></span>
     </div>
+    <div class="campus-estudiante" aria-hidden="true">
+      <svg viewBox="0 0 2170 725" preserveAspectRatio="xMidYMid meet" focusable="false">
+        <image
+          href="images/estudiante-campus.webp"
+          width="2170"
+          height="725"
+          preserveAspectRatio="xMidYMid meet"
+        />
+        <image
+          href="images/prisaly-logo.png"
+          x="997"
+          y="180"
+          width="430"
+          height="323"
+          preserveAspectRatio="xMidYMid meet"
+        />
+      </svg>
+    </div>
+  </header>
+  <div class="estado-estudiante">
     <div class="etiqueta-demo">
       ENTORNO DEMOSTRATIVO<span>Sin identidad estudiantil autenticada</span>
     </div>
-  </header>
-  <app-estado-recorrido-estudiantil />
+    <app-estado-recorrido-estudiantil />
+  </div>
   <div class="portal-estudiante">
-    <aside class="columna-perfil" aria-label="Perfil y avisos estudiantiles">
-      <section class="perfil-estudiante" aria-labelledby="titulo-perfil-estudiante">
+    <section class="perfil-estudiante modulo-panel" aria-labelledby="titulo-perfil-estudiante">
+      <div class="perfil-encabezado">
         <div class="avatar-estudiantil" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <path d="M20 21v-2a8 8 0 0 0-16 0v2M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0" />
           </svg>
         </div>
-        <p class="ceja">PERFIL GENÉRICO</p>
-        <h2 id="titulo-perfil-estudiante">Tu perfil estudiantil</h2>
-        <p>Sin sesión estudiantil autorizada.</p>
-        <div class="personalizacion-pendiente">
-          <h3>Tu futuro avatar</h3>
-          <p>
-            Espacio reservado para personalización. Alcance pendiente de confirmación institucional.
-          </p>
+        <div class="perfil-identidad">
+          <p class="ceja">PERFIL GENÉRICO</p>
+          <h2 id="titulo-perfil-estudiante">Tu perfil estudiantil</h2>
+          <p>Sin sesión estudiantil autorizada.</p>
         </div>
-      </section>
-      <section class="notificaciones-estudiante" aria-labelledby="titulo-notificaciones">
+      </div>
+      <div class="personalizacion-pendiente">
+        <h3>Tu futuro avatar</h3>
+        <p>
+          Espacio reservado para personalización. Alcance pendiente de confirmación institucional.
+        </p>
+      </div>
+      <button class="editar-perfil" type="button" disabled aria-describedby="nota-editar-perfil">
+        Editar perfil <span>Pendiente de integración</span>
+      </button>
+      <p class="nota" id="nota-editar-perfil">Edición no disponible en esta demostración.</p>
+    </section>
+    <section
+      class="tarjeta-estudiante modulo-panel tarjeta-sesiones"
+      aria-labelledby="sesiones-estudiante"
+    >
+      <div class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 5h18v16H3zM7 2v6M17 2v6M3 10h18M7 14h3M14 14h3" />
+        </svg>
+      </div>
+      <p class="ceja">PLANIFICA TU RECORRIDO</p>
+      <h2 id="sesiones-estudiante">Sesiones académicas</h2>
+      <p class="mensaje-pendiente">
+        Las sesiones y convocatorias estudiantiles estarán disponibles cuando se habilite su
+        integración institucional
+      </p>
+      <p class="nota">Este espacio no contiene asignaciones, fechas ni horarios.</p>
+    </section>
+    <section
+      class="tarjeta-estudiante modulo-panel tarjeta-convocatorias"
+      aria-labelledby="convocatorias-estudiante"
+    >
+      <div class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 10v4h5l11 5V5L8 10H3M8 14l2 7h4l-3-6M22 9v6" />
+        </svg>
+      </div>
+      <p class="ceja">ENCUENTRA TU ESPACIO</p>
+      <h2 id="convocatorias-estudiante">Convocatorias</h2>
+      <p class="mensaje-pendiente">Consulta pendiente de integración institucional.</p>
+      <p class="nota">
+        No hay convocatorias consultadas ni estudiantes convocados en esta demostración.
+      </p>
+    </section>
+    <section
+      class="tarjeta-estudiante modulo-panel participaciones-estudiante"
+      aria-labelledby="participaciones-estudiante"
+    >
+      <div class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0M16 3a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-4"
+          />
+        </svg>
+      </div>
+      <p class="ceja">ACOMPAÑA TU APRENDIZAJE</p>
+      <h2 id="participaciones-estudiante">Participaciones académicas</h2>
+      <p class="mensaje-pendiente">
+        No hay información de participación disponible en este entorno de demostración
+      </p>
+      <p class="nota">
+        Los estados de participación se mostrarán cuando la integración esté habilitada.
+      </p>
+    </section>
+    <section class="notificaciones-estudiante modulo-panel" aria-labelledby="titulo-notificaciones">
+      <div class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+        </svg>
+      </div>
+      <h2 id="titulo-notificaciones">Notificaciones</h2>
+      <p>Los avisos institucionales estarán disponibles cuando se habilite su integración.</p>
+      <p class="nota">No se han consultado notificaciones.</p>
+    </section>
+    <section class="entrada-academica modulo-panel" aria-labelledby="titulo-entrada">
+      <div class="entrada-texto">
         <div class="icono" aria-hidden="true">
           <svg viewBox="0 0 24 24">
-            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+            <path
+              d="M7 8h10a4 4 0 0 1 4 3l1 6a2 2 0 0 1-3 2l-4-3H9l-4 3a2 2 0 0 1-3-2l1-6a4 4 0 0 1 4-3M7 10v5M4.5 12.5h5M16 11h.1M19 14h.1"
+            />
           </svg>
         </div>
-        <h2 id="titulo-notificaciones">Notificaciones</h2>
-        <p>Los avisos institucionales estarán disponibles cuando se habilite su integración.</p>
-        <p class="nota">No se han consultado notificaciones.</p>
-      </section>
-    </aside>
-    <div class="contenido-estudiante">
-      <div class="resumen-estudiante">
-        <section class="tarjeta-estudiante" aria-labelledby="sesiones-estudiante">
-          <div class="icono" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M3 5h18v16H3zM7 2v6M17 2v6M3 10h18M7 14h3M14 14h3" />
-            </svg>
-          </div>
-          <p class="ceja">PLANIFICA TU RECORRIDO</p>
-          <h2 id="sesiones-estudiante">Sesiones académicas</h2>
-          <p class="mensaje-pendiente">
-            Las sesiones y convocatorias estudiantiles estarán disponibles cuando se habilite su
-            integración institucional
-          </p>
-          <p class="nota">Este espacio no contiene asignaciones, fechas ni horarios.</p>
-        </section>
-        <section class="tarjeta-estudiante" aria-labelledby="convocatorias-estudiante">
-          <div class="icono" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M3 10v4h5l11 5V5L8 10H3M8 14l2 7h4l-3-6M22 9v6" />
-            </svg>
-          </div>
-          <p class="ceja">ENCUENTRA TU ESPACIO</p>
-          <h2 id="convocatorias-estudiante">Convocatorias</h2>
-          <p class="mensaje-pendiente">Consulta pendiente de integración institucional.</p>
-          <p class="nota">
-            No hay convocatorias consultadas ni estudiantes convocados en esta demostración.
-          </p>
-        </section>
+        <p class="ceja">DEL CONTEXTO A LA EXPERIENCIA</p>
+        <h2 id="titulo-entrada">Tu próxima experiencia de simulación</h2>
+        <p>
+          Este será el punto de entrada a una participación académica autorizada. La demostración no
+          crea intentos ni habilita el acceso académico.
+        </p>
       </div>
-      <section
-        class="tarjeta-estudiante participaciones-estudiante"
-        aria-labelledby="participaciones-estudiante"
-      >
-        <div class="icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM8 8h8M8 12h8M8 16h5" /></svg>
-        </div>
-        <p class="ceja">ACOMPAÑA TU APRENDIZAJE</p>
-        <h2 id="participaciones-estudiante">Participaciones académicas</h2>
-        <p class="mensaje-pendiente">
-          No hay información de participación disponible en este entorno de demostración
-        </p>
-        <p class="nota">
-          Los estados de participación se mostrarán cuando la integración esté habilitada.
-        </p>
-      </section>
-      <section class="entrada-academica" aria-labelledby="titulo-entrada">
-        <div class="entrada-texto">
-          <p class="ceja">DEL CONTEXTO A LA EXPERIENCIA</p>
-          <h2 id="titulo-entrada">Tu próxima experiencia de simulación</h2>
-          <p>
-            Este será el punto de entrada a una participación académica autorizada. La demostración
-            no crea intentos ni habilita el acceso académico.
-          </p>
-        </div>
-        <div class="entrada-accion">
-          <span class="habilitacion">Pendiente de habilitación</span
-          ><button
-            id="entrada-simulador"
-            type="button"
-            disabled
-            aria-describedby="requisito-intento"
-          >
-            Acceder a mi participación <span aria-hidden="true">↗</span>
-          </button>
-          <p id="requisito-intento">Disponible cuando exista un intento autorizado</p>
-        </div>
-      </section>
-    </div>
+      <div class="entrada-accion">
+        <span class="habilitacion">Pendiente de habilitación</span
+        ><button id="entrada-simulador" type="button" disabled aria-describedby="requisito-intento">
+          Acceder a mi participación <span aria-hidden="true">↗</span>
+        </button>
+        <p id="requisito-intento">Disponible cuando exista un intento autorizado</p>
+      </div>
+    </section>
+    <section class="recorrido-estudiante modulo-panel" aria-labelledby="titulo-recorrido-visual">
+      <p class="ceja">UNA MIRADA AL RECORRIDO</p>
+      <h2 id="titulo-recorrido-visual">Recorrido estudiantil</h2>
+      <p id="nota-recorrido-visual">
+        Referencia visual · Sin progreso académico real. Todas las etapas están pendientes de
+        habilitación.
+      </p>
+      <ol aria-describedby="nota-recorrido-visual">
+        <li>
+          <span aria-hidden="true"
+            ><svg viewBox="0 0 24 24">
+              <path d="M5 11V7a7 7 0 0 1 14 0v4M3 11h18v12H3z" /></svg></span
+          ><strong>Acceso</strong>
+        </li>
+        <li>
+          <span aria-hidden="true"
+            ><svg viewBox="0 0 24 24">
+              <path d="M20 21v-2a8 8 0 0 0-16 0v2M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0" /></svg></span
+          ><strong>Participación</strong>
+        </li>
+        <li>
+          <span aria-hidden="true"
+            ><svg viewBox="0 0 24 24">
+              <path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z" /></svg></span
+          ><strong>Evaluación</strong>
+        </li>
+        <li>
+          <span aria-hidden="true"
+            ><svg viewBox="0 0 24 24"><path d="M5 22V3h14l-3 5 3 5H5" /></svg></span
+          ><strong>Finalización</strong>
+        </li>
+      </ol>
+    </section>
   </div>
   <footer class="pie-estudiante">
     PRISALY · Interfaz de preparación académica · Sin datos reales

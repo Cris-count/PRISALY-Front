@@ -34,6 +34,7 @@ import { DASHBOARD_NAVEGACION } from './dashboard-secciones';
     './dashboard-tipografia.css',
     './dashboard-identidad.css',
     './dashboard-menu.css',
+    './dashboard-inicio-shell.css',
   ],
 })
 export class DashboardLayout {

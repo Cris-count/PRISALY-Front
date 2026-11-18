@@ -1,0 +1,159 @@
+:host ::ng-deep [data-modulo='casos-academicos'] > app-estado-panel .aviso {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: var(--vista-aviso-padding);
+  border-radius: 1.3rem;
+  font-size: var(--t-sm);
+}
+:host ::ng-deep [data-modulo='casos-academicos'] > app-estado-panel .aviso p {
+  margin: 0;
+  font-size: var(--t-sm);
+}
+:host ::ng-deep [data-modulo='casos-academicos'] .panel-docente app-estado-panel .aviso {
+  padding: 0.3rem 0.5rem;
+  background: transparent;
+  border: 0;
+  text-align: center;
+  font-size: var(--t-sm);
+}
+:host ::ng-deep [data-modulo='casos-academicos'] .panel-docente app-estado-panel .aviso__titulo {
+  display: none;
+}
+:host ::ng-deep [data-modulo='casos-academicos'] app-estructura-docente ul {
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+:host ::ng-deep [data-modulo='casos-academicos'] app-estructura-docente li {
+  position: relative;
+  padding: 0.8rem 0.85rem 0.8rem 3.8rem;
+  border: 1px solid #e2eafb;
+  border-radius: 1rem;
+  background: #f5f8ff;
+}
+:host ::ng-deep [data-modulo='casos-academicos'] app-estructura-docente li::before {
+  content: '\2637';
+  position: absolute;
+  left: 0.8rem;
+  top: 0.85rem;
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  background: #ede6ff;
+  color: #6334b4;
+  border-radius: 0.6rem;
+  font-size: 1.5rem;
+}
+:host ::ng-deep [data-modulo='casos-academicos'] app-estructura-docente li:nth-child(2)::before {
+  content: '\25c7';
+  background: #fff0e7;
+  color: #a85114;
+}
+:host ::ng-deep [data-modulo='casos-academicos'] app-estructura-docente li:nth-child(3)::before {
+  content: '?';
+  background: #fff0df;
+  color: #975000;
+}
+:host ::ng-deep [data-modulo='casos-academicos'] app-estructura-docente li:nth-child(4)::before {
+  content: '\2611';
+  background: #e1f5ff;
+  color: #0755b8;
+}
+:host ::ng-deep [data-modulo='casos-academicos'] app-estructura-docente li:nth-child(5)::before {
+  content: '\25c8';
+  background: #e1f5ff;
+  color: #0755b8;
+}
+:host ::ng-deep [data-modulo='casos-academicos'] app-estructura-docente h3 {
+  font-size: var(--t-card);
+}
+:host ::ng-deep [data-modulo='casos-academicos'] app-estructura-docente p {
+  margin: 0.25rem 0 0;
+  font-size: var(--t-sm);
+  line-height: 1.4;
+}
+@container (max-width: 55rem) {
+  .casos .areas-docentes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .casos .acciones-docentes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .casos .cabecera-docente {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+  .casos .crear-caso {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    margin-top: 0.8rem;
+  }
+}
+@container (max-width: 35rem) {
+  .casos .cabecera-docente {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.1rem;
+  }
+  .casos .campus-casos {
+    width: min(100%, 24rem);
+    margin: auto;
+  }
+  .casos .identidad {
+    order: 1;
+  }
+  .casos .acciones-docentes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .casos .referencia-estados ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container (max-width: 35rem) {
+  .casos .cabecera-docente > div {
+    flex: none;
+  }
+  .casos .panel-docente {
+    padding: 0.8rem;
+  }
+  :host ::ng-deep .casos app-estructura-docente li {
+    padding: 0.7rem;
+  }
+  :host ::ng-deep .casos app-estructura-docente li::before {
+    position: static;
+    margin-bottom: 0.4rem;
+  }
+}
+
+@container (max-width: 35rem) {
+  .casos .cabecera-docente h1 {
+    order: 1;
+  }
+  .casos .cabecera-docente > p:not(.ceja):not(.identidad) {
+    order: 2;
+  }
+  .casos .campus-casos {
+    order: 3;
+  }
+  .casos .crear-caso {
+    order: 4;
+  }
+  .casos .cabecera-docente .identidad {
+    order: 5;
+  }
+  :host ::ng-deep .casos > app-estado-panel .aviso {
+    display: block;
+  }
+  :host ::ng-deep .casos > app-estado-panel .aviso p {
+    margin-top: 0.35rem;
+  }
+}
+
+/* Al apilar el banner, el texto permanece sobre la zona azul de alto contraste. */
+@container (max-width: 35rem) {
+  .casos .cabecera-docente {
+    background: linear-gradient(110deg, #052650, #0755b8);
+  }
+}

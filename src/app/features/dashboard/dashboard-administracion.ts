@@ -7,7 +7,12 @@ import { EstadoPanel, TipoEstadoPanel } from './estado-panel';
   imports: [RouterLink, EstadoPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-administracion.html',
-  styleUrl: './dashboard-administracion.css',
+  styleUrls: [
+    './dashboard-administracion.css',
+    './dashboard-modulos.css',
+    './dashboard-administracion-visual.css',
+    './dashboard-administracion-estados.css',
+  ],
 })
 export class DashboardAdministracion {
   // Ejemplos de presentación: no representan respuestas de servicios ni permisos efectivos.

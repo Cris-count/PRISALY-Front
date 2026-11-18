@@ -1,42 +1,80 @@
 <div class="pagina">
+  <div class="ciudad-inicio" aria-hidden="true">
+    <img src="images/inicio-ciudad.webp" alt="" width="800" height="1200" /><img
+      class="logo-plaza"
+      src="images/prisaly-logo.png"
+      alt=""
+      width="112"
+      height="84"
+    />
+  </div>
   <section class="bienvenida" aria-labelledby="bienvenida-dashboard">
     <div class="bienvenida-texto">
       <p class="ceja">APRENDER CON PERSPECTIVA</p>
-      <h1 id="bienvenida-dashboard">Bienvenido a PRISALY</h1>
+      <h1 id="bienvenida-dashboard">Bienvenido a <span>PRISALY</span></h1>
       <p class="descripcion">
         Experiencias, personas y herramientas para aprender Psicología Social.
       </p>
-      <p class="aviso-demo">Demostración visual · Integración académica pendiente</p>
+      <span class="acento-hero" aria-hidden="true"></span>
+    </div>
+    <div class="emblema-institucional" aria-hidden="true">
+      <svg viewBox="0 0 1000 667" preserveAspectRatio="xMidYMid meet" focusable="false">
+        <image
+          href="images/inicio-campus.webp"
+          width="1000"
+          height="667"
+          preserveAspectRatio="xMidYMid meet"
+        />
+        <image
+          href="images/prisaly-logo.png"
+          x="400"
+          y="126"
+          width="190"
+          height="143"
+          preserveAspectRatio="xMidYMid meet"
+        />
+      </svg>
     </div>
     <div class="bienvenida-accion">
       <a class="accion" routerLink="/dashboard/casos-academicos"
-        >Explorar casos académicos <span aria-hidden="true">↗</span></a
+        ><span class="reproducir" aria-hidden="true">▶</span> Explorar casos académicos
+        <span aria-hidden="true">›</span></a
       >
-      <span>Comprender · Explorar · Construir</span>
+      <span>Comprender · Analizar · Contextualizar</span>
     </div>
   </section>
   <section aria-labelledby="secciones-dashboard">
     <div class="seccion-cabecera">
-      <div>
-        <p class="ceja">TU PUNTO DE PARTIDA</p>
-        <h2 id="secciones-dashboard">Explora la plataforma</h2>
-      </div>
-      <span class="detalle">Vistas de presentación</span>
+      <p class="ceja">TU PUNTO DE PARTIDA</p>
+      <h2 id="secciones-dashboard">Explora la plataforma</h2>
     </div>
     <div class="tarjetas">
       @for (seccion of secciones; track seccion.ruta) {
+        @let icono =
+          seccion.ruta === 'casos-academicos'
+            ? 'M2 7l10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5'
+            : seccion.ruta === 'configuracion'
+              ? 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M9 2h6l1 3 3 1 3 5-2 3v4l-5 3-3-2-3 1-4-4 1-4-2-3 3-4 3 1z'
+              : seccion.ruta === 'estudiante'
+                ? 'M2 3q5-2 10 1v18q-5-3-10-1zM12 4q5-3 10-1v18q-5-2-10 1z'
+                : seccion.icono;
         <a
           class="acceso"
           [class.acceso--estudiante]="seccion.ruta === 'estudiante'"
           [routerLink]="['/dashboard', seccion.ruta]"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="seccion.icono" /></svg>
+          <svg class="icono-acceso" viewBox="0 0 24 24" aria-hidden="true">
+            <path [attr.d]="icono" />
+          </svg>
           <div class="acceso-contenido">
             <h3>{{ seccion.titulo }}</h3>
             <p>{{ seccion.descripcion }}</p>
           </div>
-          <span class="disponibilidad">Explorar vista <span aria-hidden="true">→</span></span></a
-        >
+          <span class="disponibilidad">Explorar ahora <span aria-hidden="true">›</span></span>
+          <svg class="decoracion-acceso" viewBox="0 0 24 24" aria-hidden="true">
+            <path [attr.d]="icono" />
+          </svg>
+        </a>
       }
     </div>
   </section>
