@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/orden.error.schema.json",
+  "title": "orden.error",
+  "description": "Rechazo de una orden. Requiere correlacion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "codigo"
+  ],
+  "properties": {
+    "codigo": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,47}$"
+    },
+    "detalle": {
+      "type": "string",
+      "maxLength": 500
+    }
+  }
+}

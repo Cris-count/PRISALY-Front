@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/interactuable.estado.schema.json",
+  "title": "interactuable.estado",
+  "description": "Cambia el resaltado visual de un interactuable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "interactuableId",
+    "estado"
+  ],
+  "properties": {
+    "interactuableId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "disponible",
+        "completado",
+        "bloqueado"
+      ]
+    }
+  }
+}

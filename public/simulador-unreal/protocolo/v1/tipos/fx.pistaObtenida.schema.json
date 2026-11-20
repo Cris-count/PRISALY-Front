@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/fx.pistaObtenida.schema.json",
+  "title": "fx.pistaObtenida",
+  "description": "Efecto visual opcional. La pista vive solo en Angular.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "origenId"
+  ],
+  "properties": {
+    "origenId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    }
+  }
+}

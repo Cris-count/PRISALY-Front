@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/npc.reproducirAnimacion.schema.json",
+  "title": "npc.reproducirAnimacion",
+  "description": "Animacion visual de un NPC.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "npcId",
+    "animacion"
+  ],
+  "properties": {
+    "npcId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "animacion": {
+      "type": "string",
+      "enum": [
+        "hablar",
+        "escuchar",
+        "idle"
+      ]
+    }
+  }
+}

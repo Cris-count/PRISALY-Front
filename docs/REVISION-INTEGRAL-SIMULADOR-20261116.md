@@ -49,6 +49,8 @@ Esto verifica el interior y la conversación de demostración. No acredita la ej
 
 ## Hallazgos y pendientes
 
+> Los puntos 1 a 3 quedaron resueltos en `e7add19`; véase [Actualización del 17/11/2026](#actualización-del-17112026).
+
 1. **Adaptación móvil:** con viewport de 390 px, el documento alcanza 1229 px de ancho. La ciudad queda recortada y requiere desplazamiento horizontal. Debe resolverse antes de aceptar adaptación de pantalla. Durante el cambio de tamaño también se registraron errores `ResizeObserver loop completed with undelivered notifications`; queda pendiente diagnosticar su causa, sin atribuirla únicamente al desbordamiento.
 2. **Confirmación inicial del cuestionario:** utiliza `dialog open`; durante la comprobación no coincide con `:modal`, no tiene `aria-modal` y el foco permanece fuera. El bloqueo lógico del mapa funciona, pero falta completar el comportamiento de teclado y foco. La libreta sí utiliza modal nativo correctamente.
 3. **Texto de producto:** algunas instrucciones llaman “oficial” al cuestionario, aunque la experiencia ejecutada es una demo local con preguntas de ejemplo y sin intento registrado. Debe aclararse para evitar una evaluación incorrecta del avance.
@@ -81,3 +83,19 @@ En `../../Entregables/Simulador/`:
 ## Orden recomendado
 
 Primero corregir adaptación móvil, foco de confirmación y texto de demo. Después cerrar la integración real con Cristian cuando entregue V2 y VISUAL-31, sin alterar rutas por suposición. En paralelo, acordar y conectar los contratos académicos para probar persistencia y transición oficial. Solo tras esas comprobaciones corresponde declarar aceptación visual y académica.
+
+## Actualización del 17/11/2026
+
+Recomprobación sobre `e7add19` (rama `feature/simulador-integracion-nicolas`, publicada en origin), sin cambios de implementación. Servidor de desarrollo local en `/simulador-integrado`.
+
+| Hallazgo | Comprobación | Estado |
+| --- | --- | --- |
+| 1. Adaptación móvil | Viewport 390 × 844: ancho del documento 390 px, sin desplazamiento horizontal; canvas 343 × 206 px. Cambios 1280 → 768 → 390 sin errores `ResizeObserver` en consola. Escritorio: canvas 922 × 553 px, un solo canvas. | Resuelto |
+| 2. Confirmación inicial del cuestionario | El diálogo se abre con `showModal()`: coincide con `:modal`, el foco entra en «Cancelar y seguir explorando». Escape cierra, vuelve a exploración y devuelve el foco al disparador. | Resuelto |
+| 3. Texto de producto | Las vistas rotulan «demostración» y aclaran que no se persiste en Backend; cubierto por la prueba de auditoría de textos. | Resuelto |
+
+Límites: la apertura del diálogo se invocó desde el componente, porque el navegador de verificación limitaba la animación y el personaje no completó el recorrido hasta Plaza Central. Conviene repetir manualmente el recorrido completo. La verificación usó Node 24.13.1 con el helper local `scripts/patch-node.cjs`; se recomienda Node ≥ 24.15 (referencia: 24.22.1).
+
+Verificación automatizada: **489 pruebas aprobadas** y compilación de producción correcta (persiste la advertencia CommonJS de Phaser).
+
+Siguen abiertos los puntos 4 a 7: recursos V2 y VISUAL-31, interior real de Cristian, persistencia y flujo académico, y publicación coordinada.

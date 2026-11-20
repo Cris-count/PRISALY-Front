@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/mundo.listo.schema.json",
+  "title": "mundo.listo",
+  "description": "Unreal termino de cargar el nivel y espera sesion.iniciar.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "versionContenido"
+  ],
+  "properties": {
+    "versionContenido": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    }
+  }
+}

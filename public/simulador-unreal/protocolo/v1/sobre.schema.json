@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/sobre.schema.json",
+  "title": "Sobre de mensaje PRISALY v1",
+  "description": "ESTADO: PROPUESTO. Envoltura comun de todo mensaje Angular-Unreal.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "v",
+    "tipo",
+    "id",
+    "correlacion",
+    "sesion",
+    "ts",
+    "origen",
+    "datos"
+  ],
+  "properties": {
+    "v": {
+      "const": 1
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "mundo.listo",
+        "zona.entro",
+        "zona.salio",
+        "edificio.entro",
+        "edificio.salio",
+        "interactuable.disponible",
+        "interactuable.no_disponible",
+        "interactuable.activado",
+        "orden.ack",
+        "orden.error",
+        "sesion.iniciar",
+        "estado.restaurar",
+        "interactuable.estado",
+        "puerta.abrir",
+        "camara.enfocar",
+        "camara.liberar",
+        "npc.reproducirAnimacion",
+        "avatar.irA",
+        "fx.pistaObtenida",
+        "mundo.bloquearExploracion",
+        "latido"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[ua]-[0-9a-z]{6,32}$"
+    },
+    "correlacion": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[ua]-[0-9a-z]{6,32}$"
+    },
+    "sesion": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,64}$"
+    },
+    "ts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "origen": {
+      "type": "string",
+      "enum": [
+        "unreal",
+        "angular"
+      ]
+    },
+    "datos": {
+      "type": "object"
+    }
+  }
+}
