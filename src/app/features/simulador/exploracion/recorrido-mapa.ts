@@ -50,7 +50,7 @@ import { ConfiguracionMapa, EventoEspacioVisual, PlantillasEspacio } from './map
           <article class="tarjeta">
             <h2>Investiga a tu ritmo</h2>
             <p>
-              Este mapa contiene tres espacios de ejemplo. Selecciona uno y entra para explorar su
+              Este mapa contiene espacios de ejemplo. Selecciona uno y entra para explorar su
               integración visual.
             </p>
             <p>
@@ -155,31 +155,62 @@ import { ConfiguracionMapa, EventoEspacioVisual, PlantillasEspacio } from './map
               </p>
             </article>
           } @else {
+            <div class="area-mapa">
             <app-mapa-interactivo
               [configuracion]="exploracion.configuracion()"
               [seleccionado]="exploracion.seleccionado()"
               [visitas]="exploracion.visitas()"
               [exterior]="plantillas().exterior"
               (seleccionar)="exploracion.seleccionar($event)"
+              (entrar)="exploracion.entrar()"
               (preguntas)="exploracion.solicitarPreguntas()"
             />
-            <aside class="tarjeta" aria-label="Espacio seleccionado">
-              @if (exploracion.espacioSeleccionado(); as espacio) {
-                <h2>{{ espacio.nombre }}</h2>
-                <p>
-                  Visitas: {{ exploracion.visitas().get(espacio.id) ?? 0 }}. No es necesario visitar
-                  todos los lugares.
-                </p>
-                <button type="button" class="boton boton--primario" (click)="exploracion.entrar()">
-                  Entrar a {{ espacio.nombre }}
+            <aside class="herramientas" aria-label="Herramientas de exploración">
+              <div class="herramientas__botones" role="group" aria-label="Herramientas del mapa">
+                <button type="button" class="herramienta" [attr.aria-expanded]="panelActivo() === 'lugares'"
+                  aria-controls="panel-herramienta" (click)="alternarPanel('lugares')">
+                  <span aria-hidden="true">📍</span> Lugares
                 </button>
-              } @else {
-                <p>
-                  Selecciona un espacio del mapa. También puedes comenzar las preguntas desde el
-                  punto PRISALY.
-                </p>
-              }
+                <button type="button" class="herramienta" [attr.aria-expanded]="panelActivo() === 'caso'"
+                  aria-controls="panel-herramienta" (click)="alternarPanel('caso')">
+                  <span aria-hidden="true">📋</span> Información del caso
+                </button>
+                <button type="button" class="herramienta" [attr.aria-expanded]="panelActivo() === 'ayuda'"
+                  aria-controls="panel-herramienta" (click)="alternarPanel('ayuda')">
+                  <span aria-hidden="true">❔</span> Ayuda
+                </button>
+              </div>
+              <div id="panel-herramienta" class="panel-herramienta" [hidden]="!panelActivo()">
+                @switch (panelActivo()) {
+                  @case ('lugares') {
+                    <h2>Lugares</h2>
+                    <p>Elige un lugar para seleccionarlo en el mapa.</p>
+                    <ul class="lista-lugares">
+                      @for (lugar of exploracion.configuracion().espacios; track lugar.id) {
+                        <li>
+                          <button type="button" class="lugar" [disabled]="!lugar.disponible"
+                            [attr.aria-pressed]="exploracion.seleccionado() === lugar.id"
+                            (click)="exploracion.seleccionar(lugar.id)">
+                            <strong>{{ lugar.nombre }}</strong>
+                            <span>{{ !lugar.disponible ? 'No disponible' : (exploracion.visitas().get(lugar.id) ? 'Visitado · ' + exploracion.visitas().get(lugar.id) : 'Sin visitar') }}</span>
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
+                  @case ('caso') {
+                    <h2>Información del caso</h2>
+                    <p>Esta es una demostración del recorrido. Todavía no hay un caso académico asociado.</p>
+                  }
+                  @case ('ayuda') {
+                    <h2>Ayuda</h2>
+                    <p>Selecciona un lugar en el mapa o en la lista y pulsa «Entrar» junto a él. Puedes visitarlos en cualquier orden o ir directamente a las preguntas desde PRISALY.</p>
+                    <p>Al confirmar las preguntas de esta demostración, terminarás ese bloque antes de salir.</p>
+                  }
+                }
+              </div>
             </aside>
+            </div>
           }
           @if (exploracion.fase() === 'confirmando') {
             <app-confirmacion-entrada
@@ -217,6 +248,28 @@ import { ConfiguracionMapa, EventoEspacioVisual, PlantillasEspacio } from './map
       gap: 0.75rem;
       margin-top: 1rem;
     }
+    .area-mapa { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1rem; align-items: start; }
+    .herramientas { display: grid; gap: 0.75rem; }
+    .herramientas__botones { display: grid; gap: 0.5rem; }
+    .herramienta, .lugar {
+      width: 100%; border: 1px solid #bdcfe0; border-radius: 0.65rem;
+      background: #fff; color: #203b4d; padding: 0.75rem; font: inherit; text-align: left; cursor: pointer;
+    }
+    .herramienta[aria-expanded='true'], .lugar[aria-pressed='true'] { background: #e8f1fb; border-color: #315f8c; }
+    .herramienta:focus-visible, .lugar:focus-visible { outline: 3px solid #a65300; outline-offset: 3px; }
+    .lugar:disabled { opacity: 0.55; cursor: not-allowed; }
+    .panel-herramienta { padding: 1rem; border: 1px solid #bdcfe0; border-radius: 0.75rem; background: #fff; }
+    .panel-herramienta h2 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+    .panel-herramienta p { font-size: 0.9rem; }
+    .lista-lugares { display: grid; gap: 0.4rem; list-style: none; margin: 0; padding: 0; }
+    .lugar { display: grid; gap: 0.2rem; }
+    .lugar span { font-size: 0.8rem; }
+    @media (max-width: 760px) {
+      .area-mapa { grid-template-columns: minmax(0, 1fr); }
+      .herramientas { grid-row: 1; }
+      .herramientas__botones { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .herramienta { text-align: center; overflow-wrap: anywhere; }
+    }
     .sustituto {
       padding: 2rem 1rem;
       margin-top: 1rem;
@@ -239,6 +292,7 @@ export class RecorridoMapa {
   protected readonly exploracion = inject(ExploracionStore);
   protected readonly preguntas = inject(SimuladorStore);
   protected readonly verSim01 = signal(false);
+  protected readonly panelActivo = signal<'lugares' | 'caso' | 'ayuda' | null>(null);
   private readonly titulo = viewChild.required<ElementRef<HTMLElement>>('titulo');
   protected readonly puedeTerminar = computed(
     () =>
@@ -252,6 +306,7 @@ export class RecorridoMapa {
       this.exploracion.configurar(this.configuracion());
       this.preguntas.volverAlInicio();
       this.verSim01.set(false);
+      this.panelActivo.set(null);
     });
     afterRenderEffect({
       write: () => {
@@ -264,6 +319,9 @@ export class RecorridoMapa {
   protected volver(): void {
     this.verSim01.set(false);
     this.exploracion.volverAlMapa();
+  }
+  protected alternarPanel(panel: 'lugares' | 'caso' | 'ayuda'): void {
+    this.panelActivo.update(actual => actual === panel ? null : panel);
   }
   protected comenzarPreguntas(): void {
     if (this.exploracion.fase() !== 'confirmando') return;

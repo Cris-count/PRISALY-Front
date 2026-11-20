@@ -104,9 +104,10 @@ describe('ExploracionStore: estado visual sin participación académica', () => 
       }),
     ).toThrow();
     const config = structuredClone(MAPA_DEMOSTRACION);
+    const posicionOriginal = config.espacios[0].posicion.x;
     store.configurar(config);
     (config.espacios[0].posicion as { x: number }).x = 80;
-    expect(store.configuracion().espacios[0].posicion.x).toBe(24);
+    expect(store.configuracion().espacios[0].posicion.x).toBe(posicionOriginal);
   });
   it('mover una plantilla no altera la navegación por ID', () => {
     store.configurar({

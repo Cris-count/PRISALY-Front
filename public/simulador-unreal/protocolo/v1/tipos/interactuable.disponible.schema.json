@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/interactuable.disponible.schema.json",
+  "title": "interactuable.disponible",
+  "description": "Hay un interactuable a distancia y con linea de vista.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "interactuableId",
+    "categoria"
+  ],
+  "properties": {
+    "interactuableId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "puerta",
+        "npc",
+        "documento",
+        "cierre"
+      ]
+    }
+  }
+}

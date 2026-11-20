@@ -26,6 +26,7 @@ export class MotorNarrativo {
     return !this.dialogoActual && !this.actual.transicion && this.escena.decisiones.length === 0;
   }
   get puedeVolver() { return this.historial.length > 0; }
+  get historialCompleto(): readonly EstadoNarrativo[] { return this.historial; }
   get totalEscenas() { return this.guion.escenas.length; }
 
   avanzarDialogo(): void {
@@ -59,6 +60,70 @@ export class MotorNarrativo {
   }
 
   reiniciar(): void { this.historial = []; this.actual = this.inicial(); }
+
+  /**
+   * Reanuda el motor desde un estado previamente capturado de este mismo guion.
+   * Realiza una validación exhaustiva de correspondencia de escena, personajes,
+   * expresiones, marcas booleanas, escenas visitadas e integridad del historial.
+   */
+  restaurar(estado: EstadoNarrativo, historial: readonly EstadoNarrativo[] = []): void {
+    this.validarEstadoARestaurar(estado, historial);
+    this.actual = congelar(structuredClone(estado));
+    this.historial = historial.map(h => congelar(structuredClone(h)));
+  }
+
+  private validarEstadoARestaurar(estado: EstadoNarrativo, historial: readonly EstadoNarrativo[]): void {
+    const exigir = (valido: boolean, mensaje: string) => {
+      if (!valido) throw new Error(`Estado inválido para restauración: ${mensaje}`);
+    };
+
+    exigir(!!estado && typeof estado === 'object', 'el estado debe ser un objeto');
+    const escena = this.guion.escenas.find(e => e.id === estado.escenaId);
+    exigir(!!escena, `la escena ${estado?.escenaId} no pertenece al guion`);
+
+    exigir(typeof estado.dialogo === 'number' && estado.dialogo >= 0, 'índice de diálogo inválido');
+
+    // Validación estricta de personajes del guion
+    exigir(Array.isArray(estado.personajes), 'personajes debe ser una lista');
+    const personajesGuionIds = new Set(this.guion.personajes.map(p => p.id));
+    const expresionValida = (valor: string) => ['serena', 'atenta', 'alegre'].includes(valor);
+
+    exigir(estado.personajes.length === this.guion.personajes.length, 'la lista de personajes no coincide con el guion');
+    for (const p of estado.personajes) {
+      exigir(personajesGuionIds.has(p.id), `personaje desconocido ${p.id}`);
+      exigir(expresionValida(p.expresion), `expresión inválida '${p.expresion}' en personaje ${p.id}`);
+      exigir(typeof p.estado === 'string', `estado inválido en personaje ${p.id}`);
+    }
+
+    // Validación estricta de marcas
+    exigir(!!estado.marcas && typeof estado.marcas === 'object', 'mapa de marcas inválido');
+    for (const [clave, valor] of Object.entries(estado.marcas)) {
+      exigir(typeof valor === 'boolean', `la marca '${clave}' debe tener un valor booleano`);
+    }
+
+    // Validación de escenas visitadas
+    exigir(Array.isArray(estado.visitadas) && estado.visitadas.length > 0, 'la lista de visitadas no puede estar vacía');
+    const idsEscenasGuion = new Set(this.guion.escenas.map(e => e.id));
+    for (const v of estado.visitadas) {
+      exigir(idsEscenasGuion.has(v), `escena visitada '${v}' no pertenece al guion`);
+    }
+    exigir(estado.visitadas.includes(estado.escenaId), 'la lista de visitadas debe incluir la escena actual');
+
+    // Validación de transición pendiente (si existe)
+    if (estado.transicion) {
+      exigir(idsEscenasGuion.has(estado.transicion.destino), `destino de transición '${estado.transicion.destino}' inexistente`);
+      exigir(typeof estado.transicion.texto === 'string', 'texto de transición inválido');
+    }
+
+    // Validación de consistencia del historial
+    exigir(Array.isArray(historial), 'el historial debe ser una lista');
+    for (const h of historial) {
+      exigir(idsEscenasGuion.has(h.escenaId), `historial contiene escena inexistente '${h.escenaId}'`);
+      for (const p of h.personajes) {
+        exigir(personajesGuionIds.has(p.id) && expresionValida(p.expresion), 'historial contiene personajes incompatibles');
+      }
+    }
+  }
 
   private inicial(): EstadoNarrativo {
     const escena = this.guion.escenas.find(e => e.id === this.guion.inicio)!;

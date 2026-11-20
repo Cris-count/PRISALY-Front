@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/camara.enfocar.schema.json",
+  "title": "camara.enfocar",
+  "description": "Acercamiento contextual a un objetivo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "objetivoId",
+    "modo"
+  ],
+  "properties": {
+    "objetivoId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    },
+    "modo": {
+      "type": "string",
+      "enum": [
+        "conversacion",
+        "documento"
+      ]
+    }
+  }
+}

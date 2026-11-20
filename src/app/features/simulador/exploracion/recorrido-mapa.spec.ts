@@ -88,11 +88,11 @@ describe('RecorridoMapa', () => {
     await pulsar('Comenzar preguntas');
   }
 
-  it('presenta el caso sin consultas académicas y renderiza edificios y punto central', async () => {
+  it('presenta el caso sin consultas académicas y conserva selección y acceso a preguntas', async () => {
     expect(texto()).toContain('No hay un caso académico real');
     await abrirMapa();
-    expect(html().querySelectorAll('button[aria-pressed]').length).toBe(3);
-    expect(html().querySelector('img')?.getAttribute('src')).toBe('images/prisaly-logo.png');
+    expect(html().querySelectorAll('button[aria-pressed]').length).toBe(6);
+    expect(html().querySelector('button[aria-label="PRISALY, comenzar preguntas demostrativas"]')).not.toBeNull();
     expect(texto()).toContain('Plantilla pendiente');
   });
   it('selecciona, entra, regresa y repite visitas en orden libre', async () => {
@@ -111,6 +111,29 @@ describe('RecorridoMapa', () => {
     expect(fixture.debugElement.injector.get(ExploracionStore).visitas().get('demo-oficinas')).toBe(
       2,
     );
+  });
+  it('la barra permite consultar herramientas y seleccionar lugares sin llamadas académicas', async () => {
+    await abrirMapa();
+    const herramienta = (nombre: string) => Array.from(html().querySelectorAll<HTMLButtonElement>('.herramienta'))
+      .find(b => b.textContent?.includes(nombre))!;
+    herramienta('Lugares').click();
+    await fixture.whenStable();
+    expect(herramienta('Lugares').getAttribute('aria-expanded')).toBe('true');
+    const hospital = Array.from(html().querySelectorAll<HTMLButtonElement>('.lugar'))
+      .find(b => b.textContent?.includes('Hospital'))!;
+    hospital.click();
+    await fixture.whenStable();
+    expect(boton('Entrar a Hospital')).toBeDefined();
+    expect(hospital.getAttribute('aria-pressed')).toBe('true');
+    herramienta('Información del caso').click();
+    await fixture.whenStable();
+    expect(texto()).toContain('Todavía no hay un caso académico asociado');
+    herramienta('Ayuda').click();
+    await fixture.whenStable();
+    expect(texto()).toContain('Selecciona un lugar en el mapa o en la lista');
+    herramienta('Ayuda').click();
+    await fixture.whenStable();
+    expect(html().querySelector<HTMLElement>('#panel-herramienta')!.hidden).toBeTrue();
   });
   it('la confirmación es modal, cancelar o Escape conserva visitas y selección', async () => {
     await abrirMapa();

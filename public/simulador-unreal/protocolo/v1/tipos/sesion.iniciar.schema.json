@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/sesion.iniciar.schema.json",
+  "title": "sesion.iniciar",
+  "description": "Inicia la sesion visual y aplica preferencias de accesibilidad.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "casoId",
+    "preferencias"
+  ],
+  "properties": {
+    "casoId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,64}$"
+    },
+    "preferencias": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reducirMovimiento",
+        "invertirCamara"
+      ],
+      "properties": {
+        "reducirMovimiento": {
+          "type": "boolean"
+        },
+        "invertirCamara": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/estado.restaurar.schema.json",
+  "title": "estado.restaurar",
+  "description": "Redibuja estados visuales desde el estado de Angular. Idempotente.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "zonaActual",
+    "interactuables",
+    "edificiosVisitados",
+    "exploracionBloqueada"
+  ],
+  "properties": {
+    "zonaActual": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z][a-z0-9_]{1,63}$"
+    },
+    "interactuables": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "interactuableId",
+          "estado"
+        ],
+        "properties": {
+          "interactuableId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,63}$"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "disponible",
+              "completado",
+              "bloqueado"
+            ]
+          }
+        }
+      }
+    },
+    "edificiosVisitados": {
+      "type": "array",
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]{1,63}$"
+      }
+    },
+    "exploracionBloqueada": {
+      "type": "boolean"
+    }
+  }
+}

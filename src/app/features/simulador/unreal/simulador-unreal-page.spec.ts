@@ -1,0 +1,137 @@
+import { TestBed } from '@angular/core/testing';
+import { SESION_VISUAL_UNREAL, SesionVisualUnreal } from './configuracion-unreal';
+import { CARGAR_ESQUEMAS_UNREAL, cargarEsquemasBrowser } from './protocolo/cargar-esquemas-browser';
+import { Esquemas } from './protocolo/validador-mensaje';
+import { FABRICA_REPRODUCTOR_UNREAL, FabricaReproductorUnreal, ReproductorUnreal } from './reproductor-unreal';
+import { SimuladorUnrealPage } from './simulador-unreal-page';
+import { CanalPixelStreaming, TransportePixelStreaming } from './transporte-pixel-streaming';
+
+describe('SimuladorUnrealPage', () => {
+  let esquemas: Esquemas;
+  const asignacion: SesionVisualUnreal = { urlSenalizacion: 'ws://127.0.0.1:8888', streamerId: 'instancia-prueba', sesion: 'sesion-prueba-0001', casoId: 'caso-demo-01' };
+  beforeAll(async () => { esquemas = await cargarEsquemasBrowser(); });
+
+  function preparar(sesion: SesionVisualUnreal | null = asignacion) {
+    let responder!: (texto: string) => void;
+    let informar!: Parameters<FabricaReproductorUnreal>[2];
+    let numero = 1;
+    const canal: jasmine.SpyObj<CanalPixelStreaming> = jasmine.createSpyObj('PixelStreaming', ['emitUIInteraction', 'addResponseEventListener', 'removeResponseEventListener', 'disconnect']);
+    canal.addResponseEventListener.and.callFake((_nombre, receptor) => { responder = receptor; });
+    canal.emitUIInteraction.and.callFake((texto) => {
+      const orden = JSON.parse(texto);
+      queueMicrotask(() => responder(JSON.stringify({ v: 1, tipo: 'orden.ack', id: `u-${String(++numero).padStart(6, '0')}`, correlacion: orden.id, sesion: asignacion.sesion, ts: 1, origen: 'unreal', datos: {} })));
+      return true;
+    });
+    const transporte = new TransportePixelStreaming(canal);
+    const reproductor: ReproductorUnreal = {
+      transporte, conectar: jasmine.createSpy('conectar'), reproducir: jasmine.createSpy('reproducir'),
+      permitirEntrada: jasmine.createSpy('permitirEntrada'), cerrar: jasmine.createSpy('cerrar').and.callFake(() => transporte.cerrar()),
+    };
+    const fabrica = jasmine.createSpy('fabrica').and.callFake(async (_contenedor, _asignacion, callback) => { informar = callback; return reproductor; });
+    const cargar = jasmine.createSpy('cargar').and.resolveTo(esquemas);
+    TestBed.configureTestingModule({ imports: [SimuladorUnrealPage], providers: [
+      { provide: SESION_VISUAL_UNREAL, useValue: sesion },
+      { provide: CARGAR_ESQUEMAS_UNREAL, useValue: cargar },
+      { provide: FABRICA_REPRODUCTOR_UNREAL, useValue: fabrica },
+    ] });
+    const fixture = TestBed.createComponent(SimuladorUnrealPage);
+    fixture.detectChanges();
+    const emitir = (tipo: string, datos: object = {}) => responder(JSON.stringify({ v: 1, tipo, id: `u-${String(++numero).padStart(6, '0')}`, correlacion: null, sesion: asignacion.sesion, ts: 1, origen: 'unreal', datos }));
+    return { fixture, pagina: fixture.componentInstance, fabrica, cargar, reproductor, canal, emitir, informar: (estado: Parameters<typeof informar>[0]) => informar(estado) };
+  }
+
+  it('sin servidor muestra disponibilidad pendiente y no solicita conexión ni esquemas', async () => {
+    const prueba = preparar(null);
+    await prueba.pagina.conectar();
+    expect(prueba.fixture.nativeElement.textContent).toContain('Ciudad 3D pendiente de habilitación');
+    expect(prueba.fabrica).not.toHaveBeenCalled();
+    expect(prueba.cargar).not.toHaveBeenCalled();
+    expect(prueba.fixture.nativeElement.querySelector('video')).toBeNull();
+  });
+
+  it('un canal abierto y video no habilitan navegación sin mundo.listo y ack de inicio', async () => {
+    const prueba = preparar();
+    await prueba.pagina.conectar();
+    prueba.reproductor.transporte.abrir();
+    prueba.informar('canal-abierto');
+    prueba.informar('video-listo');
+    expect(prueba.pagina.conectado()).toBeFalse();
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' });
+    await prueba.fixture.whenStable();
+    expect(prueba.pagina.conectado()).toBeTrue();
+    expect(JSON.parse(prueba.canal.emitUIInteraction.calls.first().args[0]).tipo).toBe('sesion.iniciar');
+    prueba.pagina.desconectar();
+  });
+
+  it('recibe zonas semánticas sin inventar coordenadas ni iniciar un cuestionario', async () => {
+    const prueba = preparar();
+    await prueba.pagina.conectar();
+    prueba.reproductor.transporte.abrir();
+    prueba.informar('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' });
+    await prueba.fixture.whenStable();
+    prueba.emitir('zona.entro', { zoneId: 'hospital_entrada' });
+    expect(prueba.pagina.ubicacion()).toBe('Entrada de Hospital');
+    prueba.emitir('zona.entro', { zoneId: 'zona_desconocida' });
+    expect(prueba.pagina.ubicacion()).toBe('Entrada de Hospital');
+    await prueba.pagina.caminarA('zona_desconocida');
+    expect(prueba.canal.emitUIInteraction).toHaveBeenCalledTimes(1);
+    await prueba.pagina.caminarA('plaza_central');
+    expect(JSON.parse(prueba.canal.emitUIInteraction.calls.mostRecent().args[0]).tipo).toBe('avatar.irA');
+    expect(prueba.pagina.estado()).toContain('Esperando confirmación');
+    prueba.emitir('zona.entro', { zoneId: 'plaza_central' });
+    expect(prueba.pagina.ubicacion()).toBe('Plaza Central');
+    expect(prueba.fixture.nativeElement.textContent).not.toContain('Confirmar e iniciar cuestionario');
+    prueba.pagina.desconectar();
+  });
+
+  it('al destruir la página desconecta y no procesa eventos tardíos', async () => {
+    const prueba = preparar();
+    await prueba.pagina.conectar();
+    prueba.fixture.destroy();
+    expect(prueba.canal.disconnect).toHaveBeenCalledTimes(1);
+    prueba.informar('video-listo');
+    expect(prueba.pagina.videoReproduciendo()).toBeFalse();
+  });
+
+  it('conecta puerta y NPC con el panel Angular y muestra la pista en la libreta (canal simulado)', async () => {
+    const prueba = preparar();
+    await prueba.pagina.conectar(); prueba.reproductor.transporte.abrir(); prueba.informar('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' }); await prueba.fixture.whenStable();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-puerta', categoria: 'puerta' }); await prueba.fixture.whenStable();
+    prueba.emitir('edificio.entro', { zoneId: 'hospital_entrada' }); await prueba.fixture.whenStable();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-npc-doctor', categoria: 'npc' }); await prueba.fixture.whenStable();
+    prueba.fixture.detectChanges();
+    expect(prueba.fixture.nativeElement.textContent).toContain('Bienvenido al Hospital Central');
+    const pulsar = async (texto: string) => {
+      const botones = Array.from(prueba.fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+      const boton = botones.find(b => b.textContent?.trim() === texto)!;
+      expect(boton).toBeTruthy(); boton.click(); await prueba.fixture.whenStable(); prueba.fixture.detectChanges();
+    };
+    await pulsar('Siguiente diálogo'); await pulsar('Siguiente diálogo');
+    await pulsar('Solicitar informe de ingreso del paciente');
+    expect(prueba.fixture.nativeElement.textContent).toContain('Historia Clínica de Emergencia');
+    expect(prueba.fixture.nativeElement.textContent).toContain('Libreta (1)');
+    await pulsar('Continuar conversación'); await pulsar('Siguiente diálogo'); await pulsar('Cerrar conversación');
+    prueba.emitir('edificio.salio', { zoneId: 'hospital_entrada' }); await prueba.fixture.whenStable();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-puerta', categoria: 'puerta' }); await prueba.fixture.whenStable();
+    prueba.emitir('edificio.entro', { zoneId: 'hospital_entrada' }); await prueba.fixture.whenStable();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-npc-doctor', categoria: 'npc' }); await prueba.fixture.whenStable();
+    prueba.fixture.detectChanges();
+    expect(prueba.fixture.nativeElement.textContent).toContain('Conversación completada');
+    expect(prueba.fixture.nativeElement.textContent).toContain('Libreta (1)');
+    expect(prueba.pagina.hospital.vista()?.terminado).toBeTrue();
+    prueba.pagina.desconectar();
+  });
+
+  it('cerrar durante la carga impide crear una conexión después de abandonar la página', async () => {
+    const prueba = preparar();
+    let resolver!: (esquemas: Esquemas) => void;
+    prueba.cargar.and.returnValue(new Promise<Esquemas>((resolve) => { resolver = resolve; }));
+    const conexion = prueba.pagina.conectar();
+    prueba.fixture.destroy();
+    resolver(esquemas);
+    await conexion;
+    expect(prueba.fabrica).not.toHaveBeenCalled();
+  });
+});
