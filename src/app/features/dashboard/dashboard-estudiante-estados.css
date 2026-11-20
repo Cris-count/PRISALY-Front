@@ -1,0 +1,101 @@
+﻿:host ::ng-deep .estado-estudiante .aviso {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  padding: var(--vista-aviso-padding);
+  font-size: var(--t-sm);
+}
+:host ::ng-deep .estado-estudiante .aviso p {
+  font-size: var(--t-sm);
+  margin: 0;
+  line-height: 1.4;
+}
+@container (max-width: 36rem) {
+  :host ::ng-deep .estado-estudiante .aviso {
+    display: block;
+  }
+  :host ::ng-deep .estado-estudiante .aviso p {
+    margin-top: 0.35rem;
+  }
+}
+
+.recorrido-estudiante li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+}
+.recorrido-estudiante li span {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  grid-row: 1;
+  width: min(2.5rem, 100%);
+  height: auto;
+  aspect-ratio: 1;
+}
+.recorrido-estudiante li strong {
+  grid-column: 1;
+  grid-row: 2;
+}
+.recorrido-estudiante li:not(:last-child)::after {
+  position: relative;
+  z-index: 0;
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  left: 50%;
+  right: auto;
+  top: auto;
+  width: calc(100% + 0.4rem);
+  margin-bottom: 0.4rem;
+}
+
+.perfil-estudiante {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.avatar-estudiantil {
+  width: 4rem;
+  height: 4rem;
+}
+.editar-perfil {
+  margin-top: 0;
+}
+.tarjeta-estudiante > p:not(.ceja),
+.notificaciones-estudiante > p {
+  grid-column: 1 / -1;
+  margin: 0.1rem 0;
+}
+.tarjeta-estudiante .ceja {
+  margin-bottom: 0;
+}
+.notificaciones-estudiante > .icono {
+  grid-row: 1;
+}
+.notificaciones-estudiante h2 {
+  align-self: center;
+}
+.portal-estudiante .entrada-academica {
+  --modulo-acento: #0755b8;
+  --modulo-suave: #eee8ff;
+}
+.entrada-texto .icono {
+  color: #6334b4;
+  background: #eee8ff;
+}
+#entrada-simulador {
+  min-height: 2.2rem;
+}
+.recorrido-estudiante li:first-child span {
+  background: #ffbc58;
+  border-color: #a36f1c;
+  color: #654000;
+}
+
+.perfil-estudiante .avatar-estudiantil {
+  background: #0755b8;
+  color: #fff;
+}

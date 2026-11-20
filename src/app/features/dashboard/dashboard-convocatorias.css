@@ -1,0 +1,214 @@
+:host {
+  display: block;
+  color: #10254a;
+}
+.convocatorias {
+  container-type: inline-size;
+}
+.regreso {
+  display: inline-block;
+  padding: 0.15rem 0;
+  color: #0755b8;
+  font-size: var(--t-sm);
+}
+.banner-convocatorias {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 0.8fr);
+  align-items: center;
+  min-height: var(--vista-banner-min);
+  gap: 0.35rem 0.8rem;
+  padding: 0.65rem 1.3rem 0.45rem;
+  margin: 0.35rem 0 var(--vista-aviso-gap);
+  border: 1px solid #a8ddff;
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(ellipse at -15% 140%, #ffac26 0 27%, transparent 27.5%),
+    linear-gradient(105deg, #052650, #0863cc 52%, #d1efff);
+  box-shadow: 0 8px 20px #123c7318;
+}
+.ceja {
+  margin: 0 0 0.25rem;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #e3f5ff;
+}
+h1 {
+  font-size: var(--vista-titulo);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  margin: 0.2rem 0 0.3rem;
+  color: #fff;
+}
+h1 span {
+  color: #ffbc4d;
+}
+.texto-banner > p:not(.ceja) {
+  color: #f2f8ff;
+  font-size: var(--vista-descripcion);
+  line-height: 1.5;
+  margin: 0.3rem 0;
+}
+.trazo {
+  display: block;
+  width: 4.5rem;
+  height: 0.2rem;
+  border-radius: 1rem;
+  background: #ffbc4d;
+  margin-top: 0.35rem;
+}
+.campus-convocatorias {
+  display: block;
+  width: 100%;
+  height: 8rem;
+  pointer-events: none;
+}
+.accion-principal {
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid #fff;
+  border-radius: 1.2rem;
+  background: #f5fbffb3;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  min-width: 0;
+  opacity: 1;
+  -webkit-text-fill-color: currentColor;
+}
+.accion-principal button {
+  width: 100%;
+  padding: 0.65rem 0.4rem;
+  border: 1px solid #ffce6b;
+  border-radius: 0.9rem;
+  background: linear-gradient(110deg, #ffc140, #ff981f);
+  color: #402300;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: not-allowed;
+}
+.accion-principal small {
+  display: block;
+  color: #294562;
+  margin-top: 0.3rem;
+  font-size: var(--t-xs);
+  text-align: center;
+}
+.identidad {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin: 0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.5rem;
+  background: #07356c;
+  color: #eaf6ff;
+  font-size: var(--t-xs);
+}
+.nota-resumen {
+  background: #edf4ff;
+  border-radius: 0.5rem;
+  margin: 0.4rem 0;
+  color: #344968;
+  font-size: var(--t-xs);
+  line-height: 1.5;
+}
+.resumen-convocatorias {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+.tarjeta-resumen {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #b9d5f2;
+  border-radius: 1.2rem;
+  background:
+    radial-gradient(ellipse at 100% 160%, var(--suave) 0 49%, transparent 50%),
+    linear-gradient(125deg, white, #f0f7ff);
+  box-shadow: 0 5px 12px #123c7317;
+  --acento: #0755b8;
+  --suave: #d9f0ff;
+}
+.tarjeta-resumen[data-acento='naranja'] {
+  --acento: #a14d00;
+  --suave: #ffecd6;
+}
+.tarjeta-resumen[data-acento='verde'] {
+  --acento: #126b31;
+  --suave: #dcf4e3;
+}
+.tarjeta-resumen[data-acento='violeta'] {
+  --acento: #702ac7;
+  --suave: #eee4ff;
+}
+.icono-resumen {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.9rem;
+  background: var(--suave);
+  color: var(--acento);
+}
+.tarjeta-resumen strong {
+  color: #10254a;
+  font-size: 1.65rem;
+  line-height: 1.1;
+}
+.tarjeta-resumen p {
+  margin: 0.2rem 0 0;
+  color: #243f63;
+  font-size: var(--t-sm);
+}
+svg {
+  width: 1.7rem;
+  height: 1.7rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.icono-resumen svg {
+  width: 2rem;
+  height: 2rem;
+}
+@container (max-width: 58rem) {
+  .banner-convocatorias {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .accion-principal {
+    grid-column: 1 / -1;
+  }
+  .resumen-convocatorias {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (max-width: 36rem) {
+  .banner-convocatorias {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem;
+  }
+  .campus-convocatorias {
+    height: auto;
+  }
+  .resumen-convocatorias {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Al apilar el banner, el texto permanece sobre la zona azul de alto contraste. */
+@container (max-width: 36rem) {
+  .banner-convocatorias {
+    background: linear-gradient(110deg, #052650, #0755b8);
+  }
+}

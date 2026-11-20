@@ -60,6 +60,38 @@ describe('Dashboard público de demostración', () => {
     expect(raiz().querySelector('img')?.getAttribute('src')).toBe('images/prisaly-logo.png');
   });
 
+  it('mantiene la búsqueda de Inicio como presentación y las ilustraciones fuera de la interacción', async () => {
+    const busqueda = raiz().querySelector('.busqueda-inicio')!;
+    expect(busqueda.getAttribute('role')).toBe('note');
+    expect(busqueda.textContent).toContain('No disponible');
+    expect(busqueda.querySelector('input, button, a')).toBeNull();
+    for (const selector of ['.ciudad-inicio', '.emblema-institucional']) {
+      expect(raiz().querySelector(selector)?.getAttribute('aria-hidden')).toBe('true');
+      const ilustracion = raiz().querySelector(selector + ' img, ' + selector + ' image');
+      expect(ilustracion?.getAttribute('src') ?? ilustracion?.getAttribute('href')).toMatch(
+        /^images\/inicio-/,
+      );
+    }
+    expect(raiz().querySelector('.emblema-institucional image')?.getAttribute('href')).toBe(
+      'images/inicio-campus.webp',
+    );
+    expect(raiz().querySelectorAll('.emblema-institucional image')[1]?.getAttribute('href')).toBe(
+      'images/prisaly-logo.png',
+    );
+    expect(
+      raiz().querySelector('.emblema-institucional svg')?.getAttribute('preserveAspectRatio'),
+    ).toBe('xMidYMid meet');
+    expect(raiz().querySelector('.accion')?.getAttribute('href')).toBe(
+      '/dashboard/casos-academicos',
+    );
+    await pulsar('.accion');
+    expect(TestBed.inject(Router).url).toBe('/dashboard/casos-academicos');
+    expect(raiz().querySelector('.busqueda-inicio')).toBeNull();
+    expect(raiz().querySelector('nav [aria-current="page"]')?.getAttribute('href')).toBe(
+      '/dashboard/casos-academicos',
+    );
+  });
+
   it('contrae y expande conservando nombres accesibles, navegación y estado local', async () => {
     // Headless puede usar un viewport móvil, donde el control de escritorio está oculto.
     // Se mueve la instancia real (no un clon) a una vista de escritorio con el CSS original.
@@ -120,6 +152,89 @@ describe('Dashboard público de demostración', () => {
     }
   });
 
+  it('conserva el mismo sidebar y su identidad al recorrer las ocho secciones expandido y contraído', async () => {
+    const frame = document.createElement('iframe');
+    frame.title = 'Identidad del sidebar entre módulos';
+    frame.style.cssText = 'position:absolute;left:-10000px;width:1440px;height:1000px;border:0';
+    const host = harness.fixture.nativeElement as HTMLElement;
+    const padre = host.parentNode!;
+    const siguiente = host.nextSibling;
+    document.body.appendChild(frame);
+    try {
+      const doc = frame.contentDocument!;
+      const ventana = frame.contentWindow!;
+      const estilo = doc.createElement('style');
+      estilo.textContent = Array.from(document.styleSheets)
+        .flatMap((hoja) => Array.from(hoja.cssRules, (regla) => regla.cssText))
+        .join('\n');
+      doc.head.appendChild(estilo);
+      doc.body.appendChild(host);
+      const lateral = raiz().querySelector<HTMLElement>('.lateral')!;
+      const logo = lateral.querySelector<HTMLImageElement>('.marca img')!;
+      const enlaces = Array.from(lateral.querySelectorAll<HTMLAnchorElement>('nav a'));
+      const rutas = [
+        '/dashboard',
+        ...DASHBOARD_NAVEGACION.map((s) => '/dashboard/' + s.ruta),
+        '/dashboard',
+      ];
+      function identidad() {
+        const menu = ventana.getComputedStyle(lateral);
+        const campus = ventana.getComputedStyle(lateral, '::before');
+        const esquina = ventana.getComputedStyle(lateral, '::after');
+        const marca = ventana.getComputedStyle(logo);
+        return {
+          fondo: menu.backgroundImage,
+          espacio: menu.padding,
+          campus: [campus.backgroundImage, campus.height, campus.bottom, campus.borderRadius],
+          esquina: [esquina.backgroundImage, esquina.height],
+          logo: [marca.width, marca.height],
+          grupo: ventana.getComputedStyle(lateral.querySelector('.grupo')!).margin,
+          enlaces: enlaces.map((e) => {
+            const css = ventana.getComputedStyle(e);
+            return [
+              e.getAttribute('href'),
+              e.textContent,
+              e.querySelector('path')?.getAttribute('d'),
+              css.borderRadius,
+              css.padding,
+              css.fontSize,
+            ];
+          }),
+        };
+      }
+      for (const contraido of [false, true]) {
+        if (contraido) await pulsar('.contraer-menu');
+        const referencia = identidad();
+        expect(referencia.campus[0]).toContain('inicio-ciudad.webp');
+        expect(referencia.esquina[0]).toContain('radial-gradient');
+        for (const ruta of rutas) {
+          await pulsar('nav a[href="' + ruta + '"]');
+          expect(TestBed.inject(Router).url).toBe(ruta);
+          expect(raiz().querySelector('.lateral')).toBe(lateral);
+          expect(lateral.querySelector('.marca img')).toBe(logo);
+          expect(logo.getAttribute('src')).toBe('images/prisaly-logo.png');
+          expect(lateral.querySelectorAll('nav a').length).toBe(8);
+          expect(lateral.querySelectorAll('nav [aria-current="page"]').length).toBe(1);
+          expect(lateral.querySelector('nav [aria-current="page"]')?.getAttribute('href')).toBe(
+            ruta,
+          );
+          expect(lateral.getBoundingClientRect().width).toBeCloseTo(contraido ? 88 : 272, 0);
+          expect(identidad())
+            .withContext(ruta + ' / compacto=' + contraido)
+            .toEqual(referencia);
+          expect(lateral.querySelector('.nota-demo')?.textContent).toContain(
+            'Interfaz de demostración',
+          );
+          expect(lateral.querySelector('.volver')?.getAttribute('href')).toBe('/login');
+          expect(raiz().querySelector('.area h1')).not.toBeNull();
+        }
+      }
+    } finally {
+      padre.insertBefore(host, siguiente);
+      frame.remove();
+    }
+  });
+
   it('permite explorar desde el login sin completar credenciales y regresar', async () => {
     await harness.navigateByUrl('/login');
     await pulsar('.explorar-demo');
@@ -142,7 +257,7 @@ describe('Dashboard público de demostración', () => {
         seccion.titulo,
       );
       expect(raiz().querySelectorAll('.alcance').length).toBe(
-        seccion.ruta === 'configuracion' ? 3 : 0,
+        seccion.ruta === 'configuracion' ? 6 : 0,
       );
       expect(raiz().textContent).toContain('Implementación pendiente');
       await pulsar('.regreso');
@@ -150,9 +265,40 @@ describe('Dashboard público de demostración', () => {
     });
   }
 
+  it('presenta Configuración sin activar preferencias ni operaciones administrativas', async () => {
+    const guardar = spyOn(Storage.prototype, 'setItem');
+    await harness.navigateByUrl('/dashboard/configuracion');
+    expect(raiz().querySelectorAll('.config-tarjeta').length).toBe(6);
+    const preferencias = raiz().querySelectorAll<HTMLInputElement>('.preferencia input');
+    expect(preferencias.length).toBe(4);
+    for (const preferencia of preferencias) {
+      expect(preferencia.disabled).toBeTrue();
+      expect(preferencia.checked).toBeFalse();
+      preferencia.click();
+      expect(preferencia.checked).toBeFalse();
+    }
+    expect(raiz().textContent).toContain('No habilita operaciones administrativas reales');
+    expect(raiz().textContent).toContain('Referencia estática demostrativa');
+    expect(raiz().querySelectorAll('.config-tarjeta a, .config-tarjeta button').length).toBe(0);
+    expect(guardar).not.toHaveBeenCalled();
+  });
+
   it('las tarjetas llevan a sus vistas y las secciones admiten acceso directo', async () => {
+    expect(
+      Array.from(raiz().querySelectorAll('.acceso'), (enlace) => enlace.getAttribute('href')),
+    ).toEqual(DASHBOARD_NAVEGACION.map((seccion) => `/dashboard/${seccion.ruta}`));
+    expect(raiz().querySelector('.accion')?.getAttribute('href')).toBe(
+      '/dashboard/casos-academicos',
+    );
+    expect(raiz().querySelector('.notificaciones-inicio')?.getAttribute('aria-label')).toBe(
+      'Notificaciones demostrativas no disponibles',
+    );
+    expect(
+      raiz().querySelector('.notificaciones-inicio button, .notificaciones-inicio a'),
+    ).toBeNull();
     await pulsar('.acceso[href="/dashboard/casos-academicos"]');
     expect(raiz().querySelector('h1')?.textContent).toBe('Casos académicos');
+    expect(raiz().querySelector('.notificaciones-inicio')).toBeNull();
     await harness.navigateByUrl('/dashboard/configuracion');
     expect(raiz().querySelector('h1')?.textContent).toBe('Configuración');
   });
@@ -210,8 +356,15 @@ describe('Dashboard público de demostración', () => {
   it('presenta docentes vacíos y catálogos pendientes sin inventar registros o privilegios', async () => {
     await harness.navigateByUrl('/dashboard/usuarios-docentes');
     const pagina = raiz().querySelector('app-dashboard-administracion')!;
-    expect(pagina.querySelector('tbody')?.children.length).toBe(0);
-    expect(pagina.querySelectorAll('th[scope="col"]').length).toBe(3);
+    expect(pagina.querySelectorAll('.docentes tbody tr:not(.fila-vacia)').length).toBe(0);
+    expect(pagina.querySelectorAll('.docentes tbody .fila-vacia').length).toBe(1);
+    expect(pagina.querySelector('.fila-vacia td')?.getAttribute('colspan')).toBe('3');
+    expect(pagina.querySelectorAll('.docentes th[scope="col"]').length).toBe(3);
+    expect(pagina.querySelectorAll('.vista-previa th[scope="col"]').length).toBe(4);
+    expect(pagina.querySelectorAll('.vista-previa tbody tr').length).toBe(1);
+    expect(pagina.querySelector('.vista-previa')?.textContent).toContain(
+      'No corresponde a una cuenta ni a un registro docente',
+    );
     expect(
       pagina.querySelector('.docentes app-estado-panel [role="status"]')?.textContent,
     ).toContain('Esta demostración no consulta ni contiene registros docentes');
@@ -300,6 +453,41 @@ describe('Dashboard público de demostración', () => {
     expect(pagina.querySelector('a[href^="/simulador"]')).toBeNull();
   });
 
+  it('distribuye el alto sobrante del panel estudiantil sin recortar contenido ni activar acciones', async () => {
+    await harness.navigateByUrl('/dashboard/estudiante');
+    const frame = document.createElement('iframe');
+    frame.title = 'Espacio disponible del panel estudiantil';
+    frame.style.cssText = 'position:absolute;left:-10000px;width:2560px;height:1440px;border:0';
+    document.body.appendChild(frame);
+    try {
+      const doc = frame.contentDocument!;
+      const ventana = frame.contentWindow!;
+      const style = doc.createElement('style');
+      style.textContent =
+        Array.from(document.styleSheets)
+          .flatMap((hoja) => Array.from(hoja.cssRules, (regla) => regla.cssText))
+          .join('\n') + '\nbody{margin:0}html{font-size:16px}';
+      doc.head.appendChild(style);
+      doc.body.appendChild(raiz().cloneNode(true));
+      const pagina = doc.querySelector<HTMLElement>('.panel-estudiantil')!;
+      const pie = pagina.querySelector('.pie-estudiante')!.getBoundingClientRect();
+      expect(ventana.innerHeight - pie.bottom).toBeLessThanOrEqual(32);
+      expect(pie.bottom).toBeLessThanOrEqual(ventana.innerHeight);
+      expect(doc.documentElement.scrollHeight).toBeLessThanOrEqual(ventana.innerHeight);
+      expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
+      expect(pagina.querySelectorAll('.portal-estudiante > section').length).toBe(7);
+      for (const panel of pagina.querySelectorAll<HTMLElement>('.portal-estudiante > section')) {
+        expect(panel.scrollHeight).toBeLessThanOrEqual(panel.clientHeight + 1);
+      }
+      expect(pagina.querySelector<HTMLButtonElement>('#entrada-simulador')!.disabled).toBeTrue();
+      expect(
+        ventana.getComputedStyle(pagina.querySelector('.campus-estudiante')!).pointerEvents,
+      ).toBe('none');
+    } finally {
+      frame.remove();
+    }
+  });
+
   it('mantiene deshabilitada la participación y no navega ni solicita un intento', async () => {
     await harness.navigateByUrl('/dashboard/estudiante');
     const boton = raiz().querySelector<HTMLButtonElement>('#entrada-simulador')!;
@@ -349,9 +537,24 @@ describe('Dashboard público de demostración', () => {
       );
       expect(
         pagina.querySelector(
-          'form, tbody tr, time, output, input[type="number"], [data-id-caso], [data-id-sesion], [data-id-estudiante]',
+          'form, tbody:not([data-demostracion="visual"]) tr, time, output, input[type="number"], [data-id-caso], [data-id-sesion], [data-id-estudiante]',
         ),
       ).toBeNull();
+      if (ruta === 'sesiones') {
+        const tabla = pagina.querySelector('table');
+        expect(tabla?.getAttribute('aria-describedby')).toBe('nota-tabla');
+        expect(pagina.querySelector('#nota-tabla')?.textContent).toContain(
+          'No son sesiones ni casos reales',
+        );
+        expect(pagina.querySelectorAll('tbody[data-demostracion="visual"] tr').length).toBe(3);
+        expect(pagina.querySelectorAll('tbody tr small').length).toBe(6);
+        expect(
+          pagina.querySelectorAll('tbody .accion-pendiente[aria-disabled="true"]').length,
+        ).toBe(3);
+        expect(pagina.querySelectorAll('tbody td:nth-child(3)').length).toBe(3);
+        for (const fecha of pagina.querySelectorAll('tbody td:nth-child(3)'))
+          expect(fecha.textContent).toBe('Sin fecha');
+      }
       const guardar = spyOn(Storage.prototype, 'setItem');
       const borrar = spyOn(Storage.prototype, 'removeItem');
       const vaciar = spyOn(Storage.prototype, 'clear');
@@ -430,6 +633,22 @@ describe('Dashboard público de demostración', () => {
     );
     expect(pagina.querySelector('input, textarea, select, output, progress, meter')).toBeNull();
     expect(pagina.querySelector('.referencia-estados')).toBeNull();
+    const rubricas = pagina.querySelector('.rubricas')!;
+    expect(rubricas.querySelectorAll('tbody[data-demostracion="visual"] tr').length).toBe(6);
+    expect(rubricas.querySelector('#ejemplo-rubricas')?.textContent).toContain(
+      'No son rúbricas oficiales ni registros consultados',
+    );
+    expect(rubricas.querySelector('#nota-matriz')?.textContent).toContain(
+      'No corresponde a una rúbrica configurada',
+    );
+    expect(
+      rubricas.querySelectorAll('.matriz td[aria-label="Celda decorativa sin puntuación"]').length,
+    ).toBe(12);
+    expect(
+      Array.from(rubricas.querySelectorAll('.matriz thead th'), (celda) =>
+        celda.textContent?.trim(),
+      ),
+    ).toEqual(['Criterio / Dimensión', 'Inicial', 'Básico', 'Alto', 'Superior']);
   });
 
   it('la programación permanece no disponible, sin fechas ni casos BORRADOR seleccionables', async () => {
@@ -466,6 +685,15 @@ describe('Dashboard público de demostración', () => {
     expect(pagina.querySelector<HTMLInputElement>('#destinatarios-convocatoria')?.value).toBe('');
     expect(pagina.querySelector<HTMLTextAreaElement>('#condiciones-convocatoria')?.value).toBe('');
     expect(pagina.querySelector('a[href^="mailto:"], form')).toBeNull();
+    expect(pagina.querySelectorAll('.tarjeta-resumen').length).toBe(4);
+    expect(pagina.querySelector('#nota-resumen')?.textContent).toContain('Cifras estáticas');
+    expect(pagina.querySelectorAll('tbody[data-demostracion="visual"] tr').length).toBe(5);
+    expect(pagina.querySelector('#nota-listado')?.textContent).toContain(
+      'No son convocatorias reales',
+    );
+    expect(pagina.querySelectorAll('.opciones-convocatoria button:disabled').length).toBe(5);
+    expect(pagina.querySelectorAll('.acciones-fila button:disabled').length).toBe(15);
+    expect(pagina.querySelector('time, progress, meter, output')).toBeNull();
   });
 
   it('actualiza el contenido al navegar entre las cuatro vistas docentes sin duplicar el layout', async () => {
@@ -520,6 +748,7 @@ describe('Dashboard público de demostración', () => {
     [390, 1],
     [768, 1],
     [1440, 1],
+    [2560, 1],
     [768, 2],
   ]) {
     it(`todas las vistas se adaptan a ${ancho}px con texto al ${escala * 100}% sin desbordar y conservan la navegación`, async () => {
@@ -592,7 +821,7 @@ describe('Dashboard público de demostración', () => {
             const estilo = ventana.getComputedStyle(rejilla);
             expect(estilo.display).toBe('grid');
             expect(estilo.gridTemplateColumns.split(' ').length).toBe(
-              ancho <= 600 ? 1 : ancho <= 1200 ? 2 : 3,
+              ruta === '/dashboard' && escala === 2 ? 1 : ancho <= 600 ? 1 : ancho <= 1200 ? 2 : 3,
             );
             expect(estilo.gap).toBe(`${16 * escala}px`);
           }
@@ -612,13 +841,39 @@ describe('Dashboard público de demostración', () => {
           }
           expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
           const titulo = ventana.getComputedStyle(doc.querySelector('h1')!);
+          const tituloAmpliado = ['/dashboard/rubricas', '/dashboard/configuracion'].includes(ruta);
           expect(parseFloat(titulo.fontSize)).toBeGreaterThanOrEqual(28 * escala);
-          expect(parseFloat(titulo.fontSize)).toBeLessThanOrEqual(32 * escala);
+          expect(parseFloat(titulo.fontSize)).toBeLessThanOrEqual(
+            (tituloAmpliado
+              ? 34
+              : [
+                    '/dashboard',
+                    '/dashboard/estudiante',
+                    '/dashboard/configuracion',
+                    '/dashboard/usuarios-docentes',
+                  ].includes(ruta)
+                ? 48
+                : 32) * escala,
+          );
           expect(titulo.fontWeight).toBe('700');
           const enlaceMenu = ventana.getComputedStyle(doc.querySelector('nav a')!);
           expect(parseFloat(enlaceMenu.fontSize)).toBe(15 * escala);
           expect(enlaceMenu.fontWeight).toBe('600');
           if (ancho > 800) expect(lateral.getBoundingClientRect().width).toBeCloseTo(272, 0);
+          if (ancho === 1440) {
+            const banner = doc.querySelector<HTMLElement>(
+              '.bienvenida, .cabecera-admin, .casos .cabecera-docente, .banner-rubricas, .banner-sesiones, .banner-convocatorias, .config-hero, .bienvenida-estudiante',
+            )!;
+            expect(banner.getBoundingClientRect().height).toBeGreaterThanOrEqual(170);
+            expect(banner.getBoundingClientRect().height).toBeLessThanOrEqual(200);
+            const margenIzquierdo =
+              banner.getBoundingClientRect().left -
+              doc.querySelector('.area')!.getBoundingClientRect().left;
+            expect(margenIzquierdo).toBeCloseTo(28, 0);
+            expect(parseFloat(ventana.getComputedStyle(doc.querySelector('h1')!).fontSize)).toBe(
+              tituloAmpliado ? 34 : 32,
+            );
+          }
           if (ancho === 1440 && ruta === '/dashboard') {
             expect(doc.querySelectorAll('.tarjetas > .acceso').length).toBe(
               DASHBOARD_NAVEGACION.length,
@@ -626,7 +881,35 @@ describe('Dashboard público de demostración', () => {
             expect(doc.querySelector('.acceso--estudiante')?.getAttribute('href')).toBe(
               '/dashboard/estudiante',
             );
-            expect(doc.documentElement.scrollHeight).toBeLessThanOrEqual(alto);
+            // Inicio conserva su escala y permite scroll vertical natural, sin comprimirlo.
+            const paginaInicio = doc.querySelector<HTMLElement>('app-dashboard-inicio .pagina')!;
+            const paginaRect = paginaInicio.getBoundingClientRect();
+            const areaRect = doc.querySelector('.area')!.getBoundingClientRect();
+            expect(paginaRect.width / areaRect.width).toBeCloseTo(0.95, 2);
+            const barraSuperior = doc.querySelector('.superior')!.getBoundingClientRect();
+            // El layout actual deja 32px de aire sin desplazar todo con un margen adicional.
+            expect(paginaRect.top - barraSuperior.bottom).toBeGreaterThanOrEqual(32 * escala);
+            const pieInicio = doc.querySelector('.pie-pagina')!.getBoundingClientRect();
+            const aprendizaje = doc.querySelector('.acceso--estudiante')!.getBoundingClientRect();
+            expect(pieInicio.top).toBeGreaterThanOrEqual(aprendizaje.bottom);
+            expect(pieInicio.bottom).toBeLessThanOrEqual(paginaRect.bottom + 1);
+            expect(ventana.getComputedStyle(paginaInicio).maxHeight).toBe('none');
+            for (const descripcion of doc.querySelectorAll('.acceso p')) {
+              expect(
+                parseFloat(ventana.getComputedStyle(descripcion).fontSize),
+              ).toBeGreaterThanOrEqual(15 * escala);
+            }
+          }
+          if (ruta === '/dashboard' && ancho >= 1440) {
+            const bannerInicio = doc.querySelector('.bienvenida')!.getBoundingClientRect();
+            const ciudad = doc.querySelector('.ciudad-inicio')!.getBoundingClientRect();
+            expect(ciudad.top).toBeGreaterThanOrEqual(bannerInicio.bottom);
+            expect(
+              ventana.getComputedStyle(doc.querySelector('.ciudad-inicio')!).pointerEvents,
+            ).toBe('none');
+            for (const tarjeta of doc.querySelectorAll('.acceso')) {
+              expect(tarjeta.getBoundingClientRect().height).toBeGreaterThanOrEqual(144);
+            }
           }
           expect(ventana.getComputedStyle(lateral).display).toBe(ancho <= 800 ? 'none' : 'flex');
           lateral.classList.add('lateral--abierta');

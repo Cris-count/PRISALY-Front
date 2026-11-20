@@ -1,0 +1,177 @@
+:host:has(.rubricas) {
+  display: grid;
+  flex: 1;
+}
+.rubricas {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(min-content, 1fr) auto;
+  --t-sm: 0.90625rem;
+  --t-xs: 0.78125rem;
+  --vista-titulo: clamp(1.875rem, 2.4vw, 2.125rem);
+  --vista-banner-min: 12rem;
+  --vista-banner-arte: 10rem;
+  --vista-panel-padding: 1.0625rem;
+  container-type: inline-size;
+  color: #10254a;
+}
+.rubricas .regreso {
+  padding: 0.15rem 0;
+  color: #0755b8;
+}
+.rubricas .banner-rubricas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 12rem);
+  align-items: center;
+  min-height: var(--vista-banner-min);
+  gap: var(--vista-gap);
+  padding: 0.65rem 1.5rem;
+  margin: 0.35rem 0 var(--vista-aviso-gap);
+  border: 1px solid #c4e5ff;
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(ellipse at 100% 115%, #ffab20 0 10%, transparent 10.5%),
+    radial-gradient(ellipse at 78% 130%, #048eea 0 30%, transparent 30.5%),
+    radial-gradient(ellipse at -15% 140%, #ffac26 0 27%, transparent 27.5%),
+    linear-gradient(110deg, #052650, #064ba8 65%, #0875cb);
+  box-shadow: 0 8px 20px #123c7318;
+}
+.rubricas h1 {
+  font-size: var(--vista-titulo);
+  line-height: 1.1;
+  margin: 0 0 0.35rem;
+  color: #fff;
+}
+.rubricas .texto-rubricas > p {
+  color: #f2f8ff;
+  margin: 0.3rem 0;
+  font-size: var(--t-base);
+  line-height: 1.5;
+}
+.rubricas .texto-rubricas .sesion-rubricas {
+  display: inline-block;
+  border: 1px solid #92bbec;
+  border-radius: 2rem;
+  padding: 0.3rem 0.8rem;
+  font-size: var(--t-sm);
+  background: #07356c;
+}
+.rubricas .portapapeles {
+  display: block;
+  width: 100%;
+  height: var(--vista-banner-arte);
+  object-fit: contain;
+  pointer-events: none;
+}
+.rubricas .paneles-rubricas {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: var(--vista-gap);
+  margin: 0.65rem 0;
+}
+.rubricas .panel-docente {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--vista-panel-padding);
+  border: 1px solid #a8baff;
+  border-radius: var(--vista-panel-radio);
+  background: linear-gradient(125deg, #fff, #f0f6ff);
+  box-shadow:
+    0 7px 16px #123c7317,
+    inset 0 -2px #c4c2ff;
+}
+.rubricas .estructura-rubricas {
+  border-color: #e7a13a;
+  box-shadow:
+    0 7px 16px #123c7317,
+    inset 0 -2px #ffd396;
+}
+.rubricas .titulo-rubricas {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+  margin-bottom: 0.65rem;
+}
+.rubricas .ceja {
+  margin: 0 0 0.2rem;
+  color: #0755b8;
+}
+.rubricas h2 {
+  color: #10254a;
+  margin: 0 0 0.3rem;
+  font-size: var(--vista-panel-titulo);
+  line-height: 1.25;
+}
+.rubricas p {
+  font-size: var(--t-sm);
+  color: #243f63;
+  line-height: 1.5;
+}
+.rubricas .titulo-rubricas p:last-child {
+  margin: 0.25rem 0 0;
+}
+.rubricas svg {
+  width: 1.8rem;
+  height: 1.8rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.rubricas .sello-rubricas {
+  display: grid;
+  place-items: center;
+  width: 3.75rem;
+  height: 3.75rem;
+  border-radius: 1.1rem;
+}
+.rubricas .sello-rubricas svg {
+  width: 2.3rem;
+  height: 2.3rem;
+}
+.rubricas .azul {
+  background: #e1edff;
+  color: #0755df;
+}
+.rubricas .naranja {
+  background: #ffedda;
+  color: #bc5800;
+}
+.rubricas .pie-rubricas {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0.65rem 0 0;
+  padding: 0.65rem 1rem;
+  border: 1px solid #a9bee8;
+  border-radius: 1rem;
+  background: #edf4ff;
+}
+.rubricas .nota {
+  margin: 0.5rem 0 0;
+  font-size: var(--t-xs);
+}
+@container (max-width: 58rem) {
+  .rubricas .paneles-rubricas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@container (max-width: 36rem) {
+  .rubricas .banner-rubricas {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem;
+  }
+  .rubricas .portapapeles {
+    width: min(100%, 13rem);
+    justify-self: center;
+  }
+  .rubricas .titulo-rubricas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rubricas h1 {
+    font-size: var(--vista-titulo);
+  }
+}

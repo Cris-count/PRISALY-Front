@@ -1,232 +1,228 @@
-:host {
-  display: block;
+﻿:host {
+  display: grid;
+  flex: 1;
+  container-type: inline-size;
+  --t-sm: 0.90625rem;
+  --t-xs: 0.78125rem;
 }
 .panel-estudiantil {
-  max-width: 76rem;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(min-content, 1fr) auto;
 }
 .regreso {
   display: inline-block;
-  padding: 0.5rem 0;
+  padding: 0.15rem 0;
   color: var(--p-azul);
   font-size: var(--t-sm);
 }
-.bienvenida-estudiante {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+.panel-estudiantil .bienvenida-estudiante.modulo-hero {
+  display: grid;
+  min-block-size: 11.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  gap: 1rem;
-  margin: 1rem 0;
-  padding: 1.5rem;
-  border: 1px solid var(--p-borde);
-  border-radius: 1rem;
-  background: linear-gradient(115deg, #fff, #edf4ff);
+  gap: 0.5rem;
+  margin: 0.35rem 0 var(--vista-aviso-gap);
+  padding: 0;
+  border-radius: var(--vista-banner-radio);
+  background: linear-gradient(105deg, #052650, #0755b8 65%, #b4e6ff);
+  box-shadow: 0 8px 20px #123c731b;
 }
-.bienvenida-estudiante > div:first-child {
-  flex: 1 1 28rem;
-}
-.ceja {
-  margin-bottom: 0.5rem;
-  color: var(--p-azul);
-  font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+.hero-texto {
+  padding: 0.9rem 0 0.9rem 1.4rem;
+  min-width: 0;
 }
 h1 {
-  font-size: var(--t-titulo);
-  font-weight: 700;
+  font-size: var(--vista-titulo);
+  line-height: 1.12;
   letter-spacing: -0.035em;
+  margin: 0.2rem 0;
 }
-h2 {
-  margin: 0 0 0.7rem;
-  font-size: var(--t-seccion);
+h1 span {
+  color: #ffbc58;
+}
+.ceja {
+  font-size: var(--t-xs);
   font-weight: 700;
-  line-height: 1.3;
+  letter-spacing: 0.1em;
+  color: #174a7c;
+  margin: 0.15rem 0;
 }
-h3 {
-  margin: 0;
-  font-size: var(--t-card);
-  font-weight: 600;
+.bienvenida-estudiante .ceja {
+  color: #dff5ff;
 }
-p {
-  color: var(--p-sec);
-  font-size: var(--t-base);
-  line-height: 1.55;
+.bienvenida-estudiante .descripcion {
+  margin: 0.45rem 0;
+  font-size: var(--vista-descripcion);
+  line-height: 1.4;
 }
-.descripcion {
-  max-width: 43rem;
-  margin: 0.75rem 0 0;
+.linea-estudiante {
+  display: block;
+  width: 5rem;
+  height: 0.2rem;
+  border-radius: 1rem;
+  background: #ffb338;
+  margin-top: 0.55rem;
+}
+.campus-estudiante {
+  min-width: 0;
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent, #000 9%);
+}
+.campus-estudiante svg {
+  display: block;
+  width: 100%;
+  height: 9.5rem;
+  fill: none;
+  stroke: none;
+}
+.estado-estudiante {
+  margin: 0.5rem 0;
 }
 .etiqueta-demo {
-  padding: 0.75rem;
-  border: 1px solid var(--p-borde);
-  border-radius: 0.6rem;
-  background: var(--p-fondo);
-  color: var(--p-acento);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.7rem;
+  margin: 0.25rem 0;
   font-size: var(--t-xs);
-  font-weight: 600;
+  color: #385374;
 }
 .etiqueta-demo span {
-  display: block;
-  margin-top: 0.3rem;
-  color: var(--p-sec);
-  font-weight: 400;
+  color: #385374;
 }
-.portal-estudiante {
-  display: grid;
-  grid-template-columns: 15rem minmax(0, 1fr);
-  gap: 1.25rem;
-  margin-top: 1.25rem;
-  align-items: start;
+h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
 }
-.columna-perfil,
-.contenido-estudiante {
-  display: grid;
-  gap: 1rem;
-  min-width: 0;
-}
-.perfil-estudiante,
-.notificaciones-estudiante,
-.tarjeta-estudiante,
-.entrada-academica {
-  min-width: 0;
-  padding: 1.25rem;
-  border: 1px solid var(--p-borde);
-  border-radius: 0.9rem;
-  background: var(--p-fondo);
-}
-.perfil-estudiante h2,
-.notificaciones-estudiante h2,
-.tarjeta-estudiante h2 {
+h3 {
+  margin: 0 0 0.3rem;
   font-size: var(--t-card);
+  line-height: 1.3;
 }
-.avatar-estudiantil {
-  display: grid;
-  place-items: center;
-  width: 5rem;
-  height: 5rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--p-borde);
-  border-radius: 50%;
-  background: var(--p-suave);
-  color: var(--p-azul);
-}
-.avatar-estudiantil svg {
-  width: 2.5rem;
-  height: 2.5rem;
-}
-.personalizacion-pendiente {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px dashed var(--p-borde);
-}
-.personalizacion-pendiente h3 {
+p {
+  margin: 0.3rem 0;
+  color: var(--p-sec);
   font-size: var(--t-sm);
+  line-height: 1.4;
 }
-.personalizacion-pendiente p,
 .nota {
-  font-size: var(--t-sm);
-}
-.resumen-estudiante {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-.icono {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  margin-bottom: 0.8rem;
-  border-radius: 0.6rem;
-  background: var(--p-suave);
-  color: var(--p-azul);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  margin: 0.35rem 0 0;
 }
 svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.7rem;
+  height: 1.7rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.5;
+  stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.nota {
-  margin: 0.8rem 0 0;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--p-borde);
-}
-.entrada-academica {
+.portal-estudiante {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  align-items: center;
-  gap: 1.25rem;
-  background: linear-gradient(110deg, #fff, #edf4ff);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--vista-gap);
+  margin-top: 0.65rem;
 }
-.entrada-texto p:last-child {
-  margin: 0;
-}
-.entrada-accion {
+.portal-estudiante > section {
   min-width: 0;
+  padding: 1.0625rem;
+  border: 1px solid var(--p-borde);
+  border-radius: var(--vista-panel-radio);
+  box-shadow:
+    0 7px 18px #123c7317,
+    inset 0 -2px var(--modulo-acento);
 }
-.habilitacion {
-  color: var(--p-acento);
-  font-size: var(--t-xs);
+.perfil-estudiante {
+  --modulo-acento: #0755b8;
+  --modulo-suave: #eaf4ff;
+  grid-column: 1 / span 2;
+  grid-row: 1 / span 2;
 }
-button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  width: 100%;
-  min-height: 3rem;
-  margin: 0.6rem 0;
-  padding: 0.8rem;
-  font: inherit;
-  font-size: var(--t-sm);
-  font-weight: 700;
-  border-radius: 0.55rem;
-  border: 1px solid #b49a76;
-  background: #f2e8da;
-  color: #665239;
+.tarjeta-sesiones {
+  --modulo-acento: #975000;
+  --modulo-suave: #fff0df;
+  grid-column: 3 / span 2;
+  grid-row: 1;
 }
-button:disabled {
-  cursor: not-allowed;
+.tarjeta-convocatorias {
+  --modulo-acento: #6334b4;
+  --modulo-suave: #eee8ff;
+  grid-column: 5 / span 2;
+  grid-row: 1;
 }
-#requisito-intento {
-  margin: 0;
-  font-size: var(--t-sm);
+.participaciones-estudiante {
+  --modulo-acento: #08734b;
+  --modulo-suave: #e1f5e8;
+  grid-column: 3 / span 2;
+  grid-row: 2;
+}
+.notificaciones-estudiante {
+  --modulo-acento: #875b00;
+  --modulo-suave: #fff5d8;
+  grid-column: 5 / span 2;
+  grid-row: 2;
+}
+.portal-estudiante .entrada-academica {
+  --modulo-acento: #6334b4;
+  --modulo-suave: #eee8ff;
+  grid-column: 1 / span 3;
+  grid-row: 3;
+}
+.recorrido-estudiante {
+  --modulo-acento: #b2670c;
+  --modulo-suave: #fff5e8;
+  grid-column: 4 / span 3;
+  grid-row: 3;
 }
 .pie-estudiante {
-  margin-top: 1rem;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  background: var(--p-fondo);
-  color: var(--p-sec);
+  padding: 0.15rem 0;
+  margin-top: 0.25rem;
   font-size: var(--t-xs);
+  color: #052650;
 }
 a:focus-visible {
   outline: 3px solid var(--p-azul);
   outline-offset: 3px;
 }
-@media (max-width: 1100px) {
+@container (max-width: 58rem) {
+  .portal-estudiante {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .portal-estudiante > section.modulo-panel {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .perfil-estudiante {
+    grid-row: span 2 !important;
+  }
+  .panel-estudiantil .bienvenida-estudiante.modulo-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero-texto {
+    padding: 1rem;
+  }
+}
+@container (max-width: 36rem) {
   .portal-estudiante {
     grid-template-columns: minmax(0, 1fr);
   }
-  .columna-perfil {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .entrada-academica {
-    grid-template-columns: minmax(0, 1fr);
+  .perfil-estudiante {
+    grid-row: auto !important;
   }
 }
-@media (max-width: 600px) {
-  .resumen-estudiante,
-  .columna-perfil {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .bienvenida-estudiante {
-    padding: 1.2rem;
+
+.campus-estudiante svg {
+  border-radius: 0 1.5rem 1.5rem 0;
+}
+
+/* Al apilar el banner, el texto permanece sobre la zona azul de alto contraste. */
+@container (max-width: 58rem) {
+  .panel-estudiantil .bienvenida-estudiante.modulo-hero {
+    background: linear-gradient(110deg, #052650, #0755b8);
   }
 }

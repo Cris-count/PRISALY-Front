@@ -1,0 +1,282 @@
+﻿.gestion-sesiones {
+  display: grid;
+  grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr);
+  gap: var(--vista-gap);
+}
+.listado-sesiones {
+  padding: 0.65rem 1rem;
+  box-shadow:
+    0 8px 18px #123c7314,
+    inset 0 -2px #eba333;
+}
+.cabecera-listado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.cabecera-listado h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  width: min(100%, 25rem);
+}
+label {
+  display: block;
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+input,
+select {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  border: 1px solid #94aac5;
+  border-radius: 0.8rem;
+  padding: 0.45rem 0.6rem;
+  margin-top: 0.25rem;
+  background: #f5f8ff;
+  color: #344968;
+  font-size: var(--t-sm);
+  cursor: not-allowed;
+}
+input::placeholder {
+  color: #344968;
+  opacity: 1;
+}
+.etiqueta-demo {
+  margin: 0.35rem 0;
+  font-size: var(--t-xs);
+  color: #344968;
+}
+.tabla-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #cbdcf0;
+  border-radius: 0.8rem;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--t-sm);
+}
+caption {
+  text-align: left;
+  padding: 0.35rem 0.6rem;
+  color: #344968;
+  background: #f5f9ff;
+  font-size: var(--t-xs);
+}
+th,
+td {
+  text-align: left;
+  padding: 0.4rem 0.45rem;
+  border-bottom: 1px solid #ccdcef;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}
+thead {
+  background: #dfeaff;
+  color: #173957;
+}
+th:first-child {
+  width: 25%;
+}
+th:nth-child(2) {
+  width: 21%;
+}
+th:nth-child(3) {
+  width: 16%;
+}
+th:nth-child(4) {
+  width: 20%;
+}
+th:last-child {
+  width: 18%;
+}
+tbody {
+  background: #f8fbff;
+  color: #173957;
+}
+tbody small {
+  display: block;
+  color: #405b79;
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+.estado-demo {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.3rem 0.5rem;
+  border-radius: 2rem;
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+.programada {
+  color: #216137;
+  background: #dcf2e4;
+}
+.curso {
+  color: #0755a2;
+  background: #ddf0ff;
+}
+.pendiente {
+  color: #804400;
+  background: #ffe8c9;
+}
+.accion-pendiente {
+  font-size: var(--t-xs);
+  color: #405b79;
+}
+.opciones {
+  padding: 1rem;
+  box-shadow:
+    0 8px 18px #123c7314,
+    inset 0 -2px #eba333;
+}
+.opciones h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.acciones-docentes {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+.acciones-docentes button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  border: 1px solid #c1d2e9;
+  border-radius: 0.9rem;
+  background: #f5f8ff;
+  color: #173957;
+  font-weight: 700;
+  font-size: var(--t-sm);
+  cursor: not-allowed;
+}
+.acciones-docentes small {
+  display: block;
+  font-size: var(--t-xs);
+  font-weight: 400;
+  line-height: 1.4;
+  margin-top: 0.1rem;
+}
+.preparacion {
+  margin-top: 0.6rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid #c1d2e9;
+  border-radius: 1rem;
+  background: #f8fbff;
+}
+summary {
+  font-size: var(--t-sm);
+  color: #173957;
+  cursor: pointer;
+  font-weight: 700;
+}
+.preparacion h2 {
+  margin-top: 1rem;
+}
+fieldset {
+  min-width: 0;
+  border: 1px solid #a2b9d4;
+  border-radius: 0.8rem;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+legend,
+fieldset p {
+  font-size: var(--t-sm);
+  color: #344968;
+}
+fieldset label {
+  margin-top: 0.7rem;
+}
+:host ::ng-deep .listado-sesiones app-estado-panel .aviso {
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  font-size: var(--t-xs);
+}
+@container (max-width: 58rem) {
+  .gestion-sesiones {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .banner-sesiones {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .accion-banner {
+    grid-column: 1 / -1;
+  }
+  .resumen {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .mini-ilustracion {
+    grid-column: 2;
+    width: 5.5rem;
+    justify-self: end;
+  }
+}
+@container (max-width: 38rem) {
+  .banner-sesiones,
+  .resumen-sesiones {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .banner-sesiones {
+    padding: 1rem;
+  }
+  .aula {
+    width: 100%;
+    max-width: 26rem;
+    justify-self: center;
+  }
+  .resumen {
+    padding: 0.8rem;
+  }
+  .gestion-sesiones .panel-docente {
+    padding: 0.7rem;
+  }
+  .filtros {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  table {
+    min-width: 35rem;
+  }
+  :host ::ng-deep .integracion .aviso {
+    display: block;
+  }
+  :host ::ng-deep .integracion .aviso p {
+    margin-top: 0.3rem;
+  }
+}
+
+@container (max-width: 38rem) {
+  .resumen {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .resumen .mini-ilustracion {
+    grid-column: 1;
+  }
+  .acciones-docentes button {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Al apilar el banner, el texto permanece sobre la zona azul de alto contraste. */
+@container (max-width: 38rem) {
+  .banner-sesiones {
+    background: linear-gradient(110deg, #052650, #0755b8);
+  }
+}

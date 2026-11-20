@@ -1,0 +1,151 @@
+﻿.columna-casos {
+  display: contents;
+}
+.casos {
+  max-width: none;
+  container-type: inline-size;
+  --modulo-acento: #ef9a22;
+  --modulo-suave: #eaf4ff;
+  .regreso {
+    padding-block: 0.15rem;
+  }
+  .cabecera-docente {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 0.8fr);
+    min-height: var(--vista-banner-min);
+    column-gap: 0.7rem;
+    align-items: center;
+    margin: 0.35rem 0 var(--vista-aviso-gap);
+    padding: 0.875rem 1.6rem;
+    background: linear-gradient(100deg, #052650, #0755b8 52%, #a6dfff);
+    border-radius: var(--vista-banner-radio);
+  }
+  .icono-docente {
+    display: none;
+  }
+  .cabecera-docente .ceja {
+    grid-column: 1;
+    margin: 0;
+    font-size: var(--t-xs);
+    letter-spacing: 0.22em;
+  }
+  h1 {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: var(--vista-titulo);
+    line-height: 1.12;
+    margin: 0.35rem 0;
+  }
+  h1 span {
+    color: #ffbc58;
+  }
+  .cabecera-docente > p:not(.ceja):not(.identidad) {
+    grid-column: 1;
+    grid-row: 3;
+    margin: 0.35rem 0;
+    line-height: 1.4;
+    font-size: var(--vista-descripcion);
+  }
+  .identidad {
+    grid-column: 1 / -1;
+    margin: 0.4rem 0 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: var(--t-xs);
+  }
+  .campus-casos {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    min-width: 0;
+    pointer-events: none;
+  }
+  .campus-casos svg {
+    display: block;
+    width: 100%;
+    height: 8rem;
+  }
+  .crear-caso {
+    grid-column: 3;
+    grid-row: 1 / 4;
+    text-align: center;
+    min-width: 0;
+  }
+  .crear-caso span {
+    display: block;
+    padding: 0.9rem 0.5rem;
+    border: 1px solid #ffc55b;
+    border-radius: 1rem;
+    background: linear-gradient(110deg, #ffbe35, #ff931b);
+    color: #402300;
+    font-size: var(--t-base);
+    font-weight: 700;
+  }
+  .crear-caso small {
+    display: block;
+    color: #052650;
+    background: #e9f6ff;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    margin-top: 0.35rem;
+    font-size: var(--t-xs);
+  }
+  .areas-docentes {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--vista-gap);
+    margin: 1rem 0;
+    align-items: stretch;
+  }
+  .columna-casos {
+    display: grid;
+    gap: 0.9rem;
+    grid-template-rows: 1fr auto;
+    min-width: 0;
+  }
+  .panel-docente {
+    padding: var(--vista-panel-padding);
+    border-radius: var(--vista-panel-radio);
+  }
+  .panel-docente > .ceja {
+    display: none;
+  }
+  h2 {
+    font-size: var(--vista-panel-titulo);
+    line-height: 1.25;
+    margin: 0 0 0.35rem;
+  }
+  .panel-docente > p {
+    margin: 0.35rem 0;
+    font-size: var(--t-sm);
+    line-height: 1.45;
+  }
+  .panel-docente h2::before {
+    content: '';
+    display: inline-block;
+    width: 1.6rem;
+    height: 1.3rem;
+    margin-right: 0.65rem;
+    border: 2px solid #d07c00;
+    border-radius: 0.3rem;
+    vertical-align: middle;
+    background: linear-gradient(155deg, transparent 40%, #f5b34f 41% 48%, transparent 49%);
+  }
+  .carpetas-caso {
+    display: block;
+    width: min(14rem, 80%);
+    height: auto;
+    margin: 0.5rem auto 0.25rem;
+  }
+  .sin-casos {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0.3rem auto;
+    padding: 0.25rem 1.3rem;
+    background: #deebff;
+    color: #173957;
+    border-radius: 2rem;
+    text-align: center;
+    font-size: var(--t-base);
+  }
+}

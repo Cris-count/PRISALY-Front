@@ -8,6 +8,11 @@ import { EstadoRecorridoEstudiantilPanel } from './estado-recorrido-estudiantil'
   imports: [RouterLink, EstadoRecorridoEstudiantilPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-estudiante.html',
-  styleUrl: './dashboard-estudiante.css',
+  styleUrls: [
+    './dashboard-estudiante.css',
+    './dashboard-modulos.css',
+    './dashboard-estudiante-portal.css',
+    './dashboard-estudiante-estados.css',
+  ],
 })
 export class DashboardEstudiante {}

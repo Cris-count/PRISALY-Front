@@ -7,7 +7,7 @@ import { DASHBOARD_NAVEGACION } from './dashboard-secciones';
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-inicio.html',
-  styleUrl: './dashboard-inicio.css',
+  styleUrls: ['./dashboard-inicio.css', './dashboard-inicio-escena.css'],
 })
 export class DashboardInicio {
   protected readonly secciones = DASHBOARD_NAVEGACION;

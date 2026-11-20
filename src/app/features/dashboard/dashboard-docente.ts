@@ -4,15 +4,26 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { DashboardSeccion } from './dashboard-secciones';
 import { VISTAS_DOCENTES } from './docente-vistas';
+import { DashboardSesiones } from './dashboard-sesiones';
+import { DashboardConvocatorias } from './dashboard-convocatorias';
 import { EstadoPanel } from './estado-panel';
 import { EstructuraDocente } from './estructura-docente';
 
 @Component({
   selector: 'app-dashboard-docente',
-  imports: [RouterLink, EstadoPanel, EstructuraDocente],
+  imports: [RouterLink, EstadoPanel, EstructuraDocente, DashboardSesiones, DashboardConvocatorias],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-docente.html',
-  styleUrl: './dashboard-docente.css',
+  styleUrls: [
+    './dashboard-docente.css',
+    './dashboard-modulos.css',
+    './dashboard-casos.css',
+    './dashboard-casos-paneles.css',
+    './dashboard-casos-responsive.css',
+    './dashboard-rubricas.css',
+    './dashboard-rubricas-paneles.css',
+    './dashboard-rubricas-estados.css',
+  ],
 })
 export class DashboardDocente {
   private readonly ruta = inject(ActivatedRoute);

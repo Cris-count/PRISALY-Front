@@ -133,10 +133,40 @@
         </svg>
       </button>
       <div>
-        <p class="contexto">PRISALY <span aria-hidden="true">/</span> Dashboard</p>
+        <p class="contexto">
+          PRISALY <span aria-hidden="true">/</span>
+          {{
+            titulo() === 'Inicio'
+              ? 'Espacio Académico'
+              : titulo() === 'Usuarios y docentes'
+                ? 'Administración'
+                : 'Dashboard'
+          }}
+        </p>
         <p class="titulo-pantalla">{{ titulo() }}</p>
       </div>
     </div>
+    @if ((titulo() === 'Inicio' || titulo() === 'Usuarios y docentes') && !qaPersonal) {
+      <div class="busqueda-inicio" role="note" aria-label="Búsqueda demostrativa no disponible">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10" cy="10" r="7" />
+          <path d="m15 15 6 6" />
+        </svg>
+        <span>Buscar en la plataforma…<small>Demostración · No disponible</small></span>
+      </div>
+      @if (titulo() === 'Inicio') {
+        <span
+          class="notificaciones-inicio"
+          role="note"
+          aria-label="Notificaciones demostrativas no disponibles"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+          </svg>
+          <small>Demostración</small>
+        </span>
+      }
+    }
     <div class="identificacion">
       <span class="insignia">{{ qaPersonal ? 'QA DE PERSONAL' : 'ENTORNO DE DEMOSTRACIÓN' }}</span>
       <div class="perfil">

@@ -1,0 +1,104 @@
+/* Recursos decorativos locales de Inicio: proporciones y logo original intactos. */
+.pagina > section:not(.bienvenida) {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+.emblema-institucional {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  pointer-events: none;
+}
+.emblema-institucional svg {
+  display: block;
+  width: 100%;
+  height: var(--vista-banner-arte);
+  fill: none;
+  stroke: none;
+}
+.ciudad-inicio {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  right: 0;
+  bottom: 0;
+  width: min(34%, 18rem);
+}
+.ciudad-inicio > img:first-child {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.logo-plaza {
+  position: absolute;
+  width: 20%;
+  height: auto;
+  top: 55%;
+  left: 42%;
+}
+@container (max-width: 58rem) {
+  .bienvenida {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  }
+  .bienvenida-accion {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    max-width: none;
+  }
+}
+@container (max-width: 48rem) {
+  .bienvenida {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem;
+    background: linear-gradient(110deg, #052650, #0755b8), #052650;
+  }
+  .emblema-institucional {
+    grid-row: 2;
+    width: min(100%, 24rem);
+    justify-self: center;
+  }
+  .emblema-institucional svg {
+    height: auto;
+  }
+  .tarjetas {
+    padding-right: 0;
+  }
+  .acceso--estudiante {
+    margin-right: 0;
+  }
+  .ciudad-inicio {
+    opacity: 0.2;
+    width: 45%;
+  }
+}
+@container (max-width: 28rem) {
+  .tarjetas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .acceso {
+    grid-template-columns: 3.2rem minmax(0, 1fr);
+  }
+  .ciudad-inicio {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acceso {
+    transition: none;
+  }
+  .acceso:hover {
+    transform: none;
+  }
+}
+
+.reproducir {
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: none;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 0.75rem;
+}

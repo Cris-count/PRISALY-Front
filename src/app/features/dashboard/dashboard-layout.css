@@ -21,8 +21,8 @@
   display: flex;
   flex-direction: column;
   padding: 1.8rem 1rem 1.2rem;
-  background: linear-gradient(180deg, #f7faff, var(--p-fondo));
-  border-right: 1px solid var(--p-borde);
+  background: linear-gradient(165deg, #052650, #073c80 65%, #052650), #052650;
+  border-right: 1px solid #174a83;
 }
 .marca {
   display: flex;
@@ -30,11 +30,12 @@
   align-items: center;
   gap: 0.8rem;
   text-decoration: none;
-  color: var(--p-sec);
+  color: #e1efff;
 }
 .marca img {
+  width: 160px;
+  height: 120px;
   object-fit: contain;
-  background: linear-gradient(180deg, transparent 62%, #0a1530 82%);
   border-radius: 0.5rem;
 }
 .marca span,
@@ -44,7 +45,7 @@
 }
 .grupo {
   margin: 2rem 0.9rem 0.8rem;
-  color: var(--p-sec);
+  color: #d2e9ff;
 }
 nav {
   display: grid;
@@ -56,27 +57,29 @@ nav a {
   gap: 0.8rem;
   min-height: 2.85rem;
   padding: 0.7rem 0.9rem;
-  color: var(--p-azul);
+  color: #f1f7ff;
   border: 1px solid transparent;
-  border-radius: 0.6rem;
+  border-radius: 1rem;
   font-size: var(--t-base);
   font-weight: 600;
   line-height: 1.4;
   text-decoration: none;
 }
 nav a:hover {
-  color: var(--p-azul);
-  background: var(--p-suave);
+  color: #fff;
+  background: #174e8c;
 }
 nav a.activo {
-  color: var(--p-activo-texto);
-  background: var(--p-activo-fondo);
+  color: #201000;
+  background: linear-gradient(110deg, #ffb52e, var(--p-naranja)), var(--p-naranja);
   border-color: var(--p-naranja);
-  box-shadow: inset 3px 0 var(--p-naranja);
+  box-shadow:
+    0 6px 20px #0003,
+    inset 0 1px #ffe4b4;
 }
 nav svg {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.6rem;
+  height: 1.6rem;
   flex-shrink: 0;
   fill: none;
   stroke: currentColor;
@@ -128,7 +131,7 @@ nav svg {
   gap: 1rem;
   padding: 1rem 1.75rem;
   border-bottom: 1px solid var(--p-borde);
-  background: #fffffff2;
+  background: linear-gradient(110deg, #fff, #edf5ff);
 }
 .ubicacion,
 .identificacion,
