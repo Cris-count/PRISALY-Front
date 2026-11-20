@@ -59,12 +59,12 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   it('inicia en fase de bienvenida con el título de integración', () => {
     expect(component).toBeTruthy();
     const texto = fixture.nativeElement.textContent;
-    expect(texto).toContain('Simulador PRISALY — Ciudad Integrada');
-    expect(texto).toContain('Iniciar experiencia integrada');
+    expect(texto).toContain('Simulador PRISALY');
+    expect(texto).toContain('Iniciar demostración anterior (Phaser 2.5D)');
   });
 
   it('inicia la demostración en fase de exploración con visor 2.5D y guía investigativa', () => {
-    const botonIniciar = fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario');
+    const botonIniciar = fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]');
     expect(botonIniciar).toBeTruthy();
     botonIniciar.click();
     fixture.detectChanges();
@@ -83,8 +83,19 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
     expect(component.faseExperiencia()).toBe('explorando');
   });
 
+  it('ofrece Unreal como acceso principal y exige elegir explícitamente la demostración anterior', () => {
+    const inicio = fixture.nativeElement as HTMLElement;
+    const principal = inicio.querySelector<HTMLAnchorElement>('.tarjeta-inicio .boton--primario');
+    expect(principal?.tagName).toBe('A');
+    expect(principal?.getAttribute('href')).toBe('simulador-unreal');
+    expect(principal?.textContent).toContain('Abrir simulador Unreal (3D)');
+    expect(inicio.querySelector('[data-testid="iniciar-demo-anterior"]')?.textContent).toContain('Phaser 2.5D');
+    expect(inicio.querySelector('app-visor-ciudad-2d5')).toBeNull();
+    expect(component.faseExperiencia()).toBe('preparado');
+  });
+
   it('solicita confirmación al llegar a Plaza Central y cancela regresando a exploración', () => {
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click();
     fixture.detectChanges();
 
     const adaptador = fixture.debugElement.injector.get(AdaptadorMundoSimulador);
@@ -107,7 +118,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('confirma el inicio del cuestionario, bloquea la exploración y activa las preguntas', () => {
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click();
     fixture.detectChanges();
 
     const adaptador = fixture.debugElement.injector.get(AdaptadorMundoSimulador);
@@ -130,7 +141,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('cancelar la confirmación de finalización no desbloquea la exploración de la ciudad', () => {
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click();
     fixture.detectChanges();
 
     const adaptador = fixture.debugElement.injector.get(AdaptadorMundoSimulador);
@@ -154,7 +165,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
 
   it('abre y cierra la libreta en memoria suspendiendo la interacción de Phaser', () => {
     // Iniciar demo
-    const botonIniciar = fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario');
+    const botonIniciar = fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]');
     botonIniciar.click();
     fixture.detectChanges();
 
@@ -181,7 +192,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('suspende Phaser y muestra el interior al solicitar entrada a un edificio', () => {
-    const botonIniciar = fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario');
+    const botonIniciar = fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]');
     botonIniciar.click();
     fixture.detectChanges();
 
@@ -209,7 +220,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('no altera automáticamente las respuestas académicas al recopilar pistas o notas', () => {
-    const botonIniciar = fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario');
+    const botonIniciar = fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]');
     botonIniciar.click();
     fixture.detectChanges();
 
@@ -228,7 +239,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('cerrar la libreta conserva la pausa del interior y una confirmación simultánea', async () => {
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click(); fixture.detectChanges();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click(); fixture.detectChanges();
     await fixture.whenStable();
     const adaptador = fixture.debugElement.injector.get(AdaptadorMundoSimulador);
     const store = fixture.debugElement.injector.get(SimuladorStore);
@@ -250,12 +261,12 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('crea una sesión de libreta nueva al reiniciar la demostración sin iniciar intentos reales', () => {
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click(); fixture.detectChanges();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click(); fixture.detectChanges();
     const libreta = fixture.debugElement.injector.get(LibretaStore);
     const contextoAnterior = libreta.estado().contexto;
     libreta.crearNota('No debe aparecer en otra demostración');
     fixture.nativeElement.querySelector('.boton-volver-inicio').click(); fixture.detectChanges();
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click(); fixture.detectChanges();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click(); fixture.detectChanges();
     expect(libreta.estado().notas).toEqual([]);
     expect(libreta.estado().contexto).not.toEqual(contextoAnterior);
     expect(mockGateway.iniciarIntento).not.toHaveBeenCalled();
@@ -263,7 +274,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('permite acceso directo a Plaza Central sin investigar con advertencia informativa sin bloqueo', () => {
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click();
     fixture.detectChanges();
 
     // Sin visitar ningún edificio
@@ -289,7 +300,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('muestra personajes y diálogo interactivo al ingresar al Hospital con continuidad narrativa', () => {
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click();
     fixture.detectChanges();
 
     const adaptador = fixture.debugElement.injector.get(AdaptadorMundoSimulador);
@@ -349,7 +360,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('restaura el foco al elemento disparador al cancelar el modal nativo de cuestionario', async () => {
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click();
     fixture.detectChanges();
 
     const adaptador = fixture.debugElement.injector.get(AdaptadorMundoSimulador);
@@ -377,7 +388,7 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   });
 
   it('el evento cancel del diálogo nativo (Escape) cancela la confirmación sin activar movimientos', () => {
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click();
     fixture.detectChanges();
 
     const adaptador = fixture.debugElement.injector.get(AdaptadorMundoSimulador);
@@ -403,11 +414,11 @@ describe('SimuladorIntegradoPage (Fase 7)', () => {
   it('auditoría de textos: todas las vistas rotulan estrictamente demostración sin implicar persistencia oficial', () => {
     // 1. Pantalla de inicio
     const textoInicio = fixture.nativeElement.textContent;
-    expect(textoInicio).toContain('DEMOSTRACIÓN · CIUDAD INTEGRADA');
+    expect(textoInicio).toContain('SIMULADOR 2.0 · ACCESO WEB');
     expect(textoInicio).toContain('cuestionario de demostración');
 
     // 2. Exploración
-    fixture.nativeElement.querySelector('.tarjeta-inicio .boton--primario').click();
+    fixture.nativeElement.querySelector('[data-testid="iniciar-demo-anterior"]').click();
     fixture.detectChanges();
 
     const textoExploracion = fixture.nativeElement.textContent;

@@ -56,6 +56,20 @@ export const PISTAS_DEMOSTRATIVAS_CATALOGO: readonly DefinicionPistaNarrativa[] 
       },
     },
   },
+  {
+    marca: 'demo_entrevista_paciente_registrada',
+    pista: {
+      id: 'demo-entrevista-paciente-01',
+      titulo: 'Entrevista al paciente (demostración)',
+      descripcion: 'Se registró la conversación demostrativa con el paciente de la camilla. No contiene hechos de un caso académico.',
+      origen: {
+        espacioId: 'hospital-prueba',
+        interaccionId: 'hosp-npc-paciente-01',
+        personajeId: 'paciente-01',
+        lugar: 'Hospital Central · camilla del paciente',
+      },
+    },
+  },
 ];
 
 /**

@@ -39,3 +39,4 @@
 .dialogo-concluido{color:#15803d}
 .nota-demo{font-size:.76rem;color:#64748b}
 @media (max-width:1024px){.simulador-integrado__cuerpo,.inicio-acciones{grid-template-columns:minmax(0,1fr)}}
+.acceso-unreal{display:inline-flex;align-items:center;text-decoration:none}

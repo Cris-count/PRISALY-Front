@@ -79,27 +79,36 @@
     @case ('inicio') {
       <div class="pantalla-inicio-integrada">
         <header class="inicio-cabecera">
-          <span class="insignia-fase">DEMOSTRACIÓN · CIUDAD INTEGRADA</span>
-          <h1>Simulador PRISALY — Ciudad Integrada</h1>
+          <span class="insignia-fase">SIMULADOR 2.0 · ACCESO WEB</span>
+          <h1>Simulador PRISALY</h1>
           <p class="inicio-subtitulo">
-            Recorre la ciudad en perspectiva axonométrica 2.5D, investiga en los edificios y dirígete
-            a la Plaza Central PRISALY cuando decidas dar paso al cuestionario de demostración.
+            Accede a la ciudad 3D de Unreal desde el navegador. La demostración anterior
+            en Phaser 2.5D sigue disponible como una opción independiente.
           </p>
         </header>
 
         <div class="inicio-acciones">
           <div class="tarjeta-inicio">
-            <h2>Modo Demostración Integrado</h2>
+            <h2>Simulador Unreal · Ciudad 3D</h2>
+            <p>Abre el acceso al nuevo simulador. La ciudad se habilitará cuando esté disponible su servidor de streaming.</p>
+            <a class="boton boton--primario acceso-unreal" href="simulador-unreal" data-testid="abrir-unreal">
+              Abrir simulador Unreal (3D)
+            </a>
+          </div>
+
+          <div class="tarjeta-inicio tarjeta-inicio--secundaria">
+            <h2>Demostración anterior · Phaser 2.5D</h2>
             <p>
-              Explora libremente la ciudad, visita los edificios y toma notas demostrativas. La transición en la Plaza Central
-              bloquea la exploración y activa el cuestionario de ejemplo.
+              Esta es la versión anterior, no el simulador Unreal. Permite recorrer el mapa 2.5D,
+              visitar edificios y utilizar la libreta y el cuestionario de demostración.
             </p>
             <button
               type="button"
-              class="boton boton--primario"
+              class="boton boton--secundario"
+              data-testid="iniciar-demo-anterior"
               (click)="iniciarDemostracion()"
             >
-              Iniciar experiencia integrada
+              Iniciar demostración anterior (Phaser 2.5D)
             </button>
           </div>
 
@@ -167,7 +176,7 @@
             <div class="hud-caso">
               <h1 class="hud-titulo">{{ caso.titulo }}</h1>
               @if (store.esDemostracion()) {
-                <span class="insignia-demo">Demostración</span>
+                <span class="insignia-demo">Demostración anterior · Phaser 2.5D</span>
               }
               <span class="insignia-estado">
                 {{ faseExperiencia() === 'en-cuestionario' || faseExperiencia() === 'confirmando-finalizacion' ? 'Fase Cuestionario Demo' : 'Fase Exploración' }}
@@ -184,6 +193,9 @@
             </div>
 
             <div class="hud-acciones">
+              @if (store.esDemostracion()) {
+                <a href="simulador-unreal" class="boton acceso-unreal">Ir a Unreal (3D)</a>
+              }
               <button
                 type="button"
                 class="boton-libreta"

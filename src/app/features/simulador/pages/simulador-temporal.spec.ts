@@ -107,12 +107,12 @@ describe('ciclo de vida del mundo técnico', () => {
       controles.push(control); emitir({ tipo: 'listo', posicion: { x: 0, y: 0 } }); return control;
     };
     TestBed.configureTestingModule({ providers: [provideRouter(routes), { provide: FABRICA_MUNDO, useValue: fabrica }] });
-    const harness = await RouterTestingHarness.create('/simulador');
+    const harness = await RouterTestingHarness.create('/simulador-tecnico-2d5');
     await esperarCreacion();
     expect(controles.length).toBe(1);
     await harness.navigateByUrl('/login');
     expect(controles[0].destruir).toHaveBeenCalledTimes(1);
-    await harness.navigateByUrl('/simulador');
+    await harness.navigateByUrl('/simulador-tecnico-2d5');
     await esperarCreacion();
     expect(controles.length).toBe(2);
     expect(controles[1].destruir).not.toHaveBeenCalled();
