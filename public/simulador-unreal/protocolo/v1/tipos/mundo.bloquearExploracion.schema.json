@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/mundo.bloquearExploracion.schema.json",
+  "title": "mundo.bloquearExploracion",
+  "description": "Bloqueo irreversible del mundo antes del cuestionario.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "motivo"
+  ],
+  "properties": {
+    "motivo": {
+      "const": "cuestionario"
+    }
+  }
+}

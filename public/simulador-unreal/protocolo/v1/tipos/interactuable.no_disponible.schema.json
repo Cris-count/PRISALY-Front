@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/interactuable.no_disponible.schema.json",
+  "title": "interactuable.no_disponible",
+  "description": "El interactuable dejo de estar disponible.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "interactuableId"
+  ],
+  "properties": {
+    "interactuableId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,63}$"
+    }
+  }
+}
