@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/orden.ack.schema.json",
+  "title": "orden.ack",
+  "description": "Confirmacion de una orden. Requiere correlacion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {}
+}

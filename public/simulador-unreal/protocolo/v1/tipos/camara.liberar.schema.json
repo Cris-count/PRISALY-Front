@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/camara.liberar.schema.json",
+  "title": "camara.liberar",
+  "description": "Vuelve al encuadre anterior.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {}
+}

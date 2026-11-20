@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prisaly.local/protocolo/v1/tipos/latido.schema.json",
+  "title": "latido",
+  "description": "Deteccion de desconexion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {}
+}

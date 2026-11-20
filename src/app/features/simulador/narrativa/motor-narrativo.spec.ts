@@ -121,4 +121,89 @@ describe('MotorNarrativo', () => {
       decisiones: [{ id: 'bucle', texto: '', consecuencias: [], rutas: [{ destino: escena.id, texto: '' }] }],
     }] })).toThrowError();
   });
+
+  it('restaura fielmente un estado y su historial sin re-ejecutar efectos de inicio', () => {
+    viajar('conversar');
+    motor.avanzarDialogo();
+    const capturado = motor.estado;
+    const historialCapturado = motor.historialCompleto;
+
+    const nuevoMotor = new MotorNarrativo(GUION_DEMOSTRACION);
+    expect(nuevoMotor.estado.escenaId).toBe('bienvenida');
+
+    nuevoMotor.restaurar(capturado, historialCapturado);
+    expect(nuevoMotor.estado.escenaId).toBe('conversacion');
+    expect(nuevoMotor.estado.marcas['conversacion']).toBeTrue();
+    expect(nuevoMotor.estado.personajes.find(p => p.id === 'b')?.expresion).toBe('alegre');
+    expect(nuevoMotor.puedeVolver).toBeTrue();
+
+    // Verificamos que retroceder usa el historial restaurado
+    nuevoMotor.volver();
+    expect(nuevoMotor.estado.dialogo).toBe(0);
+  });
+
+  it('rechaza restaurar a una escena que no existe en el guion', () => {
+    const estadoInvalido = {
+      ...motor.estado,
+      escenaId: 'escena-inexistente',
+    };
+    expect(() => motor.restaurar(estadoInvalido)).toThrowError(/no pertenece al guion/);
+  });
+
+  it('rechaza restaurar un estado con personajes desconocidos o lista discordante', () => {
+    const estadoConPersonajeFalso = {
+      ...motor.estado,
+      personajes: [
+        { id: 'fantasma', nombre: 'Desconocido', estado: 'presente', expresion: 'serena' as const },
+        motor.estado.personajes[1],
+      ],
+    };
+    expect(() => motor.restaurar(estadoConPersonajeFalso)).toThrowError(/personaje desconocido/);
+
+    const estadoIncompleto = {
+      ...motor.estado,
+      personajes: [motor.estado.personajes[0]],
+    };
+    expect(() => motor.restaurar(estadoIncompleto)).toThrowError(/no coincide con el guion/);
+  });
+
+  it('rechaza restaurar un estado con expresiones no autorizadas', () => {
+    const estadoExpresionInvalida = {
+      ...motor.estado,
+      personajes: [
+        { ...motor.estado.personajes[0], expresion: 'furiosa' as any },
+        motor.estado.personajes[1],
+      ],
+    };
+    expect(() => motor.restaurar(estadoExpresionInvalida)).toThrowError(/expresión inválida/);
+  });
+
+  it('rechaza restaurar marcas no booleanas o escenas visitadas inconsistentes', () => {
+    const estadoMarcaInvalida = {
+      ...motor.estado,
+      marcas: { pista: 'texto-invalido' as any },
+    };
+    expect(() => motor.restaurar(estadoMarcaInvalida)).toThrowError(/debe tener un valor booleano/);
+
+    const estadoVisitadaInexistente = {
+      ...motor.estado,
+      visitadas: ['bienvenida', 'sala-inexistente'],
+    };
+    expect(() => motor.restaurar(estadoVisitadaInexistente)).toThrowError(/no pertenece al guion/);
+
+    const estadoSinEscenaActualEnVisitadas = {
+      ...motor.estado,
+      escenaId: 'bienvenida',
+      visitadas: ['conversacion'],
+    };
+    expect(() => motor.restaurar(estadoSinEscenaActualEnVisitadas)).toThrowError(/debe incluir la escena actual/);
+  });
+
+  it('rechaza restaurar un historial con inconsistencias', () => {
+    const pasoInvalido = {
+      ...motor.estado,
+      escenaId: 'escena-del-historial-falsa',
+    };
+    expect(() => motor.restaurar(motor.estado, [pasoInvalido])).toThrowError(/historial contiene escena inexistente/);
+  });
 });

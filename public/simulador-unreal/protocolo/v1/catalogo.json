@@ -1,0 +1,153 @@
+{
+  "$comment": "ESTADO: PROPUESTO (v1 candidato). No es un contrato aprobado por Direccion Central.",
+  "version": 1,
+  "tipos": {
+    "mundo.listo": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/mundo.listo.schema.json",
+      "descripcion": "Unreal termino de cargar el nivel y espera sesion.iniciar."
+    },
+    "zona.entro": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/zona.entro.schema.json",
+      "descripcion": "El avatar entro a un volumen de zona."
+    },
+    "zona.salio": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/zona.salio.schema.json",
+      "descripcion": "El avatar salio de un volumen de zona."
+    },
+    "edificio.entro": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/edificio.entro.schema.json",
+      "descripcion": "Termino la carga del interior de un edificio."
+    },
+    "edificio.salio": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/edificio.salio.schema.json",
+      "descripcion": "El avatar volvio al exterior."
+    },
+    "interactuable.disponible": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/interactuable.disponible.schema.json",
+      "descripcion": "Hay un interactuable a distancia y con linea de vista."
+    },
+    "interactuable.no_disponible": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/interactuable.no_disponible.schema.json",
+      "descripcion": "El interactuable dejo de estar disponible."
+    },
+    "interactuable.activado": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/interactuable.activado.schema.json",
+      "descripcion": "El estudiante activo un interactuable. Unreal no decide nada mas."
+    },
+    "orden.ack": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": true,
+      "esquema": "tipos/orden.ack.schema.json",
+      "descripcion": "Confirmacion de una orden. Requiere correlacion."
+    },
+    "orden.error": {
+      "origen": "unreal",
+      "requiereAck": false,
+      "esRespuesta": true,
+      "esquema": "tipos/orden.error.schema.json",
+      "descripcion": "Rechazo de una orden. Requiere correlacion."
+    },
+    "sesion.iniciar": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/sesion.iniciar.schema.json",
+      "descripcion": "Inicia la sesion visual y aplica preferencias de accesibilidad."
+    },
+    "estado.restaurar": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/estado.restaurar.schema.json",
+      "descripcion": "Redibuja estados visuales desde el estado de Angular. Idempotente."
+    },
+    "interactuable.estado": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/interactuable.estado.schema.json",
+      "descripcion": "Cambia el resaltado visual de un interactuable."
+    },
+    "puerta.abrir": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/puerta.abrir.schema.json",
+      "descripcion": "Ordena la transicion al interior."
+    },
+    "camara.enfocar": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/camara.enfocar.schema.json",
+      "descripcion": "Acercamiento contextual a un objetivo."
+    },
+    "camara.liberar": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/camara.liberar.schema.json",
+      "descripcion": "Vuelve al encuadre anterior."
+    },
+    "npc.reproducirAnimacion": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/npc.reproducirAnimacion.schema.json",
+      "descripcion": "Animacion visual de un NPC."
+    },
+    "avatar.irA": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/avatar.irA.schema.json",
+      "descripcion": "Mueve el avatar a una zona (alternativa accesible)."
+    },
+    "fx.pistaObtenida": {
+      "origen": "angular",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/fx.pistaObtenida.schema.json",
+      "descripcion": "Efecto visual opcional. La pista vive solo en Angular."
+    },
+    "mundo.bloquearExploracion": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/mundo.bloquearExploracion.schema.json",
+      "descripcion": "Bloqueo irreversible del mundo antes del cuestionario."
+    },
+    "latido": {
+      "origen": "ambos",
+      "requiereAck": false,
+      "esRespuesta": false,
+      "esquema": "tipos/latido.schema.json",
+      "descripcion": "Deteccion de desconexion."
+    }
+  }
+}

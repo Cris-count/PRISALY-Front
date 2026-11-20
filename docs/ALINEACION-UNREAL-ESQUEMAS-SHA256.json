@@ -1,0 +1,117 @@
+[
+  {
+    "archivo": "catalogo.json",
+    "sha256": "d2732c9ed2905f2773997f2b538989ccf80de0587b1f6fc928c1e01dd0ca80e3",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "sobre.schema.json",
+    "sha256": "5a781af8990b698f84f6f86bb93712b75345a6e2732c57e0f843ec5046627feb",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\avatar.irA.schema.json",
+    "sha256": "ed7c568e242ad9678ba2ebb31fd008a47fa2e910c3fbcfb70150d827556c1304",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\camara.enfocar.schema.json",
+    "sha256": "8903c81bedc64bd22950d0155220a0fb2d4883b32fcc8117c15c80be351b2d5f",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\camara.liberar.schema.json",
+    "sha256": "687c0983b06f8c5b9bf1014c735e553d8ac2cda41d020834ef974cd22b17f71b",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\edificio.entro.schema.json",
+    "sha256": "1698f5574e4ac83cf38a8b9e0044e0e65303f48ead145dfac801a8a01077621c",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\edificio.salio.schema.json",
+    "sha256": "16fc37511306259d7909c672273783705f8e60162d0800e6ea6fbd4dfaf7c243",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\estado.restaurar.schema.json",
+    "sha256": "1d63364d35a56d5c0d12c522292413535774fba48697bf577f812dbf2bb67a60",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\fx.pistaObtenida.schema.json",
+    "sha256": "40bc85db113afa7bf797aeace49ea5a37b48d400ad838768fd78f960b4597112",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\interactuable.activado.schema.json",
+    "sha256": "70e87d8ab0d659ef16580deeb1fb41402704ae9a66c6e8dd25497bc28cd52788",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\interactuable.disponible.schema.json",
+    "sha256": "5b27aaec777cd421984876259de30fe7adaa071cac50ed6900176ff30879753b",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\interactuable.estado.schema.json",
+    "sha256": "48ae5d82bd37040f5ab9191bdf346e157708bd20fab28b9a28fb85b58da05349",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\interactuable.no_disponible.schema.json",
+    "sha256": "300f47cf456ea483f69ee28e0525871b53c24eb0e83c66c48d8c5c32017d52f7",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\latido.schema.json",
+    "sha256": "30e0a06363a3463859a73ae8331cd80565b8db4a839f8f0bddca6f8e01c3160f",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\mundo.bloquearExploracion.schema.json",
+    "sha256": "ca348a91689310f05a5ffb5ab250e06ad85e92e01deb4fc953c920de04ebb565",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\mundo.listo.schema.json",
+    "sha256": "a050c8b1c9e76e38ea39004f6d00d63bef7f9d862f9ae1e94567bbb2588ece8c",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\npc.reproducirAnimacion.schema.json",
+    "sha256": "03aa458f06ea67e99e84b5a09e8ff5fda9bde7cbccf21c030c659d59d6791ec8",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\orden.ack.schema.json",
+    "sha256": "b5e711e496ccd5d92a1c50fc78d4d6f657a037834bb349d4de373f9d43039772",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\orden.error.schema.json",
+    "sha256": "d66a293ff920d617cb012c9c5d711e89f77d72a452de073cef25c2c6a88691c7",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\puerta.abrir.schema.json",
+    "sha256": "57477d8be63ef6c87748b6c50772e8f65f77bce1e609676122d6bf192684c0eb",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\sesion.iniciar.schema.json",
+    "sha256": "c00537cf6f5ef1a9b3484bcebcb2b8e9b712dd19ba3da01d37e2de37b446b012",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\zona.entro.schema.json",
+    "sha256": "49014262aed8497a93ad00625c6aca60f91f8c6ba31391c98a23b15c659a75c3",
+    "coincideOriginal": true
+  },
+  {
+    "archivo": "tipos\\zona.salio.schema.json",
+    "sha256": "301a2953f813b19791c9b59287a257b435dc6eebd93158927cfdc251e6cb0cdb",
+    "coincideOriginal": true
+  }
+]
