@@ -176,3 +176,13 @@ PS2-LAB-03 permanece independiente: no se modifica, copia ni publica. Backend, E
 El checkout inicial estaba limpio: los cambios anteriores ya estaban conservados en cb6ecd8. La rama original y su commit permanecen intactos, incluidos los archivos excluidos. La rama nueva se creó desde develop y contiene una selección de archivos, sin sobrescribir las ramas anteriores.
 
 El commit de publicación se titula exactamente **Simulador02**. El PR se abre como **Draft** hacia develop. No se realiza merge ni force push. El PR anterior #13 se sustituye por el Draft de esta rama, conservando su historial.
+
+## Corrección posterior del control de URLs de CI — 20/11/2026
+
+GitHub detuvo el PR #14 en `npm run check:urls`: la lista de hosts locales y el texto de un error de señalización coincidían con el patrón del detector de URLs de Backend. No se trataba de una URL de API configurada.
+
+Se añadió `src/environments/senalizacion-unreal.ts` para centralizar exactamente los tres hosts locales ya admitidos. `configuracion-unreal.ts` importa esa política; la exigencia de WSS remoto y las restricciones de sesión, credenciales y fragmentos se mantienen. El mensaje de error usa «direcciones de bucle local». No se modifican el detector ni el workflow y no se añaden excepciones para omitir archivos.
+
+Se amplió el caso de prueba de asignación visual para comprobar los tres hosts locales y rechazar nombres que los imitan, WS remoto y direcciones de escucha general. Resultado real de esta corrección: `check:urls`, TypeScript de aplicación y pruebas, build de producción y **531/531 pruebas Angular** correctos, todos con salida 0. Las advertencias de build descritas arriba se mantienen.
+
+Los logs nuevos permanecen fuera del commit en `Entregables/Simulador2/PUBLICACION-20-CI-URLS-20261120`. La publicación pasa a 118 archivos respecto a develop por el nuevo módulo de configuración. PS2-LAB-03, Backend y P1–P6 siguen fuera de esta corrección.

@@ -67,8 +67,14 @@ describe('Alineación de identificadores y asignación visual', () => {
 
   it('acepta WSS y WS local, pero rechaza HTTP y WS remoto', () => {
     expect(() => validarSesionVisual(sesion)).not.toThrow();
-    expect(() => validarSesionVisual({ ...sesion, urlSenalizacion: 'ws://127.0.0.1:8888' })).not.toThrow();
-    for (const urlSenalizacion of ['https://stream.prisaly.example', 'ws://stream.prisaly.example', 'wss://usuario:clave@stream.prisaly.example']) {
+    for (const urlSenalizacion of ['ws://127.0.0.1:8888', 'ws://localhost:8888', 'ws://[::1]:8888']) {
+      expect(() => validarSesionVisual({ ...sesion, urlSenalizacion })).not.toThrow();
+    }
+    for (const urlSenalizacion of [
+      'https://stream.prisaly.example', 'ws://stream.prisaly.example',
+      'wss://usuario:clave@stream.prisaly.example', 'ws://localhost.example:8888',
+      'ws://127.0.0.1.example:8888', 'ws://0.0.0.0:8888',
+    ]) {
       expect(() => validarSesionVisual({ ...sesion, urlSenalizacion })).toThrow();
     }
   });
