@@ -1,0 +1,218 @@
+<section class="panel" aria-labelledby="contenido-m3-titulo">
+  <h2 id="contenido-m3-titulo">Contenido del caso (M3)</h2>
+  <p class="etiqueta-real">
+    Escenarios, preguntas y opciones leídos del servidor. El servidor solo permite añadir contenido
+    a casos en borrador; no hay edición ni eliminación publicadas.
+  </p>
+
+  @if (!sesionValida()) {
+    <p class="mensaje">Inicia sesión de personal para consultar el contenido de un caso.</p>
+  } @else {
+    @if (aviso(); as a) {
+      <p
+        class="mensaje"
+        [class.error]="a.tipo === 'error'"
+        [class.exito]="a.tipo === 'exito'"
+        role="status"
+        aria-live="polite"
+      >
+        {{ a.texto }}
+      </p>
+    }
+    @if (ocupado()) {
+      <p role="status">Cargando…</p>
+    }
+
+    <form class="fila" [formGroup]="formConsultar" (ngSubmit)="consultarPorId()">
+      <h3>Consultar contenido</h3>
+      <label
+        >Identificador del caso (UUID)
+        <input formControlName="idCaso" autocomplete="off" spellcheck="false" />
+      </label>
+      @if (formConsultar.controls.idCaso.touched && formConsultar.controls.idCaso.invalid) {
+        <span class="error-campo">Introduce un UUID válido.</span>
+      }
+      <div class="acciones">
+        <button type="submit" [disabled]="ocupado()">Consultar contenido</button>
+      </div>
+      @if (store.casos().length > 0) {
+        <p>Casos de esta sesión (no es un listado del servidor):</p>
+        <ul>
+          @for (c of store.casos(); track c.idCaso) {
+            <li>
+              <button type="button" (click)="consultar(c.idCaso)" [disabled]="ocupado()">
+                {{ c.titulo }} · {{ c.estado }}
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </form>
+
+    @if (contenido(); as c) {
+      <div class="fila" data-prueba="contenido-caso">
+        <h3>{{ c.titulo }}</h3>
+        <p>
+          Estado: <strong>{{ c.estado }}</strong> · Tiempo estimado:
+          {{ c.tiempoEstimadoSegundos / 60 }} min
+        </p>
+        @if (c.historia) {
+          <p><strong>Historia:</strong> {{ c.historia }}</p>
+        }
+        @if (c.desarrolloSituacional) {
+          <p><strong>Desarrollo situacional:</strong> {{ c.desarrolloSituacional }}</p>
+        }
+        @if (!esBorrador()) {
+          <p class="mensaje">
+            Caso en estado {{ c.estado }}: el servidor no admite añadir contenido.
+          </p>
+        }
+        @if (requiereRecarga()) {
+          <p class="mensaje error" role="alert">
+            La versión mostrada no está confirmada. Recarga el contenido antes de añadir elementos.
+          </p>
+        }
+        <div class="acciones">
+          <button type="button" (click)="recargar()" [disabled]="ocupado()">
+            Recargar contenido
+          </button>
+        </div>
+
+        @if (observaciones().length > 0) {
+          <div data-prueba="observaciones">
+            <p>Contenido incompleto (informativo; el servidor valida al publicar):</p>
+            <ul>
+              @for (o of observaciones(); track $index) {
+                <li>{{ o }}</li>
+              }
+            </ul>
+          </div>
+        }
+
+        @for (e of c.escenarios; track e.idEscenario) {
+          <article class="fila" data-prueba="escenario">
+            <h4>Escenario {{ e.orden ?? '—' }} · {{ e.titulo || 'Sin título' }}</h4>
+            @if (e.contexto) {
+              <p><strong>Contexto:</strong> {{ e.contexto }}</p>
+            }
+            @if (e.instrucciones) {
+              <p><strong>Instrucciones:</strong> {{ e.instrucciones }}</p>
+            }
+            @if (e.activo === false) {
+              <p>Inactivo</p>
+            }
+            @for (p of e.preguntas; track p.idPregunta) {
+              <div data-prueba="pregunta">
+                <p>
+                  <strong>Pregunta {{ p.orden ?? '—' }}:</strong> {{ p.enunciado }}
+                  @if (p.estadoEdicion) {
+                    <span> · {{ p.estadoEdicion }}</span>
+                  }
+                </p>
+                @if (p.textoAyuda) {
+                  <p>Ayuda: {{ p.textoAyuda }}</p>
+                }
+                <ul>
+                  @for (o of p.opciones ?? []; track o.idOpcion) {
+                    <li data-prueba="opcion">
+                      {{ o.orden ?? '—' }}. {{ o.texto }}
+                      <strong>{{ o.esCorrecta ? '(correcta)' : '(incorrecta)' }}</strong>
+                      @if (o.explicacion) {
+                        — {{ o.explicacion }}
+                      }
+                    </li>
+                  } @empty {
+                    <li>Sin opciones.</li>
+                  }
+                </ul>
+              </div>
+            } @empty {
+              <p>Sin preguntas.</p>
+            }
+          </article>
+        } @empty {
+          <p data-prueba="sin-escenarios">Este caso no tiene escenarios.</p>
+        }
+      </div>
+
+      @if (editable()) {
+        <form class="fila" [formGroup]="formEscenario" (ngSubmit)="agregarEscenario()">
+          <h3>Añadir escenario</h3>
+          <div class="campos">
+            <label>Título <input formControlName="titulo" /></label>
+            <label>Orden <input formControlName="orden" inputmode="numeric" /></label>
+          </div>
+          <label>Contexto <textarea formControlName="contexto" rows="2"></textarea></label>
+          <label
+            >Instrucciones <textarea formControlName="instrucciones" rows="2"></textarea>
+          </label>
+          @if (formEscenario.touched && formEscenario.invalid) {
+            <span class="error-campo">El orden es obligatorio y debe ser un número entero.</span>
+          }
+          <div class="acciones">
+            <button type="submit" [disabled]="ocupado()">Añadir escenario</button>
+          </div>
+        </form>
+
+        @if (c.escenarios.length > 0) {
+          <form class="fila" [formGroup]="formPregunta" (ngSubmit)="agregarPregunta()">
+            <h3>Añadir pregunta</h3>
+            <label
+              >Escenario
+              <select formControlName="idEscenario">
+                <option value="">Selecciona un escenario</option>
+                @for (e of c.escenarios; track e.idEscenario) {
+                  <option [value]="e.idEscenario">
+                    {{ e.orden ?? '—' }} · {{ e.titulo || e.idEscenario }}
+                  </option>
+                }
+              </select>
+            </label>
+            <label>Enunciado <textarea formControlName="enunciado" rows="2"></textarea></label>
+            <div class="campos">
+              <label>Texto de ayuda <input formControlName="textoAyuda" /></label>
+              <label>Orden <input formControlName="orden" inputmode="numeric" /></label>
+            </div>
+            @if (formPregunta.touched && formPregunta.invalid) {
+              <span class="error-campo">Escenario, enunciado y orden entero son obligatorios.</span>
+            }
+            <div class="acciones">
+              <button type="submit" [disabled]="ocupado()">Añadir pregunta</button>
+            </div>
+          </form>
+        }
+
+        @if (preguntas().length > 0) {
+          <form class="fila" [formGroup]="formOpcion" (ngSubmit)="agregarOpcion()">
+            <h3>Añadir opción de respuesta</h3>
+            <label
+              >Pregunta
+              <select formControlName="idPregunta">
+                <option value="">Selecciona una pregunta</option>
+                @for (p of preguntas(); track p.idPregunta) {
+                  <option [value]="p.idPregunta">{{ p.orden ?? '—' }} · {{ p.enunciado }}</option>
+                }
+              </select>
+            </label>
+            <label>Texto <input formControlName="texto" /></label>
+            <label>Explicación <textarea formControlName="explicacion" rows="2"></textarea></label>
+            <div class="campos">
+              <label
+                ><input type="checkbox" formControlName="esCorrecta" /> Es la opción correcta</label
+              >
+              <label>Orden <input formControlName="orden" inputmode="numeric" /></label>
+            </div>
+            @if (formOpcion.touched && formOpcion.invalid) {
+              <span class="error-campo"
+                >Pregunta, texto, explicación y orden entero son obligatorios.</span
+              >
+            }
+            <div class="acciones">
+              <button type="submit" [disabled]="ocupado()">Añadir opción</button>
+            </div>
+          </form>
+        }
+      }
+    }
+  }
+</section>
