@@ -11,6 +11,7 @@ import { EstructuraDocente } from './estructura-docente';
 import { PanelCasosM3 } from '../academico/panel-casos-m3';
 import { PanelRubricaM3 } from '../academico/panel-rubrica-m3';
 import { PanelContenidoM3 } from '../academico/panel-contenido-m3';
+import { RecorridoDocente } from '../academico/recorrido-docente';
 
 @Component({
   selector: 'app-dashboard-docente',
@@ -23,6 +24,7 @@ import { PanelContenidoM3 } from '../academico/panel-contenido-m3';
     PanelCasosM3,
     PanelRubricaM3,
     PanelContenidoM3,
+    RecorridoDocente,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-docente.html',

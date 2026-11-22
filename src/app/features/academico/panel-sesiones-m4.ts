@@ -19,6 +19,13 @@ import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { aFalloAcademico, mensajeFallo, UUID_RE } from './academico-http';
 import { CasosSesionStore } from './casos-sesion.store';
 import {
+  PARAM_CASO,
+  PARAM_SESION,
+  ParametroRecorrido,
+  SELECCION_INVALIDADA,
+  uuidDeParametro,
+} from './contexto-recorrido';
+import {
   admiteCambios,
   EstadoSesion,
   SesionAcademica,
@@ -27,6 +34,41 @@ import {
 } from './sesiones-m4.api';
 
 type Aviso = { tipo: 'exito' | 'error' | 'info'; texto: string } | null;
+
+/**
+ * FE-55. Códigos publicados por `M4ExceptionHandler` (Backend 773818c). Solo traducen el motivo
+ * que ya decidió el servidor; ningún código se infiere en Angular.
+ */
+export const MENSAJES_M4: Readonly<Record<string, string>> = {
+  'M4-NO-AUTENTICADO': 'La sesión no es válida o expiró. Inicia sesión de nuevo.',
+  'M4-SIN-PERMISO': 'El servidor denegó la operación: la identidad no tiene el permiso requerido.',
+  'M4-SESION-AJENA': 'La sesión pertenece a otro docente.',
+  'M4-SESION-NO-ENCONTRADA': 'La sesión no existe o no es accesible.',
+  'M4-CASO-NO-PUBLICADO':
+    'El caso no existe o no está publicado: solo se programan casos publicados.',
+  'M4-SESION-DUPLICADA': 'Ya existe una sesión con el mismo caso, docente y rango de fechas.',
+  'M4-ESTADO-INVALIDO': 'La transición de estado no está permitida para la sesión.',
+  'M4-CONVOCATORIA-DUPLICADA': 'El estudiante ya está convocado a esta sesión.',
+  'M4-CONVOCATORIA-NO-PERMITIDA': 'La sesión ya no admite convocatorias en su estado actual.',
+  'M4-SESION-CON-CONVOCATORIAS': 'La sesión ya tiene convocatorias y no admite ese cambio.',
+  'M4-SESION-CON-PARTICIPACIONES': 'La sesión ya tiene participaciones y no admite ese cambio.',
+  'M4-FECHA-INVALIDA': 'La fecha de fin debe ser posterior a la de inicio.',
+  'M4-DURACION-INVALIDA': 'La duración máxima de participación debe ser positiva.',
+  'M4-VALIDACION': 'Los datos no cumplen las validaciones del servidor.',
+  'M4-REFERENCIA-NO-VALIDA': 'Algún identificador enviado no es válido o no existe.',
+  'M4-BLOQUEO-ACADEMICO-NO-CONFIRMADO':
+    'El servidor no pudo confirmar el bloqueo académico del caso; la sesión no se programó.',
+  'M4-PROVEEDOR-NO-DISPONIBLE': 'Un servicio requerido por M4 no está disponible.',
+};
+
+/** Texto de error de M4: mensaje del código publicado o, si no hay código, el genérico. */
+export function mensajeM4(e: unknown, generico409: string): string {
+  const fallo = aFalloAcademico(e);
+  const texto =
+    (fallo.codigo && MENSAJES_M4[fallo.codigo]) ||
+    (fallo.estado === 409 ? generico409 : mensajeFallo(fallo));
+  return `${texto}${fallo.estado > 0 ? ` (HTTP ${fallo.estado}${fallo.codigo ? ` · ${fallo.codigo}` : ''})` : ''}`;
+}
 
 /** `datetime-local` (hora local del navegador) → instante ISO-8601 UTC que espera `Instant`. */
 export function aInstante(local: string): string | null {
@@ -82,6 +124,51 @@ export class PanelSesionesM4 {
   protected readonly seleccionada = signal<SesionAcademica | null>(null);
   protected readonly ocupado = signal(false);
   protected readonly aviso = signal<Aviso>(null);
+  /** FE-55: caso y sesión activos compartidos por URL con casos y convocatorias. */
+  private readonly paramCaso = new ParametroRecorrido(PARAM_CASO);
+  private readonly paramSesion = new ParametroRecorrido(PARAM_SESION);
+  private sesionPendiente: string | null = null;
+
+  /** Casos recordados en la sesión; solo los PUBLICADOS los acepta M4 (lo valida el servidor). */
+  protected readonly casosPublicados = computed(() =>
+    this.casos.casos().filter((c) => c.estado === 'PUBLICADO'),
+  );
+  protected readonly casosNoPublicados = computed(() =>
+    this.casos.casos().filter((c) => c.estado !== 'PUBLICADO'),
+  );
+
+  constructor() {
+    this.paramSesion
+      .invalidaciones()
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        if (this.ocupado()) this.sesionPendiente = SELECCION_INVALIDADA;
+        else this.sesionPendiente = null;
+        this.seleccionada.set(null);
+      });
+
+    // El caso de la URL solo rellena el campo: no se consulta M3 ni se presupone publicado.
+    this.paramCaso
+      .cambios()
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => {
+        const campo = this.formCrear.controls.casoId;
+        if (uuidDeParametro(campo.value) !== id) campo.setValue(id);
+      });
+    this.paramCaso
+      .invalidaciones()
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.formCrear.controls.casoId.setValue(''));
+    this.paramSesion
+      .cambios()
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => {
+        if (this.ocupado()) {
+          this.sesionPendiente = id;
+          if (this.seleccionada()?.id.toLowerCase() !== id) this.seleccionada.set(null);
+        } else if (this.seleccionada()?.id.toLowerCase() !== id) this.consultar(id);
+      });
+  }
 
   protected readonly formCrear = new FormGroup(
     {
@@ -141,6 +228,7 @@ export class PanelSesionesM4 {
   }
 
   protected consultar(id: string): void {
+    if (this.seleccionada()?.id.toLowerCase() !== id.toLowerCase()) this.seleccionada.set(null);
     this.iniciar();
     this.api
       .consultar(id)
@@ -238,8 +326,10 @@ export class PanelSesionesM4 {
   }
 
   protected seleccionar(s: SesionAcademica | null): void {
+    if (this.sesionPendiente && s?.id.toLowerCase() !== this.sesionPendiente) return;
     this.seleccionada.set(s);
     if (!s) return;
+    this.paramSesion.fijar(s.id);
     this.formEditar.reset({
       titulo: s.titulo,
       mensajePersonalizado: s.mensajePersonalizado ?? '',
@@ -251,6 +341,8 @@ export class PanelSesionesM4 {
 
   protected usarCaso(idCaso: string): void {
     this.formCrear.controls.casoId.setValue(idCaso);
+    this.formCrear.controls.casoId.markAsDirty();
+    this.paramCaso.fijar(idCaso);
   }
 
   protected fecha(instante: string | null): string {
@@ -266,18 +358,23 @@ export class PanelSesionesM4 {
 
   private terminar(aviso: Aviso): void {
     this.ocupado.set(false);
+    const pendiente = this.sesionPendiente;
+    this.sesionPendiente = null;
+    if (pendiente === SELECCION_INVALIDADA) return;
+    if (pendiente && this.seleccionada()?.id.toLowerCase() !== pendiente) {
+      this.consultar(pendiente);
+      return;
+    }
     this.aviso.set(aviso);
   }
 
   private fallar(e: unknown): void {
-    const fallo = aFalloAcademico(e);
-    const texto =
-      fallo.estado === 409
-        ? 'El servidor rechazó la operación por una regla académica (por ejemplo, caso no publicado o transición de estado no permitida).'
-        : mensajeFallo(fallo);
     this.terminar({
       tipo: 'error',
-      texto: `${texto}${fallo.estado > 0 ? ` (HTTP ${fallo.estado}${fallo.codigo ? ` · ${fallo.codigo}` : ''})` : ''}`,
+      texto: mensajeM4(
+        e,
+        'El servidor rechazó la operación por una regla académica (por ejemplo, caso no publicado o transición de estado no permitida).',
+      ),
     });
   }
 }

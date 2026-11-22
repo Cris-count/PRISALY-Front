@@ -13,6 +13,7 @@ import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { aFalloAcademico, esUuid, mensajeFallo, UUID_RE } from './academico-http';
 import { CasoDocente, CasoPatch, CasosM3Api } from './casos-m3.api';
 import { CasosSesionStore } from './casos-sesion.store';
+import { PARAM_CASO, ParametroRecorrido, SELECCION_INVALIDADA } from './contexto-recorrido';
 
 type Aviso = { tipo: 'exito' | 'error' | 'info'; texto: string } | null;
 
@@ -52,6 +53,47 @@ export class PanelCasosM3 {
   protected readonly aviso = signal<Aviso>(null);
   /** Tras un 412/428 la edición se bloquea hasta volver a consultar: no hay reintento automático. */
   protected readonly requiereReconsulta = signal(false);
+  /** FE-55: caso activo compartido por URL con contenido, rúbrica y sesiones. */
+  private readonly paramCaso = new ParametroRecorrido(PARAM_CASO);
+  private casoPendiente: string | null = null;
+
+  /** Siguiente paso del recorrido según el estado leído del servidor (solo orientación). */
+  protected readonly siguientePaso = computed(() => {
+    const estado = this.caso()?.estado;
+    if (estado === 'BORRADOR')
+      return 'Siguiente paso: añade escenarios, preguntas y opciones en «Contenido del caso», configura la rúbrica y después solicita la publicación.';
+    if (estado === 'PUBLICADO')
+      return 'Caso publicado: ya puede programarse una sesión en «Sesiones». El contenido evaluable queda bloqueado.';
+    if (estado === 'ARCHIVADO') return 'Caso archivado: no admite cambios ni nuevas sesiones.';
+    return null;
+  });
+
+  constructor() {
+    this.paramCaso
+      .invalidaciones()
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        if (this.ocupado()) this.casoPendiente = SELECCION_INVALIDADA;
+        else this.casoPendiente = null;
+        this.caso.set(null);
+        this.etag.set(null);
+      });
+
+    this.paramCaso
+      .cambios()
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => {
+        if (this.ocupado()) {
+          this.casoPendiente = id;
+          if (this.caso()?.idCaso.toLowerCase() !== id) {
+            this.caso.set(null);
+            this.etag.set(null);
+          }
+        } else if (this.caso()?.idCaso.toLowerCase() !== id) {
+          this.consultar(id);
+        }
+      });
+  }
 
   protected readonly formCrear = new FormGroup({
     titulo: new FormControl('', {
@@ -127,6 +169,10 @@ export class PanelCasosM3 {
 
   protected consultar(idCaso: string, avisoFinal: Aviso = null): void {
     if (!esUuid(idCaso)) return;
+    if (this.caso()?.idCaso.toLowerCase() !== idCaso.toLowerCase()) {
+      this.caso.set(null);
+      this.etag.set(null);
+    }
     this.iniciar();
     this.api
       .consultar(idCaso)
@@ -196,10 +242,12 @@ export class PanelCasosM3 {
   }
 
   private mostrar(datos: CasoDocente, etag: string | null): void {
+    if (this.casoPendiente && this.casoPendiente !== datos.idCaso.toLowerCase()) return;
     this.caso.set(datos);
     this.etag.set(etag);
     this.requiereReconsulta.set(false);
     this.store.recordar(datos);
+    this.paramCaso.fijar(datos.idCaso);
     this.formEditar.reset({
       titulo: datos.titulo,
       minutos: Math.round(datos.tiempoEstimadoSegundos / 60),
@@ -213,6 +261,13 @@ export class PanelCasosM3 {
 
   private terminar(aviso: Aviso): void {
     this.ocupado.set(false);
+    const pendiente = this.casoPendiente;
+    this.casoPendiente = null;
+    if (pendiente === SELECCION_INVALIDADA) return;
+    if (pendiente && this.caso()?.idCaso.toLowerCase() !== pendiente) {
+      this.consultar(pendiente);
+      return;
+    }
     this.aviso.set(aviso);
   }
 

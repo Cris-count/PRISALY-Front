@@ -19,6 +19,7 @@ import {
   Versionado,
 } from './casos-m3.api';
 import { CasosSesionStore } from './casos-sesion.store';
+import { PARAM_CASO, ParametroRecorrido, SELECCION_INVALIDADA } from './contexto-recorrido';
 
 type Aviso = { tipo: 'exito' | 'error' | 'info'; texto: string } | null;
 
@@ -83,9 +84,28 @@ export class PanelContenidoM3 {
   protected readonly aviso = signal<Aviso>(null);
   protected readonly requiereRecarga = signal(false);
 
+  /** FE-55: caso activo compartido por URL con el panel de casos, la rúbrica y las sesiones. */
+  private readonly paramCaso = new ParametroRecorrido(PARAM_CASO);
+  private casoPendiente: string | null = null;
+
   protected readonly esBorrador = computed(() => this.contenido()?.estado === 'BORRADOR');
+  /**
+   * FE-55: otro panel (por ejemplo, la publicación en «Casos académicos») leyó del servidor un
+   * estado distinto del mostrado aquí. Las altas se bloquean hasta recargar el contenido.
+   */
+  protected readonly estadoDesactualizado = computed(() => {
+    const c = this.contenido();
+    if (!c) return null;
+    const id = c.idCaso.toLowerCase();
+    const recordado = this.store.casos().find((x) => x.idCaso.toLowerCase() === id);
+    return recordado && recordado.estado !== c.estado ? recordado.estado : null;
+  });
   protected readonly editable = computed(
-    () => this.esBorrador() && this.etag() !== null && !this.requiereRecarga(),
+    () =>
+      this.esBorrador() &&
+      this.etag() !== null &&
+      !this.requiereRecarga() &&
+      this.estadoDesactualizado() === null,
   );
   protected readonly preguntas = computed<readonly PreguntaContenido[]>(
     () => this.contenido()?.escenarios.flatMap((e) => e.preguntas) ?? [],
@@ -100,9 +120,17 @@ export class PanelContenidoM3 {
     for (const e of c.escenarios) {
       const nombre = e.titulo || e.idEscenario;
       if (e.preguntas.length === 0) lista.push(`El escenario «${nombre}» no tiene preguntas.`);
-      for (const p of e.preguntas)
-        if ((p.opciones ?? []).length === 0)
+      for (const p of e.preguntas) {
+        const opciones = p.opciones ?? [];
+        // Refleja `CasoValidation.assertValidSingleChoiceQuestion` (Backend 773818c); solo informa.
+        const correctas = opciones.filter((o) => o.esCorrecta).length;
+        if (opciones.length === 0)
           lista.push(`La pregunta «${p.enunciado}» no tiene opciones de respuesta.`);
+        else if (correctas === 0)
+          lista.push(`La pregunta «${p.enunciado}» no tiene ninguna opción marcada como correcta.`);
+        else if (correctas > 1)
+          lista.push(`La pregunta «${p.enunciado}» tiene más de una opción marcada como correcta.`);
+      }
     }
     return lista;
   });
@@ -151,6 +179,31 @@ export class PanelContenidoM3 {
     }),
   });
 
+  constructor() {
+    this.paramCaso
+      .invalidaciones()
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        if (this.ocupado()) this.casoPendiente = SELECCION_INVALIDADA;
+        else this.casoPendiente = null;
+        this.contenido.set(null);
+        this.etag.set(null);
+      });
+
+    this.paramCaso
+      .cambios()
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => {
+        if (this.ocupado()) {
+          this.casoPendiente = id;
+          if (this.contenido()?.idCaso.toLowerCase() !== id) {
+            this.contenido.set(null);
+            this.etag.set(null);
+          }
+        } else if (this.contenido()?.idCaso.toLowerCase() !== id) this.consultar(id);
+      });
+  }
+
   protected consultarPorId(): void {
     this.formConsultar.markAllAsTouched();
     if (this.formConsultar.invalid) return;
@@ -159,6 +212,10 @@ export class PanelContenidoM3 {
 
   protected consultar(idCaso: string, avisoFinal: Aviso = null): void {
     if (this.ocupado()) return;
+    if (this.contenido()?.idCaso.toLowerCase() !== idCaso.toLowerCase()) {
+      this.contenido.set(null);
+      this.etag.set(null);
+    }
     this.iniciar();
     this.api
       .contenido(idCaso)
@@ -313,9 +370,11 @@ export class PanelContenidoM3 {
 
   /** Datos y versión siempre de la misma respuesta. */
   private aplicarVersion(r: Versionado<CasoContenido>): void {
+    if (this.casoPendiente && this.casoPendiente !== r.datos.idCaso.toLowerCase()) return;
     this.contenido.set(r.datos);
     this.etag.set(r.etag);
     this.requiereRecarga.set(false);
+    this.paramCaso.fijar(r.datos.idCaso);
     this.store.recordar({
       idCaso: r.datos.idCaso,
       titulo: r.datos.titulo,
@@ -331,6 +390,13 @@ export class PanelContenidoM3 {
 
   private terminar(aviso: Aviso): void {
     this.ocupado.set(false);
+    const pendiente = this.casoPendiente;
+    this.casoPendiente = null;
+    if (pendiente === SELECCION_INVALIDADA) return;
+    if (pendiente && this.contenido()?.idCaso.toLowerCase() !== pendiente) {
+      this.consultar(pendiente);
+      return;
+    }
     this.aviso.set(aviso);
   }
 

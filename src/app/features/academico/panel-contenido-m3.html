@@ -72,6 +72,16 @@
             La versión mostrada no está confirmada. Recarga el contenido antes de añadir elementos.
           </p>
         }
+        @if (estadoDesactualizado(); as nuevo) {
+          <p class="mensaje error" role="alert" data-prueba="estado-desactualizado">
+            El servidor informó el estado {{ nuevo }} para este caso desde otra operación. Recarga
+            el contenido antes de continuar.
+          </p>
+        }
+        <p class="etiqueta-real" data-prueba="requisitos-publicacion">
+          Para publicar, el servidor exige al menos una pregunta, que cada pregunta tenga opciones
+          con exactamente una correcta y una rúbrica con al menos un criterio.
+        </p>
         <div class="acciones">
           <button type="button" (click)="recargar()" [disabled]="ocupado()">
             Recargar contenido
