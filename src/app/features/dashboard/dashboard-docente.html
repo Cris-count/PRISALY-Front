@@ -19,6 +19,7 @@
         height="210"
       />
     </header>
+    <app-panel-rubrica-m3 />
     <app-estado-panel
       class="integracion-rubricas"
       estado="pendiente"
@@ -208,6 +209,9 @@
       <p>{{ seccion().descripcion }}</p>
       <p class="identidad">Sin sesión docente autenticada · Solo presentación</p>
     </header>
+    @if (seccion().ruta === 'casos-academicos') {
+      <app-panel-casos-m3 />
+    }
     <app-estado-panel
       estado="pendiente"
       mensaje="Interfaz visual en preparación. Las operaciones académicas no están disponibles y requieren integración institucional autorizada."

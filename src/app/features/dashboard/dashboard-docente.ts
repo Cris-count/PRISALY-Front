@@ -8,10 +8,20 @@ import { DashboardSesiones } from './dashboard-sesiones';
 import { DashboardConvocatorias } from './dashboard-convocatorias';
 import { EstadoPanel } from './estado-panel';
 import { EstructuraDocente } from './estructura-docente';
+import { PanelCasosM3 } from '../academico/panel-casos-m3';
+import { PanelRubricaM3 } from '../academico/panel-rubrica-m3';
 
 @Component({
   selector: 'app-dashboard-docente',
-  imports: [RouterLink, EstadoPanel, EstructuraDocente, DashboardSesiones, DashboardConvocatorias],
+  imports: [
+    RouterLink,
+    EstadoPanel,
+    EstructuraDocente,
+    DashboardSesiones,
+    DashboardConvocatorias,
+    PanelCasosM3,
+    PanelRubricaM3,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-docente.html',
   styleUrls: [

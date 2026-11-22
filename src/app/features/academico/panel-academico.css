@@ -1,0 +1,122 @@
+/* Estilos funcionales mínimos de los paneles conectados; heredan tipografía y colores del dashboard. */
+:host {
+  display: block;
+  margin-block: 1.5rem;
+}
+
+.panel {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.panel h2,
+.panel h3 {
+  margin: 0;
+}
+
+.etiqueta-real {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+form,
+.fila {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.campos {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
+label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  background: transparent;
+  color: inherit;
+  min-width: 0;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+button {
+  font: inherit;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.mensaje {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border-left: 4px solid currentColor;
+}
+
+.mensaje.error {
+  border-left-color: #c0392b;
+}
+
+.mensaje.exito {
+  border-left-color: #2e8b57;
+}
+
+.error-campo {
+  font-size: 0.8rem;
+  color: #c0392b;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  overflow-x: auto;
+  display: block;
+}
+
+.tabla th,
+.tabla td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  word-break: break-word;
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+}

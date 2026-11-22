@@ -3,11 +3,12 @@ import { RouterLink } from '@angular/router';
 import { EstadoPanel } from './estado-panel';
 import { EstructuraDocente } from './estructura-docente';
 import { VISTAS_DOCENTES } from './docente-vistas';
+import { PanelConvocatoriasM4 } from '../academico/panel-convocatorias-m4';
 
 /** Presentación estática de muestra; sin operaciones ni registros académicos. */
 @Component({
   selector: 'app-dashboard-convocatorias',
-  imports: [RouterLink, EstadoPanel, EstructuraDocente],
+  imports: [RouterLink, EstadoPanel, EstructuraDocente, PanelConvocatoriasM4],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-convocatorias.html',
   styleUrls: [
