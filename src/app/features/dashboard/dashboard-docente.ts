@@ -10,6 +10,7 @@ import { EstadoPanel } from './estado-panel';
 import { EstructuraDocente } from './estructura-docente';
 import { PanelCasosM3 } from '../academico/panel-casos-m3';
 import { PanelRubricaM3 } from '../academico/panel-rubrica-m3';
+import { PanelContenidoM3 } from '../academico/panel-contenido-m3';
 
 @Component({
   selector: 'app-dashboard-docente',
@@ -21,6 +22,7 @@ import { PanelRubricaM3 } from '../academico/panel-rubrica-m3';
     DashboardConvocatorias,
     PanelCasosM3,
     PanelRubricaM3,
+    PanelContenidoM3,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-docente.html',

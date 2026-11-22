@@ -40,17 +40,66 @@ export interface CasoPatch {
   tiempoEstimadoSegundos?: number;
 }
 
+/** `CasoContenidoResponse.OpcionContenido` (vista docente: incluye corrección y explicación). */
+export interface OpcionContenido {
+  readonly idOpcion: string;
+  readonly texto: string;
+  readonly esCorrecta: boolean;
+  readonly explicacion: string | null;
+  readonly orden: number | null;
+}
+
+/** `CasoContenidoResponse.PreguntaContenido`. Los campos añadidos en FE-54 son opcionales. */
 export interface PreguntaContenido {
   readonly idPregunta: string;
   readonly enunciado: string;
   readonly orden: number | null;
+  readonly textoAyuda?: string | null;
+  readonly estadoEdicion?: string | null;
+  readonly visible?: boolean | null;
+  readonly opciones?: readonly OpcionContenido[];
 }
 
+/** `CasoContenidoResponse.EscenarioContenido`. */
 export interface EscenarioContenido {
   readonly idEscenario: string;
   readonly titulo: string | null;
   readonly orden: number | null;
+  readonly contexto?: string | null;
+  readonly instrucciones?: string | null;
+  readonly activo?: boolean | null;
   readonly preguntas: readonly PreguntaContenido[];
+}
+
+/** Cuerpo cerrado de `POST /v1/casos/{idCaso}/escenarios` (`CasoContenidoRequest.escenario`). */
+export interface AgregarEscenarioRequest {
+  readonly idEscenario: string;
+  readonly titulo: string | null;
+  readonly contexto: string | null;
+  readonly instrucciones: string | null;
+  readonly orden: number;
+}
+
+/** Cuerpo cerrado de `POST .../escenarios/{idEscenario}/preguntas`. */
+export interface AgregarPreguntaRequest {
+  readonly idPregunta: string;
+  readonly enunciado: string;
+  readonly textoAyuda: string | null;
+  readonly orden: number;
+}
+
+/** Cuerpo cerrado de `POST .../preguntas/{idPregunta}/opciones` (RF-07/RF-08). */
+export interface AgregarOpcionRequest {
+  readonly idOpcion: string;
+  readonly texto: string;
+  readonly esCorrecta: boolean;
+  readonly explicacion: string;
+  readonly orden: number;
+}
+
+/** Respuesta 201 `{ id }` con el ETag de la nueva versión del agregado. */
+export interface ElementoCreado {
+  readonly id: string;
 }
 
 /** Proyección de `CasoContenidoResponse` que usa la interfaz (lectura). */
@@ -117,6 +166,31 @@ function leerCaso(v: unknown): CasoDocente {
   };
 }
 
+const opcionalTexto = (v: unknown): string | null => (typeof v === 'string' ? v : null);
+
+/** Ausente → lista vacía (compatibilidad); presente con otro tipo → respuesta inválida. */
+function leerOpciones(v: unknown): OpcionContenido[] {
+  if (v === undefined) return [];
+  if (!Array.isArray(v)) throw respuestaInvalida();
+  return v.map((x) => {
+    const o = x as Record<string, unknown> | null;
+    if (
+      !o ||
+      !texto(o['idOpcion']) ||
+      typeof o['texto'] !== 'string' ||
+      typeof o['esCorrecta'] !== 'boolean'
+    )
+      throw respuestaInvalida();
+    return {
+      idOpcion: o['idOpcion'] as string,
+      texto: o['texto'] as string,
+      esCorrecta: o['esCorrecta'] as boolean,
+      explicacion: opcionalTexto(o['explicacion']),
+      orden: Number.isInteger(o['orden']) ? (o['orden'] as number) : null,
+    };
+  });
+}
+
 function leerContenido(v: unknown): CasoContenido {
   const base = leerCaso(v);
   const c = v as Record<string, unknown>;
@@ -142,8 +216,15 @@ function leerContenido(v: unknown): CasoContenido {
           idPregunta: pr['idPregunta'] as string,
           enunciado: pr['enunciado'] as string,
           orden: Number.isInteger(pr['orden']) ? (pr['orden'] as number) : null,
+          textoAyuda: opcionalTexto(pr['textoAyuda']),
+          estadoEdicion: opcionalTexto(pr['estadoEdicion']),
+          visible: typeof pr['visible'] === 'boolean' ? (pr['visible'] as boolean) : null,
+          opciones: leerOpciones(pr['opciones']),
         };
       }),
+      contexto: opcionalTexto(esc['contexto']),
+      instrucciones: opcionalTexto(esc['instrucciones']),
+      activo: typeof esc['activo'] === 'boolean' ? (esc['activo'] as boolean) : null,
     };
   });
   return {
@@ -320,6 +401,111 @@ export class CasosM3Api {
       })
       .pipe(
         map((r) => ({ datos: leerRubrica(r.body), etag: etag(r) })),
+        catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
+      );
+  }
+
+  /**
+   * FE-54. Altas de contenido en un caso en Borrador. Cada alta exige `If-Match` y devuelve 201
+   * con `{ id }` y el ETag de la nueva versión. El consumidor no debe combinar ese ETag con datos
+   * leídos en una versión anterior: debe volver a consultar `contenido`.
+   */
+  agregarEscenario(
+    idCaso: string,
+    datos: AgregarEscenarioRequest,
+    ifMatch: string,
+  ): Observable<Versionado<ElementoCreado>> {
+    if (!esUuid(datos.idEscenario)) return throwError(() => respuestaInvalida());
+    const cuerpo: AgregarEscenarioRequest = {
+      idEscenario: datos.idEscenario,
+      titulo: datos.titulo,
+      contexto: datos.contexto,
+      instrucciones: datos.instrucciones,
+      orden: datos.orden,
+    };
+    return this.postContenido(
+      idCaso,
+      `v1/casos/${idCaso}/escenarios`,
+      cuerpo,
+      ifMatch,
+      cuerpo.idEscenario,
+    );
+  }
+
+  agregarPregunta(
+    idCaso: string,
+    idEscenario: string,
+    datos: AgregarPreguntaRequest,
+    ifMatch: string,
+  ): Observable<Versionado<ElementoCreado>> {
+    if (!esUuid(idEscenario) || !esUuid(datos.idPregunta))
+      return throwError(() => respuestaInvalida());
+    const cuerpo: AgregarPreguntaRequest = {
+      idPregunta: datos.idPregunta,
+      enunciado: datos.enunciado,
+      textoAyuda: datos.textoAyuda,
+      orden: datos.orden,
+    };
+    return this.postContenido(
+      idCaso,
+      `v1/casos/${idCaso}/escenarios/${idEscenario}/preguntas`,
+      cuerpo,
+      ifMatch,
+      cuerpo.idPregunta,
+    );
+  }
+
+  agregarOpcion(
+    idCaso: string,
+    idPregunta: string,
+    datos: AgregarOpcionRequest,
+    ifMatch: string,
+  ): Observable<Versionado<ElementoCreado>> {
+    if (!esUuid(idPregunta) || !esUuid(datos.idOpcion))
+      return throwError(() => respuestaInvalida());
+    const cuerpo: AgregarOpcionRequest = {
+      idOpcion: datos.idOpcion,
+      texto: datos.texto,
+      esCorrecta: datos.esCorrecta,
+      explicacion: datos.explicacion,
+      orden: datos.orden,
+    };
+    return this.postContenido(
+      idCaso,
+      `v1/casos/${idCaso}/preguntas/${idPregunta}/opciones`,
+      cuerpo,
+      ifMatch,
+      cuerpo.idOpcion,
+    );
+  }
+
+  private postContenido(
+    idCaso: string,
+    ruta: string,
+    cuerpo: object,
+    ifMatch: string,
+    idEsperado: string,
+  ): Observable<Versionado<ElementoCreado>> {
+    if (!esUuid(idCaso) || !ifMatch) return throwError(() => respuestaInvalida());
+    return this.http
+      .post<unknown>(this.url(ruta), cuerpo, {
+        context: contextoAcademico(),
+        headers: new HttpHeaders({ 'If-Match': ifMatch }),
+        observe: 'response',
+      })
+      .pipe(
+        map((r) => {
+          const b = r.body as Record<string, unknown> | null;
+          // El Backend devuelve el mismo identificador que generó el cliente.
+          if (
+            r.status !== 201 ||
+            !b ||
+            typeof b['id'] !== 'string' ||
+            b['id'].toLowerCase() !== idEsperado.toLowerCase()
+          )
+            throw respuestaInvalida();
+          return { datos: { id: b['id'] }, etag: etag(r) };
+        }),
         catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
       );
   }

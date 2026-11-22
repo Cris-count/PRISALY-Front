@@ -35,6 +35,10 @@ const RUTAS_AUTORIZADAS: readonly { metodo: string; ruta: RegExp }[] = [
   { metodo: 'GET', ruta: new RegExp(`^v1/casos/${UUID}$`) },
   { metodo: 'PATCH', ruta: new RegExp(`^v1/casos/${UUID}$`) },
   { metodo: 'GET', ruta: new RegExp(`^v1/casos/${UUID}/contenido$`) },
+  // FE-54: altas de contenido (CasoContenidoController). Las lecturas parciales no se consumen.
+  { metodo: 'POST', ruta: new RegExp(`^v1/casos/${UUID}/escenarios$`) },
+  { metodo: 'POST', ruta: new RegExp(`^v1/casos/${UUID}/escenarios/${UUID}/preguntas$`) },
+  { metodo: 'POST', ruta: new RegExp(`^v1/casos/${UUID}/preguntas/${UUID}/opciones$`) },
   { metodo: 'POST', ruta: new RegExp(`^v1/casos/${UUID}/publicar$`) },
   { metodo: 'GET', ruta: new RegExp(`^v1/casos/${UUID}/rubrica$`) },
   { metodo: 'PUT', ruta: new RegExp(`^v1/casos/${UUID}/rubrica$`) },
