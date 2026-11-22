@@ -1,0 +1,147 @@
+<section class="panel" aria-labelledby="rubrica-m3-titulo">
+  <h2 id="rubrica-m3-titulo">Rúbrica del caso (M3)</h2>
+  <p class="etiqueta-real">
+    Datos reales del servidor. Se guarda con control de versión (If-Match).
+  </p>
+
+  @if (!sesionValida()) {
+    <p class="mensaje">Inicia sesión de personal para gestionar rúbricas.</p>
+  } @else {
+    @if (aviso(); as a) {
+      <p
+        class="mensaje"
+        [class.error]="a.tipo === 'error'"
+        [class.exito]="a.tipo === 'exito'"
+        role="status"
+        aria-live="polite"
+      >
+        {{ a.texto }}
+      </p>
+    }
+    @if (ocupado()) {
+      <p role="status">Procesando…</p>
+    }
+
+    <form class="fila" [formGroup]="formCaso" (ngSubmit)="cargarPorId()">
+      <label
+        >Identificador del caso (UUID)
+        <input formControlName="idCaso" autocomplete="off" spellcheck="false" />
+      </label>
+      @if (formCaso.controls.idCaso.touched && formCaso.controls.idCaso.invalid) {
+        <span class="error-campo">Introduce un UUID válido.</span>
+      }
+      <div class="acciones">
+        <button type="submit" [disabled]="ocupado()">Cargar rúbrica</button>
+        @for (c of store.casos(); track c.idCaso) {
+          <button type="button" (click)="cargar(c.idCaso)" [disabled]="ocupado()">
+            {{ c.titulo }}
+          </button>
+        }
+      </div>
+    </form>
+
+    @if (idCaso() && contenido(); as caso) {
+      <p>
+        Caso <strong>{{ caso.titulo }}</strong> · estado {{ caso.estado }} ·
+        {{ preguntas().length }} pregunta(s)
+        @if (rubrica(); as r) {
+          · rúbrica {{ r.completa ? 'completa' : 'incompleta' }}
+        }
+      </p>
+
+      @if (requiereRecarga()) {
+        <div class="acciones">
+          <button type="button" (click)="cargar(caso.idCaso)" [disabled]="ocupado()">
+            Volver a cargar la rúbrica
+          </button>
+        </div>
+      }
+
+      <form class="fila" [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="campos">
+          <label
+            >Nombre
+            <input formControlName="nombre" maxlength="150" />
+          </label>
+          <label
+            >Puntaje total
+            <input formControlName="puntajeTotal" type="number" min="0" step="0.01" />
+          </label>
+        </div>
+        <label
+          >Descripción
+          <textarea formControlName="descripcion" rows="2"></textarea>
+        </label>
+
+        <h3>Criterios</h3>
+        <div formArrayName="criterios" class="fila">
+          @for (c of form.controls.criterios.controls; track c; let i = $index) {
+            <div class="campos" [formGroupName]="i">
+              <label>Identificador <input formControlName="id" maxlength="60" /></label>
+              <label>Descripción <input formControlName="descripcion" /></label>
+              <label
+                >Puntaje <input formControlName="puntaje" type="number" min="1" step="1"
+              /></label>
+              <label
+                >Ponderación <input formControlName="ponderacion" type="number" min="0" step="0.01"
+              /></label>
+              <div class="acciones">
+                <button type="button" (click)="quitarCriterio(i)" [disabled]="ocupado()">
+                  Quitar criterio
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <p>Sin criterios.</p>
+          }
+        </div>
+        <div class="acciones">
+          <button type="button" (click)="agregarCriterio()" [disabled]="ocupado()">
+            Agregar criterio
+          </button>
+        </div>
+
+        <h3>Asociación de preguntas</h3>
+        <div formArrayName="asociaciones" class="fila">
+          @for (
+            a of form.controls.asociaciones.controls;
+            track a.controls.idPregunta.value;
+            let i = $index
+          ) {
+            <div class="campos" [formGroupName]="i">
+              <span>{{ nombrePregunta(a.controls.idPregunta.value) }}</span>
+              <label
+                >Criterio
+                <select formControlName="criterio">
+                  <option value="">Sin asociar</option>
+                  @for (c of form.controls.criterios.controls; track c) {
+                    @if (c.controls.id.value) {
+                      <option [value]="c.controls.id.value">{{ c.controls.id.value }}</option>
+                    }
+                  }
+                </select>
+              </label>
+              <label
+                >Valor de la pregunta
+                <input formControlName="valor" type="number" min="0" step="0.01"
+              /></label>
+            </div>
+          } @empty {
+            <p>El caso no tiene preguntas en su contenido.</p>
+          }
+        </div>
+
+        @if (form.touched && form.invalid) {
+          <span class="error-campo"
+            >Revisa nombre y criterios (identificador, descripción y puntaje mayor que cero).</span
+          >
+        }
+        <div class="acciones">
+          <button type="submit" [disabled]="ocupado() || requiereRecarga() || !etag()">
+            Guardar rúbrica
+          </button>
+        </div>
+      </form>
+    }
+  }
+</section>

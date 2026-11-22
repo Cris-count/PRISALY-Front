@@ -1,0 +1,163 @@
+<section class="panel" aria-labelledby="adm-m1-titulo">
+  <h2 id="adm-m1-titulo">Administración de permisos (M1)</h2>
+  <p class="etiqueta-real">
+    Datos reales del servidor. La autorización la decide el Backend (rol ADMINISTRADOR).
+  </p>
+
+  @if (!sesionValida()) {
+    <p class="mensaje">Inicia sesión de personal para consultar la administración.</p>
+  } @else {
+    @if (aviso(); as a) {
+      <p
+        class="mensaje"
+        [class.error]="a.tipo === 'error'"
+        [class.exito]="a.tipo === 'exito'"
+        role="status"
+        aria-live="polite"
+      >
+        {{ a.texto }}
+      </p>
+    }
+
+    <div class="fila">
+      <h3>Catálogo</h3>
+      <div class="acciones">
+        <button type="button" (click)="consultarCatalogo()" [disabled]="ocupado()">
+          Consultar roles y permisos
+        </button>
+      </div>
+      @if (roles(); as lista) {
+        <p>
+          Roles:
+          @for (r of lista; track r.idRol; let ultimo = $last) {
+            <span class="mono">{{ r.nombre }}</span>
+            @if (!ultimo) {
+              <span>, </span>
+            }
+          } @empty {
+            <span>sin roles</span>
+          }
+        </p>
+      }
+      @if (permisos(); as lista) {
+        @if (lista.length === 0) {
+          <p>El catálogo no contiene permisos.</p>
+        } @else {
+          <table class="tabla" aria-label="Permisos del catálogo">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of lista; track p.idPermiso) {
+                <tr>
+                  <td class="mono">{{ p.codigo }}</td>
+                  <td>{{ p.nombre }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    </div>
+
+    <form class="fila" [formGroup]="formUsuario" (ngSubmit)="consultarUsuario()">
+      <h3>Permisos efectivos de un usuario</h3>
+      <label
+        >Identificador del usuario (UUID)
+        <input formControlName="idUsuario" autocomplete="off" spellcheck="false" />
+      </label>
+      @if (formUsuario.controls.idUsuario.touched && formUsuario.controls.idUsuario.invalid) {
+        <span class="error-campo">Introduce un UUID válido.</span>
+      }
+      <div class="acciones">
+        <button type="submit" [disabled]="ocupado()">Consultar permisos</button>
+      </div>
+    </form>
+
+    @if (efectivos(); as lista) {
+      <div class="fila">
+        <p>
+          Usuario <span class="mono">{{ usuarioConsultado() }}</span
+          >: {{ lista.length }} permiso(s) habilitado(s).
+        </p>
+        @if (esPropio()) {
+          <p class="mensaje">
+            Es tu propio usuario: la política vigente no permite asignarte PUBLICAR_CASO ni
+            ARCHIVAR_CASO (separación de funciones).
+          </p>
+        }
+        @if (permisos(); as catalogo) {
+          <table class="tabla" aria-label="Asignación de permisos">
+            <thead>
+              <tr>
+                <th>Permiso</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of catalogo; track p.idPermiso) {
+                <tr>
+                  <td class="mono">{{ p.codigo }}</td>
+                  <td>{{ tienePermiso(p.idPermiso) ? 'Habilitado' : 'No asignado' }}</td>
+                  <td>
+                    @if (tienePermiso(p.idPermiso)) {
+                      <button type="button" (click)="revocar(p)" [disabled]="ocupado()">
+                        Revocar
+                      </button>
+                    } @else if (autoasignacionProhibida(p)) {
+                      <span>No permitido (separación de funciones)</span>
+                    } @else {
+                      <button type="button" (click)="asignar(p)" [disabled]="ocupado()">
+                        Asignar
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p>Consulta primero el catálogo para asignar o revocar permisos.</p>
+          <ul>
+            @for (p of lista; track p.idPermiso) {
+              <li class="mono">{{ p.codigo }}</li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+    <form class="fila" [formGroup]="formDocente" (ngSubmit)="crearDocente()">
+      <h3>Alta de docente</h3>
+      <p class="etiqueta-real">
+        El alta no genera contraseña utilizable (D-05): la entrega segura de la credencial está
+        pendiente.
+      </p>
+      <div class="campos">
+        <label
+          >Nombre
+          <input formControlName="nombre" maxlength="150" autocomplete="off" />
+        </label>
+        <label
+          >Correo
+          <input formControlName="correo" type="email" maxlength="255" autocomplete="off" />
+        </label>
+      </div>
+      @if (formDocente.touched && formDocente.invalid) {
+        <span class="error-campo">Nombre y correo válido son obligatorios.</span>
+      }
+      <div class="acciones">
+        <button type="submit" [disabled]="ocupado()">Registrar docente</button>
+      </div>
+      @if (docenteCreado(); as d) {
+        <p>
+          Último docente registrado: {{ d.nombre }} · <span class="mono">{{ d.idUsuario }}</span>
+        </p>
+      }
+    </form>
+  }
+</section>
