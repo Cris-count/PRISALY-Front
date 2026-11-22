@@ -19,6 +19,7 @@ import {
   Rubrica,
 } from './casos-m3.api';
 import { CasosSesionStore } from './casos-sesion.store';
+import { PARAM_CASO, ParametroRecorrido, SELECCION_INVALIDADA } from './contexto-recorrido';
 
 type Aviso = { tipo: 'exito' | 'error' | 'info'; texto: string } | null;
 
@@ -80,6 +81,38 @@ export class PanelRubricaM3 {
   protected readonly ocupado = signal(false);
   protected readonly aviso = signal<Aviso>(null);
   protected readonly requiereRecarga = signal(false);
+  /** FE-55: caso activo compartido por URL con casos, contenido y sesiones. */
+  private readonly paramCaso = new ParametroRecorrido(PARAM_CASO);
+  private casoPendiente: string | null = null;
+
+  constructor() {
+    this.paramCaso
+      .invalidaciones()
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        if (this.ocupado()) this.casoPendiente = SELECCION_INVALIDADA;
+        else this.casoPendiente = null;
+        this.idCaso.set(null);
+        this.contenido.set(null);
+        this.rubrica.set(null);
+        this.etag.set(null);
+      });
+
+    this.paramCaso
+      .cambios()
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => {
+        if (this.ocupado()) {
+          this.casoPendiente = id;
+          if (this.idCaso()?.toLowerCase() !== id) {
+            this.idCaso.set(null);
+            this.contenido.set(null);
+            this.rubrica.set(null);
+            this.etag.set(null);
+          }
+        } else if (this.idCaso()?.toLowerCase() !== id) this.cargar(id);
+      });
+  }
 
   protected readonly preguntas = computed<readonly PreguntaContenido[]>(
     () => this.contenido()?.escenarios.flatMap((e) => e.preguntas) ?? [],
@@ -118,6 +151,12 @@ export class PanelRubricaM3 {
 
   protected cargar(idCaso: string): void {
     if (!esUuid(idCaso) || this.ocupado()) return;
+    if (this.idCaso()?.toLowerCase() !== idCaso.toLowerCase()) {
+      this.idCaso.set(null);
+      this.contenido.set(null);
+      this.rubrica.set(null);
+      this.etag.set(null);
+    }
     this.iniciar();
     const rubrica$ = this.api.rubrica(idCaso).pipe(
       map((r) => ({ rubrica: r.datos as Rubrica | null, etag: r.etag })),
@@ -135,6 +174,10 @@ export class PanelRubricaM3 {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ contenido, rubrica }) => {
+          if (this.casoPendiente && this.casoPendiente !== idCaso.toLowerCase()) {
+            this.terminar(null);
+            return;
+          }
           if (
             rubrica.rubrica &&
             (!contenido.etag || !rubrica.etag || contenido.etag !== rubrica.etag)
@@ -142,13 +185,14 @@ export class PanelRubricaM3 {
             this.requiereRecarga.set(true);
             this.terminar({
               tipo: 'error',
-              texto: 'El caso cambi? durante la consulta. Vuelve a cargar la r?brica.',
+              texto: 'El caso cambió durante la consulta. Vuelve a cargar la rúbrica.',
             });
             return;
           }
           this.idCaso.set(idCaso);
           this.contenido.set(contenido.datos);
           this.store.recordar(contenido.datos);
+          this.paramCaso.fijar(idCaso);
           this.aplicar(rubrica.rubrica, rubrica.etag ?? contenido.etag);
           this.terminar(
             rubrica.rubrica
@@ -205,6 +249,10 @@ export class PanelRubricaM3 {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ datos, etag: nuevo }) => {
+          if (this.casoPendiente && this.casoPendiente !== idCaso.toLowerCase()) {
+            this.terminar(null);
+            return;
+          }
           this.aplicar(datos, nuevo);
           this.terminar({
             tipo: 'exito',
@@ -253,6 +301,13 @@ export class PanelRubricaM3 {
 
   private terminar(aviso: Aviso): void {
     this.ocupado.set(false);
+    const pendiente = this.casoPendiente;
+    this.casoPendiente = null;
+    if (pendiente === SELECCION_INVALIDADA) return;
+    if (pendiente && this.idCaso()?.toLowerCase() !== pendiente) {
+      this.cargar(pendiente);
+      return;
+    }
     this.aviso.set(aviso);
   }
 

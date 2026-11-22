@@ -67,14 +67,23 @@
         >Caso (UUID de un caso publicado)
         <input formControlName="casoId" autocomplete="off" spellcheck="false" />
       </label>
-      @if (casos.casos().length > 0) {
-        <div class="acciones">
-          @for (c of casos.casos(); track c.idCaso) {
+      @if (casosPublicados().length > 0) {
+        <p>Casos publicados de esta sesión (estado de la última lectura del servidor):</p>
+        <div class="acciones" data-prueba="casos-publicados">
+          @for (c of casosPublicados(); track c.idCaso) {
             <button type="button" (click)="usarCaso(c.idCaso)">
               {{ c.titulo }} · {{ c.estado }}
             </button>
           }
         </div>
+      }
+      @if (casosNoPublicados().length > 0) {
+        <p class="etiqueta-real" data-prueba="casos-no-publicados">
+          Casos recordados aún no publicados (M4 los rechaza):
+          @for (c of casosNoPublicados(); track c.idCaso; let ultimo = $last) {
+            {{ c.titulo }} · {{ c.estado }}{{ ultimo ? '' : '; ' }}
+          }
+        </p>
       }
       <div class="campos">
         <label>Título <input formControlName="titulo" maxlength="150" /></label>

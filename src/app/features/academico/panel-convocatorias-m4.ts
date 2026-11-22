@@ -9,8 +9,9 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
-import { aFalloAcademico, mensajeFallo, UUID_RE } from './academico-http';
-import { ETIQUETA_ESTADO } from './panel-sesiones-m4';
+import { aFalloAcademico, UUID_RE } from './academico-http';
+import { PARAM_SESION, ParametroRecorrido, SELECCION_INVALIDADA } from './contexto-recorrido';
+import { ETIQUETA_ESTADO, MENSAJES_M4, mensajeM4 } from './panel-sesiones-m4';
 import { admiteCambios, Convocatoria, SesionAcademica, SesionesM4Api } from './sesiones-m4.api';
 
 type Aviso = { tipo: 'exito' | 'error' | 'info'; texto: string } | null;
@@ -39,6 +40,35 @@ export class PanelConvocatoriasM4 {
   protected readonly convocatorias = signal<readonly Convocatoria[] | null>(null);
   protected readonly ocupado = signal(false);
   protected readonly aviso = signal<Aviso>(null);
+  /** FE-55: sesión activa compartida por URL con el panel de sesiones. */
+  private readonly paramSesion = new ParametroRecorrido(PARAM_SESION);
+  private sesionPendiente: string | null = null;
+
+  constructor() {
+    this.paramSesion
+      .invalidaciones()
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        if (this.ocupado()) this.sesionPendiente = SELECCION_INVALIDADA;
+        else this.sesionPendiente = null;
+        this.seleccionada.set(null);
+        this.convocatorias.set(null);
+      });
+
+    // La sesión de la URL se vuelve a consultar en M4 antes de mostrar sus convocatorias.
+    this.paramSesion
+      .cambios()
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => {
+        if (this.ocupado()) {
+          this.sesionPendiente = id;
+          if (this.seleccionada()?.id.toLowerCase() !== id) {
+            this.seleccionada.set(null);
+            this.convocatorias.set(null);
+          }
+        } else if (this.seleccionada()?.id.toLowerCase() !== id) this.consultarSesion(id);
+      });
+  }
 
   protected readonly form = new FormGroup({
     estudianteId: new FormControl('', {
@@ -61,15 +91,41 @@ export class PanelConvocatoriasM4 {
       });
   }
 
+  private consultarSesion(id: string): void {
+    if (this.seleccionada()?.id.toLowerCase() !== id.toLowerCase()) {
+      this.seleccionada.set(null);
+      this.convocatorias.set(null);
+    }
+    this.iniciar();
+    this.api
+      .consultar(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (s) => this.seleccionar(s),
+        error: (e: unknown) => {
+          this.seleccionada.set(null);
+          this.convocatorias.set(null);
+          this.fallar(e);
+        },
+      });
+  }
+
   protected seleccionar(s: SesionAcademica, avisoFinal: Aviso = null): void {
+    if (this.sesionPendiente && this.sesionPendiente !== s.id.toLowerCase()) {
+      this.terminar(null);
+      return;
+    }
     this.seleccionada.set(s);
+    this.paramSesion.fijar(s.id);
     this.iniciar();
     this.api
       .convocatorias(s.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (lista) => {
-          this.convocatorias.set(lista);
+          if (!this.sesionPendiente || this.sesionPendiente === s.id.toLowerCase()) {
+            this.convocatorias.set(lista);
+          }
           this.terminar(avisoFinal);
         },
         error: (e: unknown) => {
@@ -113,20 +169,25 @@ export class PanelConvocatoriasM4 {
 
   private terminar(aviso: Aviso): void {
     this.ocupado.set(false);
+    const pendiente = this.sesionPendiente;
+    this.sesionPendiente = null;
+    if (pendiente === SELECCION_INVALIDADA) return;
+    if (pendiente && this.seleccionada()?.id.toLowerCase() !== pendiente) {
+      this.consultarSesion(pendiente);
+      return;
+    }
     this.aviso.set(aviso);
   }
 
   private fallar(e: unknown): void {
     const fallo = aFalloAcademico(e);
     const texto =
-      fallo.estado === 409
-        ? 'El servidor rechazó la convocatoria por una regla académica (por ejemplo, estudiante ya convocado o sesión iniciada).'
-        : fallo.estado === 404
-          ? 'La sesión o el estudiante no existen.'
-          : mensajeFallo(fallo);
-    this.terminar({
-      tipo: 'error',
-      texto: `${texto}${fallo.estado > 0 ? ` (HTTP ${fallo.estado}${fallo.codigo ? ` · ${fallo.codigo}` : ''})` : ''}`,
-    });
+      fallo.estado === 404 && !(fallo.codigo && MENSAJES_M4[fallo.codigo])
+        ? `La sesión o el estudiante no existen. (HTTP 404${fallo.codigo ? ` · ${fallo.codigo}` : ''})`
+        : mensajeM4(
+            e,
+            'El servidor rechazó la convocatoria por una regla académica (por ejemplo, estudiante ya convocado o sesión iniciada).',
+          );
+    this.terminar({ tipo: 'error', texto });
   }
 }

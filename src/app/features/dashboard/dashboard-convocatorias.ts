@@ -4,11 +4,12 @@ import { EstadoPanel } from './estado-panel';
 import { EstructuraDocente } from './estructura-docente';
 import { VISTAS_DOCENTES } from './docente-vistas';
 import { PanelConvocatoriasM4 } from '../academico/panel-convocatorias-m4';
+import { RecorridoDocente } from '../academico/recorrido-docente';
 
 /** Presentación estática de muestra; sin operaciones ni registros académicos. */
 @Component({
   selector: 'app-dashboard-convocatorias',
-  imports: [RouterLink, EstadoPanel, EstructuraDocente, PanelConvocatoriasM4],
+  imports: [RouterLink, EstadoPanel, EstructuraDocente, PanelConvocatoriasM4, RecorridoDocente],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-convocatorias.html',
   styleUrls: [

@@ -19,6 +19,7 @@
         height="210"
       />
     </header>
+    <app-recorrido-docente etapa="rubrica" />
     <app-panel-rubrica-m3 />
     <app-estado-panel
       class="integracion-rubricas"
@@ -210,6 +211,7 @@
       <p class="identidad">Sin sesión docente autenticada · Solo presentación</p>
     </header>
     @if (seccion().ruta === 'casos-academicos') {
+      <app-recorrido-docente etapa="casos" />
       <app-panel-casos-m3 />
       <app-panel-contenido-m3 />
     }
