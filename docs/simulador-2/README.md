@@ -1,8 +1,10 @@
 # Simulador 2.0 — incremento compartible
 
-Rama de integración: `integration/simulador2-controlado-20261122`. Base Frontend: `0b341c029407ca871183e6346bc6e730e9778f34`. Referencia de contratos Backend: `773818caf62758d66019a71dac6508d13148abad`.
+Rama de conciliación FE-57: `codex/simulador-fe57-f4-31-20261123`. Base Frontend: `32ba32ab0189344e71e380a7f7a59cedbb8e7705`. Referencia documental de contratos Backend: `773818caf62758d66019a71dac6508d13148abad`; no se modifica ni actualiza Backend en esta entrega.
 
-Este incremento comparte componentes Angular, adaptadores y contratos para continuar la integración. La publicación de código no acepta el recorrido Unreal ni la integración académica. No activa DD-02, M5, migraciones o servicios institucionales. La confirmación de Nicolás es obligatoria antes del push; no se autoriza PR ni merge a develop.
+Este incremento comparte componentes Angular, adaptadores y documentación de contratos. Conserva FE-57 y traslada solo los dos commits recientes del simulador, sin fusionar la rama histórica `feature/simulador-integracion-nicolas`. No implementa F4-03: el contexto académico sigue condicionado a sus contratos y habilitaciones. No activa DD-02, M5, M6, migraciones o servicios institucionales.
+
+La orden DC-BE-SIM-COORDINACION-F4-31 solicita preparar un PR para revisión de Dirección Central, sin merge automático. El alcance, los resultados nuevos y el estado de publicación se recogen en el [informe de conciliación](DC-BE-SIM-COORDINACION-F4-31-RESULTADO.md). El informe de Sincronización-10 conserva sus condiciones y resultados como antecedente histórico; no acredita la publicación de esta rama. La confirmación de alcance de Nicolás antes del push continúa pendiente.
 
 ## Qué pueden consultar
 
@@ -16,12 +18,12 @@ Después de que Nicolás confirme y se realice el push:
 
 ```powershell
 git fetch origin
-git switch --track origin/integration/simulador2-controlado-20261122
+git switch --track origin/codex/simulador-fe57-f4-31-20261123
 ```
 
 Usar un checkout limpio o aislado; conservar cualquier trabajo propio antes de cambiar de rama. No es necesario fusionar con develop para consultar este avance.
 
-La CI versionada usa Node `26.13.0` y npm `11.17.0`. La verificación local de esta entrega usó Node `24.22.1`, npm `11.17.0` y Chrome Headless `157.0.0.0`, con el mismo lockfile. No se presenta como ejecución de GitHub Actions.
+La CI versionada usa Node `26.13.0` y npm `11.17.0`. La nueva verificación F4-31 usó Node `24.22.1`, npm `11.19.1` y Chrome Headless `157.0.0.0`: **683 pruebas aprobadas y build de producción correcto**. Se reutilizaron las dependencias instaladas con el lockfile exacto en Sincronización-10; FE-57 no modifica los manifiestos, el lockfile ni Angular. No se presenta como ejecución de GitHub Actions.
 
 Desde la raíz del repositorio, con Node y Chrome disponibles:
 
