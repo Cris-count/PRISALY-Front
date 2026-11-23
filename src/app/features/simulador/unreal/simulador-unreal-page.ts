@@ -32,9 +32,9 @@ import { HospitalNarrativoUnreal } from './hospital-narrativo-unreal';
           <a href="simulador-integrado">Ver opciones y demostración anterior (Phaser 2.5D)</a>
         </section>
       } @else {
-        <p class="aviso">Integración demostrativa del Hospital. Esta pantalla no inicia un intento académico; las pistas y notas se conservan solo en esta página.</p>
+        <p class="aviso">Recorrido demostrativo por Hospital, Comisaría y Fiscalía. Las conversaciones y la libreta se conservan mientras permanezcas en esta página.</p>
         <div class="acciones">
-          <button type="button" (click)="conectar()" [disabled]="ocupado() || conectado()">Conectar ciudad 3D</button>
+          <button type="button" (click)="conectar()" [disabled]="ocupado() || conectado()">{{ hospital.ultimaZona() ? 'Reconectar y recuperar recorrido' : 'Conectar ciudad 3D' }}</button>
           <button type="button" (click)="desconectar()" [disabled]="!ocupado() && !conectado()">Desconectar</button>
           @if (requiereReproduccion()) {
             <button type="button" (click)="reproducir()">Reproducir ciudad</button>
@@ -42,6 +42,7 @@ import { HospitalNarrativoUnreal } from './hospital-narrativo-unreal';
         </div>
       }
       <p role="status" aria-live="polite">{{ estado() }}</p>
+      @if (hospital.ultimaZona() && !conectado()) { <p>Al reconectar regresarás al último acceso o zona confirmada. Tus conversaciones, pistas y notas continúan en esta página.</p> }
       @if (error()) { <p role="alert">{{ error() }}</p> }
       <div #visor class="visor" tabindex="0" role="region" aria-label="Visor de la ciudad 3D"
         [hidden]="!asignacion" (focusin)="foco.set(true)" (focusout)="foco.set(false)">
@@ -103,7 +104,12 @@ export class SimuladorUnrealPage {
   private contenedorReproductor: HTMLDivElement | null = null;
 
   constructor() {
-    effect(() => this.reproductor?.permitirEntrada(this.conectado() && this.foco() && !this.hospital.ocupado()));
+    effect(() => {
+      // Leer las señales también antes de crear el reproductor: el encadenamiento
+      // opcional omite sus argumentos cuando todavía no existe y pierde la suscripción.
+      const permitir = this.conectado() && this.foco() && !this.hospital.ocupado();
+      this.reproductor?.permitirEntrada(permitir);
+    });
     inject(DestroyRef).onDestroy(() => this.limpiar());
   }
 
@@ -189,29 +195,42 @@ export class SimuladorUnrealPage {
           preferencias: { reducirMovimiento: matchMedia('(prefers-reduced-motion: reduce)').matches, invertirCamara: false },
         });
         if (generacion !== this.generacion) return;
+        if (this.hospital.ultimaZona()) this.estado.set('Recuperando el recorrido en el último acceso confirmado…');
+        const zonaRestaurada = await this.hospital.restaurarEstadoVisual();
+        if (generacion !== this.generacion) return;
+        if (zonaRestaurada) {
+          const edificio = edificioPorZonaUnreal(zonaRestaurada);
+          this.ubicacion.set(edificio ? `Acceso recuperado: ${edificio.narrativa === 'policia' ? 'Comisaría' : edificio.narrativa === 'fiscalia' ? 'Fiscalía' : 'Hospital'}` : 'Plaza Central recuperada');
+        }
         this.sesionIniciada.set(true);
         this.actualizarEstado();
       } catch {
         if (generacion !== this.generacion) return;
         this.limpiar();
         this.estado.set('La sesión visual no fue confirmada.');
-        this.error.set('El mundo no confirmó el inicio. La actividad académica no se ha iniciado.');
+        this.error.set('El mundo no confirmó el inicio o la recuperación del recorrido. El progreso de esta página se conserva; vuelve a conectar.');
       }
       return;
     }
     if (!this.sesionIniciada()) return;
-    if (mensaje.tipo === 'zona.entro') {
+    if (mensaje.tipo === 'zona.entro' && this.hospital.espacio() === 'exterior') {
       const zonaId = mensaje.datos['zoneId'] as string;
       const edificio = edificioPorZonaUnreal(zonaId);
       if (edificio) this.ubicacion.set(edificio.narrativa === 'policia' ? 'Entrada de Policía' : edificio.narrativa === 'fiscalia' ? 'Entrada de Fiscalía' : 'Entrada de Hospital');
       else if (zonaId === PLAZA_UNREAL.zonaId) this.ubicacion.set('Plaza Central');
-    } else if (mensaje.tipo === 'zona.salio') {
+    } else if (mensaje.tipo === 'zona.salio' && this.hospital.espacio() === 'exterior') {
       this.ubicacion.set('En recorrido');
     }
+    const interiorAnterior = this.hospital.edificioActivo();
+    const estabaEnInterior = this.hospital.enInterior();
     await this.hospital.procesar(mensaje);
     if (generacion !== this.generacion) return;
-    if (mensaje.tipo === 'edificio.entro' && mensaje.datos['zoneId'] === 'hospital_entrada') this.ubicacion.set('Interior del Hospital');
-    else if (mensaje.tipo === 'edificio.salio' && mensaje.datos['zoneId'] === 'hospital_entrada') this.ubicacion.set('Exterior del Hospital');
+    const interiorActual = this.hospital.edificioActivo();
+    if (mensaje.tipo === 'edificio.entro' && interiorActual && this.hospital.enInterior() && mensaje.datos['zoneId'] === interiorActual.zonaId) {
+      this.ubicacion.set(`Interior: ${interiorActual.nombre}`);
+    } else if (mensaje.tipo === 'edificio.salio' && interiorAnterior && estabaEnInterior && !this.hospital.enInterior() && mensaje.datos['zoneId'] === interiorAnterior.zonaId) {
+      this.ubicacion.set(`Exterior: ${interiorAnterior.nombre}`);
+    }
   }
 
   private actualizarEstado(): void {

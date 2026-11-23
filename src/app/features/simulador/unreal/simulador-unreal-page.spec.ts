@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import { LibretaStore } from '../investigacion/libreta.store';
 import { SESION_VISUAL_UNREAL, SesionVisualUnreal } from './configuracion-unreal';
 import { CARGAR_ESQUEMAS_UNREAL, cargarEsquemasBrowser } from './protocolo/cargar-esquemas-browser';
-import { Esquemas } from './protocolo/validador-mensaje';
+import { Esquemas, Mensaje } from './protocolo/validador-mensaje';
 import { FABRICA_REPRODUCTOR_UNREAL, FabricaReproductorUnreal, ReproductorUnreal } from './reproductor-unreal';
 import { SimuladorUnrealPage } from './simulador-unreal-page';
 import { CanalPixelStreaming, TransportePixelStreaming } from './transporte-pixel-streaming';
@@ -17,8 +18,8 @@ describe('SimuladorUnrealPage', () => {
     let numero = 1;
     const canal: jasmine.SpyObj<CanalPixelStreaming> = jasmine.createSpyObj('PixelStreaming', ['emitUIInteraction', 'addResponseEventListener', 'removeResponseEventListener', 'disconnect']);
     canal.addResponseEventListener.and.callFake((_nombre, receptor) => { responder = receptor; });
-    canal.emitUIInteraction.and.callFake((texto) => {
-      const orden = JSON.parse(texto);
+    canal.emitUIInteraction.and.callFake((descriptor) => {
+      const orden = descriptor as Mensaje;
       queueMicrotask(() => responder(JSON.stringify({ v: 1, tipo: 'orden.ack', id: `u-${String(++numero).padStart(6, '0')}`, correlacion: orden.id, sesion: asignacion.sesion, ts: 1, origen: 'unreal', datos: {} })));
       return true;
     });
@@ -59,7 +60,30 @@ describe('SimuladorUnrealPage', () => {
     prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' });
     await prueba.fixture.whenStable();
     expect(prueba.pagina.conectado()).toBeTrue();
-    expect(JSON.parse(prueba.canal.emitUIInteraction.calls.first().args[0]).tipo).toBe('sesion.iniciar');
+    expect((prueba.canal.emitUIInteraction.calls.first().args[0] as Mensaje).tipo).toBe('sesion.iniciar');
+    prueba.pagina.desconectar();
+  });
+
+  it('observa conexión, foco y conversación aunque el reproductor no exista en el primer renderizado', async () => {
+    const prueba = preparar(); // El primer detectChanges ocurre sin reproductor.
+    const entrada = prueba.reproductor.permitirEntrada as jasmine.Spy;
+    prueba.pagina.foco.set(true); prueba.fixture.detectChanges();
+    await prueba.pagina.conectar(); prueba.reproductor.transporte.abrir();
+    prueba.informar('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' }); await prueba.fixture.whenStable();
+    expect(entrada.calls.mostRecent().args[0]).toBeTrue();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-puerta', categoria: 'puerta' }); await prueba.fixture.whenStable();
+    expect(entrada.calls.mostRecent().args[0]).toBeFalse();
+    prueba.emitir('edificio.entro', { zoneId: 'hospital_entrada' }); await prueba.fixture.whenStable();
+    expect(entrada.calls.mostRecent().args[0]).toBeTrue();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-npc-doctor', categoria: 'npc' }); await prueba.fixture.whenStable();
+    expect(entrada.calls.mostRecent().args[0]).toBeFalse();
+    await prueba.pagina.hospital.cerrarConversacion(); await prueba.fixture.whenStable();
+    expect(entrada.calls.mostRecent().args[0]).toBeTrue();
+    prueba.pagina.foco.set(false); await prueba.fixture.whenStable();
+    expect(entrada.calls.mostRecent().args[0]).toBeFalse();
+    prueba.pagina.foco.set(true); await prueba.fixture.whenStable();
+    expect(entrada.calls.mostRecent().args[0]).toBeTrue();
     prueba.pagina.desconectar();
   });
 
@@ -77,7 +101,7 @@ describe('SimuladorUnrealPage', () => {
     await prueba.pagina.caminarA('zona_desconocida');
     expect(prueba.canal.emitUIInteraction).toHaveBeenCalledTimes(1);
     await prueba.pagina.caminarA('plaza_central');
-    expect(JSON.parse(prueba.canal.emitUIInteraction.calls.mostRecent().args[0]).tipo).toBe('avatar.irA');
+    expect((prueba.canal.emitUIInteraction.calls.mostRecent().args[0] as Mensaje).tipo).toBe('avatar.irA');
     expect(prueba.pagina.estado()).toContain('Esperando confirmación');
     prueba.emitir('zona.entro', { zoneId: 'plaza_central' });
     expect(prueba.pagina.ubicacion()).toBe('Plaza Central');
@@ -121,6 +145,98 @@ describe('SimuladorUnrealPage', () => {
     expect(prueba.fixture.nativeElement.textContent).toContain('Conversación completada');
     expect(prueba.fixture.nativeElement.textContent).toContain('Libreta (1)');
     expect(prueba.pagina.hospital.vista()?.terminado).toBeTrue();
+    prueba.pagina.desconectar();
+  });
+
+  for (const interior of [
+    { puerta: 'pol-puerta', zona: 'policia_entrada', npc: 'pol-npc-oficial', titulo: 'Comisaría Sectorial', dialogo: 'Comisaría Sectorial.', decision: 'Revisar la minuta de intervención policial', pista: 'pista-informe-policial' },
+    { puerta: 'fis-puerta', zona: 'fiscalia_entrada', npc: 'fis-npc-fiscal', titulo: 'Fiscalía de Turno', dialogo: 'Estamos ordenando los indicios', decision: 'Preguntar por la calificación jurídica provisional', pista: 'pista-acusacion-fiscal' },
+  ]) {
+    it(`presenta ${interior.titulo}, su decisión y su pista; conserva el bloqueo durante el diálogo (canal simulado)`, async () => {
+      const prueba = preparar();
+      await prueba.pagina.conectar(); prueba.reproductor.transporte.abrir(); prueba.informar('video-listo');
+      prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' }); await prueba.fixture.whenStable();
+      prueba.pagina.foco.set(true); prueba.fixture.detectChanges();
+      prueba.emitir('interactuable.activado', { interactuableId: interior.puerta, categoria: 'puerta' }); await prueba.fixture.whenStable();
+      prueba.emitir('edificio.entro', { zoneId: interior.zona }); await prueba.fixture.whenStable();
+      expect(prueba.pagina.ubicacion()).toBe(`Interior: ${interior.titulo}`);
+      prueba.emitir('edificio.entro', { zoneId: 'hospital_entrada' }); await prueba.fixture.whenStable();
+      prueba.emitir('zona.salio', { zoneId: interior.zona }); await prueba.fixture.whenStable();
+      expect(prueba.pagina.ubicacion()).toBe(`Interior: ${interior.titulo}`);
+      prueba.emitir('interactuable.activado', { interactuableId: interior.npc, categoria: 'npc' }); await prueba.fixture.whenStable();
+      prueba.fixture.detectChanges();
+      expect(prueba.fixture.nativeElement.querySelector('#hospital-titulo').textContent).toContain(interior.titulo);
+      expect(prueba.fixture.nativeElement.textContent).toContain(interior.dialogo);
+      expect((prueba.reproductor.permitirEntrada as jasmine.Spy).calls.mostRecent().args[0]).toBeFalse();
+      const pulsar = async (texto: string) => {
+        const botones = Array.from(prueba.fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+        const boton = botones.find(b => b.textContent?.trim() === texto)!;
+        expect(boton).toBeTruthy(); boton.click(); await prueba.fixture.whenStable(); prueba.fixture.detectChanges();
+      };
+      await pulsar('Siguiente diálogo'); await pulsar(interior.decision);
+      expect(prueba.pagina.hospital.vista()?.estado.transicion).toBeTruthy();
+      expect(prueba.fixture.nativeElement.textContent).toContain('Libreta (1)');
+      expect(prueba.fixture.debugElement.injector.get(LibretaStore).estado().pistas.map(p => p.id)).toEqual([interior.pista]);
+      await pulsar('Cerrar conversación');
+      expect((prueba.reproductor.permitirEntrada as jasmine.Spy).calls.mostRecent().args[0]).toBeTrue();
+      prueba.emitir('edificio.salio', { zoneId: interior.zona }); await prueba.fixture.whenStable();
+      expect(prueba.pagina.ubicacion()).toBe(`Exterior: ${interior.titulo}`);
+      prueba.pagina.desconectar();
+    });
+  }
+
+  it('abre la libreta desde el exterior y guarda una nota sin iniciar una conversación (canal simulado)', async () => {
+    const prueba = preparar();
+    await prueba.pagina.conectar(); prueba.reproductor.transporte.abrir(); prueba.informar('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' }); await prueba.fixture.whenStable();
+    prueba.fixture.detectChanges();
+    const botones = Array.from(prueba.fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    botones.find(b => b.textContent?.trim() === 'Libreta (0)')!.click();
+    await prueba.fixture.whenStable(); prueba.fixture.detectChanges();
+    expect(prueba.pagina.hospital.libretaAbierta()).toBeTrue();
+    const editor = prueba.fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
+    editor.value = 'Comparar los tiempos de los tres edificios'; editor.dispatchEvent(new Event('input', { bubbles: true }));
+    await prueba.fixture.whenStable();
+    prueba.fixture.nativeElement.querySelector('dialog form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await prueba.fixture.whenStable(); prueba.fixture.detectChanges();
+    expect(prueba.fixture.debugElement.injector.get(LibretaStore).estado().notas[0].texto).toBe('Comparar los tiempos de los tres edificios');
+    prueba.fixture.nativeElement.querySelector('button[aria-label="Cerrar libreta"]').click();
+    await prueba.fixture.whenStable(); prueba.fixture.detectChanges();
+    expect(prueba.pagina.hospital.libretaAbierta()).toBeFalse();
+    expect(prueba.pagina.hospital.conversacion()).toBe('cerrada');
+    prueba.pagina.desconectar();
+  });
+
+  it('reconecta, restaura el acceso y conserva investigación antes de habilitar el control (canal simulado)', async () => {
+    const prueba = preparar();
+    await prueba.pagina.conectar(); prueba.reproductor.transporte.abrir(); prueba.informar('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' }); await prueba.fixture.whenStable();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-puerta', categoria: 'puerta' }); await prueba.fixture.whenStable();
+    prueba.emitir('edificio.entro', { zoneId: 'hospital_entrada' }); await prueba.fixture.whenStable();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-npc-doctor', categoria: 'npc' }); await prueba.fixture.whenStable();
+    prueba.pagina.hospital.avanzarDialogo(); prueba.pagina.hospital.avanzarDialogo(); prueba.pagina.hospital.elegir('consultar-expediente');
+    const libreta = prueba.fixture.debugElement.injector.get(LibretaStore);
+    libreta.crearNota('Retomar el recorrido tras reconectar');
+    prueba.pagina.desconectar();
+    const transporte = new TransportePixelStreaming(prueba.canal);
+    const siguiente: ReproductorUnreal = {
+      ...prueba.reproductor, transporte,
+      cerrar: jasmine.createSpy('cerrar-siguiente').and.callFake(() => transporte.cerrar()),
+    };
+    let informar!: Parameters<FabricaReproductorUnreal>[2];
+    prueba.fabrica.and.callFake(async (_contenedor, _sesion, callback) => { informar = callback; return siguiente; });
+    await prueba.pagina.conectar(); transporte.abrir(); informar('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' }); await prueba.fixture.whenStable();
+    expect(prueba.pagina.conectado()).toBeFalse();
+    const ordenes = prueba.canal.emitUIInteraction.calls.allArgs().map(args => args[0] as Mensaje);
+    expect(ordenes.find(m => m.tipo === 'estado.restaurar')?.datos['zonaActual']).toBe('hospital_entrada');
+    // Tiempo de quietud del contrato con MUNDO-24: no habilitar controles durante su supresión de hechos.
+    await new Promise<void>(resolver => setTimeout(resolver, 1200)); await prueba.fixture.whenStable();
+    expect(prueba.pagina.conectado()).toBeTrue();
+    expect(prueba.pagina.ubicacion()).toBe('Acceso recuperado: Hospital');
+    expect(prueba.pagina.hospital.enInterior()).toBeFalse();
+    expect(libreta.estado().pistas.length).toBe(1); expect(libreta.estado().notas.length).toBe(1);
+    expect(prueba.pagina.hospital.recorrido()[0].visitado).toBeTrue();
     prueba.pagina.desconectar();
   });
 

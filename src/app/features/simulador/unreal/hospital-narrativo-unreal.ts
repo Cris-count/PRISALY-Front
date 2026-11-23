@@ -1,19 +1,31 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { LibretaPanel } from '../investigacion/libreta-panel';
 import { LibretaStore } from '../investigacion/libreta.store';
 import { HospitalUnreal } from './hospital-unreal';
 
-/** Composición Angular del Hospital: usa el motor y la libreta existentes. */
+/** Panel de los tres interiores: conserva el selector de la integración inicial. */
 @Component({
   selector: 'app-hospital-narrativo-unreal',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [LibretaPanel],
   template: `
+    <section aria-labelledby="recorrido-titulo">
+      <h2 id="recorrido-titulo">Tu investigación</h2>
+      <button type="button" [disabled]="!hospital.puedeAbrirLibreta()" (click)="hospital.abrirLibreta()">Libreta ({{ libreta.estado().pistas.length }})</button>
+      <p>Conversaciones terminadas: {{ hospital.conversacionesTerminadas() }} de {{ hospital.totalConversaciones() }}</p>
+      @for (edificio of hospital.recorrido(); track edificio.edificioId) {
+        <article><h3>{{ edificio.nombre }}</h3><p>{{ edificio.visitado ? 'Interior visitado' : 'Interior por visitar' }}</p>
+          @for (npc of edificio.npcs; track npc.espacialId) {
+            <p>{{ npc.nombre }}: {{ npc.estado === 'completado' ? 'Conversación terminada' : npc.estado === 'en_curso' ? 'Conversación en curso' : 'Por conversar' }}</p>
+          }
+        </article>
+      }
+    </section>
     @if (hospital.error()) { <p role="alert">{{ hospital.error() }}</p> }
     @if (hospital.enInterior()) {
       <section aria-labelledby="hospital-titulo">
-        <h2 id="hospital-titulo">Hospital Central</h2>
-        <p>Acércate al doctor o al costado de la camilla del paciente y pulsa E para conversar. Para salir, camina hasta las puertas de vidrio.</p>
+        <h2 id="hospital-titulo">{{ hospital.edificioActivo()?.nombre }}</h2>
+        <p>{{ hospital.edificioActivo()?.indicaciones }}</p>
         @if (hospital.modal()) {
           <section [attr.aria-label]="'Conversación con ' + hospital.npcActivo().nombre" aria-live="polite">
             <h3>{{ hospital.npcActivo().nombre }}</h3>
@@ -30,7 +42,6 @@ import { HospitalUnreal } from './hospital-unreal';
                   <button type="button" (click)="hospital.elegir(decision.id)">{{ decision.texto }}</button>
                 }
                 @if (vista.estado.transicion) { <button type="button" (click)="hospital.completarTransicion()">Continuar conversación</button> }
-                <button type="button" (click)="libretaAbierta.set(true)">Libreta ({{ libreta.estado().pistas.length }})</button>
               </fieldset>
             }
             <button type="button" [disabled]="hospital.conversacion() === 'abriendo' || hospital.conversacion() === 'cerrando'"
@@ -39,7 +50,7 @@ import { HospitalUnreal } from './hospital-unreal';
         }
       </section>
     }
-    @if (hospital.vista()) {
+    @if (hospital.vista() || libreta.estado().pistas.length || libreta.estado().notas.length) {
       <section aria-labelledby="pistas-hospital">
         <h2 id="pistas-hospital">Pistas de tu libreta ({{ libreta.estado().pistas.length }})</h2>
         @for (pista of libreta.estado().pistas; track pista.id) {
@@ -48,7 +59,7 @@ import { HospitalUnreal } from './hospital-unreal';
         <p>El progreso se conserva al salir y reingresar durante esta sesión demostrativa. Se pierde al recargar la página.</p>
       </section>
     }
-    @if (mostrarLibreta()) { <app-libreta-panel (cerrar)="libretaAbierta.set(false)" /> }
+    @if (hospital.libretaAbierta()) { <app-libreta-panel (cerrar)="hospital.cerrarLibreta()" /> }
   `,
   styles: `
     section { margin-block:1rem; padding:1rem; border:1px solid #bed2df; border-radius:.7rem; }
@@ -60,10 +71,5 @@ import { HospitalUnreal } from './hospital-unreal';
 export class HospitalNarrativoUnreal {
   readonly hospital = inject(HospitalUnreal);
   readonly libreta = inject(LibretaStore);
-  readonly libretaAbierta = signal(false);
-  readonly mostrarLibreta = computed(() => this.libretaAbierta() && this.hospital.puedeDialogar());
-  constructor() {
-    effect(() => { if (!this.hospital.puedeDialogar()) this.libretaAbierta.set(false); });
-  }
   nombre(id: string): string { return this.hospital.vista()?.estado.personajes.find(p => p.id === id)?.nombre ?? id; }
 }

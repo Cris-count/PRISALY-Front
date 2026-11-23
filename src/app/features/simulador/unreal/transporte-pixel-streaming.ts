@@ -2,7 +2,7 @@ import type { Transporte } from './puente/transporte';
 
 /** Superficie pública de la biblioteca oficial de Epic; permite probar el canal sin una GPU. */
 export interface CanalPixelStreaming {
-  emitUIInteraction(texto: string): boolean;
+  emitUIInteraction(descriptor: object): boolean;
   addResponseEventListener(nombre: string, oyente: (texto: string) => void): void;
   removeResponseEventListener(nombre: string): void;
   disconnect(): void;
@@ -32,7 +32,11 @@ export class TransportePixelStreaming implements Transporte {
   }
 
   enviar(texto: string): void {
-    if (!this.conectado || !this.canal.emitUIInteraction(texto)) throw new Error('TRANSPORTE_DESCONECTADO');
+    if (!this.conectado) throw new Error('TRANSPORTE_DESCONECTADO');
+    // Epic aplica JSON.stringify: recibe el objeto del sobre, no otro texto JSON.
+    const descriptor: unknown = JSON.parse(texto);
+    if (!descriptor || typeof descriptor !== 'object' || Array.isArray(descriptor)) throw new Error('MENSAJE_INVALIDO');
+    if (!this.canal.emitUIInteraction(descriptor)) throw new Error('TRANSPORTE_DESCONECTADO');
   }
 
   alRecibir(oyente: (texto: string) => void): () => void {

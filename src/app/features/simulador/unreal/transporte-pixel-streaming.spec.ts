@@ -24,7 +24,7 @@ describe('TransportePixelStreaming', () => {
     transporte.abrir();
     transporte.enviar('{}');
     recibir('{"v":1}');
-    expect(canal.emitUIInteraction).toHaveBeenCalledOnceWith('{}');
+    expect(canal.emitUIInteraction).toHaveBeenCalledOnceWith({});
     expect(oyente).toHaveBeenCalledOnceWith('{"v":1}');
   });
 
@@ -32,6 +32,23 @@ describe('TransportePixelStreaming', () => {
     transporte.abrir();
     canal.emitUIInteraction.and.returnValue(false);
     expect(() => transporte.enviar('{}')).toThrow();
+  });
+
+  it('entrega el sobre como objeto para una sola serialización en Epic', () => {
+    const sobre = { v: 1, tipo: 'camara.enfocar', datos: { objetivoId: 'pol-npc-oficial', modo: 'conversacion' } };
+    transporte.abrir();
+    transporte.enviar(JSON.stringify(sobre));
+    const descriptor = canal.emitUIInteraction.calls.mostRecent().args[0];
+    expect(descriptor).toEqual(sobre);
+    expect(JSON.parse(JSON.stringify(descriptor))).toEqual(sobre);
+  });
+
+  it('rechaza JSON inválido y sobres serializados dos veces antes de enviarlos', () => {
+    transporte.abrir();
+    for (const texto of ['no-json', 'null', '[]', JSON.stringify('{"v":1}')]) {
+      expect(() => transporte.enviar(texto)).toThrow();
+    }
+    expect(canal.emitUIInteraction).not.toHaveBeenCalled();
   });
 
   it('cierra una sola vez, retira el receptor e ignora mensajes tardíos', () => {
