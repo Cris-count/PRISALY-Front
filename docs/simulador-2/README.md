@@ -46,6 +46,8 @@ Abrir `/simulador-unreal`. Esto inicia únicamente Angular. La conexión al mund
 
 La referencia local conservada usa player `ws://127.0.0.1:8898/`, streamer `PRISALY-LAB-03`, sesión visual `ses-lab-ps2-0001` y Origin exacto `http://127.0.0.1:4213`. Producción y QA mantienen la asignación local deshabilitada. Los valores viven en [sesion-visual-unreal-local.ts](../../src/environments/sesion-visual-unreal-local.ts), sin contraseñas ni tokens.
 
+Los identificadores locales pueden permanecer como texto en el bundle de producción aunque la bandera sea falsa. Son valores demostrativos, no credenciales; separar ese archivo mediante una sustitución de build sigue pendiente de decisión. Esta rama no se entrega como despliegue productivo.
+
 **Seleccionar la copia Unreal correcta:** la ciudad e interiores nuevos están en MUNDO-24; el lanzador del laboratorio PS2-LAB-03 abre otra copia. El proyecto principal tampoco recibe automáticamente estos cambios. `-PrisalyModoDiseno` permite revisar el mundo local, pero no abre la sesión integrada Angular. Esta rama no resuelve esa selección mediante copias o cambios de Unreal.
 
 ## Funcionalidades y límites

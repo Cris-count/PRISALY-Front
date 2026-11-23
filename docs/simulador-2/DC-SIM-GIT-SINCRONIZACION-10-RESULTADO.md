@@ -49,6 +49,8 @@ docs/simulador-2/DC-SIM-GIT-SINCRONIZACION-10-RESULTADO.md
 
 La configuración paralela y sus entornos están identificados como tales: se conservó el comportamiento de desarrollo y se centralizaron constantes. Nicolás debe confirmar que compartirlos no incorpora trabajo incompleto de otras sesiones.
 
+Limitación de esa configuración: los identificadores demostrativos de conexión pueden aparecer en el bundle productivo, con la activación deshabilitada. No son contraseñas/tokens. La separación por sustitución de archivos de desarrollo, propuesta en la conciliación F4-10, continúa pendiente de decisión; no se implementa ni se autoriza un despliegue productivo desde este incremento.
+
 ## Exclusiones y dependencias pendientes
 
 - Backend y todos sus cambios locales; no se publican migraciones, contratos nuevos ni configuraciones de producción Backend.
