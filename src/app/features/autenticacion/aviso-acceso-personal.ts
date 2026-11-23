@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
-import { AVISOS_ACCESO } from './m1-mapeo-rutas';
+import { AVISOS_ACCESO, MAPEO_RUTAS_PERSONAL } from './m1-mapeo-rutas';
 import { SesionPersonalM1 } from './m1-personal-sesion';
 
 /**
@@ -69,12 +69,18 @@ export class AvisoAccesoPersonal {
   /** FE-58: solo ante `rol-insuficiente`, el rol real devuelto por `/me` (informativo). */
   protected readonly rolSesion = computed(() => {
     const estado = this.sesion.estado();
-    return this.aviso() === 'rol-insuficiente' && estado.tipo === 'valida'
+    return !this.presentacion && this.aviso() === 'rol-insuficiente' && estado.tipo === 'valida'
       ? estado.identidad.rol
       : null;
   });
 
+  /** DC-FE-UX-ROLES-24: en `qa-navegacion` (presentación) no se exponen códigos internos. */
+  private readonly presentacion = Object.values(inject(MAPEO_RUTAS_PERSONAL)).some(
+    (m) => m.habilitada === true,
+  );
+
   protected readonly permisos = computed(() => {
+    if (this.presentacion) return null;
     const estado = this.sesion.estado();
     return estado.tipo === 'valida' ? estado.identidad.permisos : null;
   });

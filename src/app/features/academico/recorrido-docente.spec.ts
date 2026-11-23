@@ -632,11 +632,11 @@ describe('FE-55 RecorridoDocente (componente)', () => {
     const f = await montarRecorrido(`/x?caso=${C}&sesion=${S}&token=abc&aviso=permiso`);
     const lista = enlaces(f);
     expect(lista.map((a) => a.textContent?.trim())).toEqual([
-      '1. Caso y contenido',
-      '2. Rúbrica',
-      '3. Publicación',
-      '4. Sesión',
-      '5. Convocatoria',
+      'Caso y contenido',
+      'Rúbrica',
+      'Publicación',
+      'Sesión',
+      'Convocatoria',
     ]);
     for (const a of lista) {
       const href = a.getAttribute('href')!;
@@ -647,9 +647,8 @@ describe('FE-55 RecorridoDocente (componente)', () => {
     }
     expect(lista.filter((a) => a.getAttribute('aria-current') === 'step').length).toBe(1);
     expect(lista[3].getAttribute('aria-current')).toBe('step');
-    expect(el(f).querySelector('[data-prueba="contexto-recorrido"]')?.textContent).toContain(
-      'pendiente de consulta',
-    );
+    // DC-FE-UX-ROLES-24: sin lectura del servidor no se muestran identificadores técnicos.
+    expect(el(f).querySelector('[data-prueba="contexto-recorrido"]')).toBeNull();
   });
 
   it('muestra el estado del caso solo si se leyó del servidor en esta sesión', async () => {
@@ -657,7 +656,7 @@ describe('FE-55 RecorridoDocente (componente)', () => {
     TestBed.inject(CasosSesionStore).recordar(caso('PUBLICADO'));
     f.detectChanges();
     expect(el(f).querySelector('[data-prueba="contexto-recorrido"]')?.textContent).toContain(
-      'Caso FE-55 · PUBLICADO (última lectura del servidor)',
+      'Caso FE-55 · PUBLICADO',
     );
     expect(enlaces(f)[0].getAttribute('href')).toBe(`/dashboard/casos-academicos?caso=${C}`);
   });
@@ -665,7 +664,7 @@ describe('FE-55 RecorridoDocente (componente)', () => {
   it('sin parámetros válidos los enlaces no llevan identificadores', async () => {
     const f = await montarRecorrido('/x?caso=no-uuid');
     expect(enlaces(f)[0].getAttribute('href')).toBe('/dashboard/casos-academicos');
-    expect(texto(f)).toContain('Sin caso activo');
+    expect(el(f).querySelector('[data-prueba="contexto-recorrido"]')).toBeNull();
   });
 });
 

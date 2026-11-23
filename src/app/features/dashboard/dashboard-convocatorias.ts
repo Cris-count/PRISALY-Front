@@ -1,3 +1,4 @@
+import { crearModoDocenteOperativo } from './navegacion-rol';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { EstadoPanel } from './estado-panel';
@@ -19,5 +20,7 @@ import { RecorridoDocente } from '../academico/recorrido-docente';
   ],
 })
 export class DashboardConvocatorias {
+  /** DC-FE-UX-ROLES-24: solo paneles reales con sesión docente verificada. */
+  protected readonly operativo = crearModoDocenteOperativo();
   protected readonly vista = VISTAS_DOCENTES['convocatorias'];
 }
