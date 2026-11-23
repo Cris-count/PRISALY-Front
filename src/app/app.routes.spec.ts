@@ -3,6 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { routes } from './app.routes';
+import { provideEntornoDemostracionAutorizado } from './features/autenticacion/entorno-demostracion';
 import { ParticipacionGateway } from './features/simulador/services/participacion.gateway';
 
 describe('Rutas públicas de presentación', () => {
@@ -19,7 +20,13 @@ describe('Rutas públicas de presentación', () => {
       'finalizarIntento',
     ]);
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), { provide: ParticipacionGateway, useValue: gateway }],
+      providers: [
+        provideRouter(routes),
+        { provide: ParticipacionGateway, useValue: gateway },
+        // FE-58-05 (H-58-01): el inicio público del dashboard solo existe en el entorno de
+        // demostración autorizado; el bloqueo en producción se prueba en fe58-resolucion.spec.ts.
+        provideEntornoDemostracionAutorizado(),
+      ],
     });
   });
 

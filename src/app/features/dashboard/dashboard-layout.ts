@@ -12,6 +12,7 @@ import { DestroyRef } from '@angular/core';
 import { M1_PERSONAL_LOCAL } from '../autenticacion/m1-personal-http';
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { EstadoAccesoPersonalPanel } from '../autenticacion/estado-acceso-personal';
+import { EstadoVerificacionAcceso } from '../autenticacion/estado-verificacion-acceso';
 import {
   ActivatedRoute,
   NavigationEnd,
@@ -25,7 +26,13 @@ import { DASHBOARD_NAVEGACION } from './dashboard-secciones';
 
 @Component({
   selector: 'app-dashboard-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, EstadoAccesoPersonalPanel],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    EstadoAccesoPersonalPanel,
+    EstadoVerificacionAcceso,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-layout.html',
   styleUrls: [

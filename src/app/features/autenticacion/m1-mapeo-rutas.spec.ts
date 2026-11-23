@@ -9,8 +9,9 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, isObservable, of } from 'rxjs';
 import { DASHBOARD_SECCIONES } from '../dashboard/dashboard-secciones';
+import { provideEntornoDemostracionAutorizado } from './entorno-demostracion';
 import { AvisoAccesoPersonal } from './aviso-acceso-personal';
 import {
   decidirRuta,
@@ -38,22 +39,30 @@ function sesionCon(permisos: string[], rol = 'DOCENTE'): EstadoSesionPersonal {
 }
 
 describe('FE-54 mapeo oficial ruta–permiso', () => {
-  it('ninguna ruta tiene asociación aprobada (BLQ-53-01 vigente)', () => {
+  // FE-58-05: la matriz aprobada (DC-FE-58-RESOLUCION-04) se incorpora como requisito, pero
+  // ninguna ruta tiene habilitación efectiva hasta completar la verificación QA (antes: aprobado null).
+  it('ninguna ruta está habilitada aunque su requisito esté aprobado', () => {
     for (const s of DASHBOARD_SECCIONES) {
       expect(MAPEO_RUTAS_PERSONAL_OFICIAL[s.ruta]).withContext(s.ruta).toBeDefined();
-      expect(MAPEO_RUTAS_PERSONAL_OFICIAL[s.ruta].aprobado).withContext(s.ruta).toBeNull();
+      expect(MAPEO_RUTAS_PERSONAL_OFICIAL[s.ruta].habilitada).withContext(s.ruta).toBeFalse();
+      expect(MAPEO_RUTAS_PERSONAL_OFICIAL[s.ruta].verificacionQa)
+        .withContext(s.ruta)
+        .toBe('pendiente');
     }
   });
 
   it('decidirRuta nunca autoriza por omisión, rol ni permisos documentados', () => {
     const todos = () => true;
     expect(decidirRuta(undefined, true, todos)).toBe('pendiente');
-    expect(decidirRuta(MAPEO_RUTAS_PERSONAL_OFICIAL['sesiones'], true, todos)).toBe('pendiente');
+    expect(decidirRuta(MAPEO_RUTAS_PERSONAL_OFICIAL['sesiones'], true, todos)).toBe('preparada');
     const vacio: MapeoRutaPersonal = {
       ruta: 'x',
       permisosBackend: [],
       rolBackend: null,
       aprobado: { permisos: [] },
+      habilitada: true,
+      resolucion: null,
+      verificacionQa: 'no-aplica',
     };
     expect(decidirRuta(vacio, true, todos)).toBe('pendiente');
     expect(decidirRuta(MAPEO_RUTAS_PERSONAL_OFICIAL['sesiones'], false, todos)).toBe('sin-sesion');
@@ -71,15 +80,21 @@ describe('FE-54 guard de personal con mapeo (sesión y mapeo simulados)', () => 
     sesiones: {
       ...MAPEO_RUTAS_PERSONAL_OFICIAL['sesiones'],
       aprobado: { permisos: ['PERMISO_SIMULADO'] },
+      habilitada: true,
     },
   };
 
-  function preparar(mapeo: Record<string, MapeoRutaPersonal> | null, qa = true): void {
+  function preparar(
+    mapeo: Record<string, MapeoRutaPersonal> | null,
+    qa = true,
+    demostracion = false,
+  ): void {
     estado = signal<EstadoSesionPersonal>({ tipo: 'no-autenticada' });
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         ...(qa ? [provideM1PersonalLocal()] : []),
+        ...(demostracion ? [provideEntornoDemostracionAutorizado()] : []),
         ...(mapeo ? [{ provide: MAPEO_RUTAS_PERSONAL, useValue: mapeo }] : []),
         {
           provide: SesionPersonalM1,
@@ -93,18 +108,36 @@ describe('FE-54 guard de personal con mapeo (sesión y mapeo simulados)', () => 
                 p.every((x) => e.identidad.permisos.includes(x))
               );
             },
+            tieneRol: (r: string) => {
+              const e = estado();
+              return e.tipo === 'valida' && e.identidad.rol === r;
+            },
+            // SIMULACIÓN: `/me` confirma la identidad mostrada (FE-58-05 consulta antes de entrar).
+            actualizarIdentidad: () => of(estado().tipo === 'valida' ? 'vigente' : 'no-vigente'),
           },
         },
       ],
     });
   }
-  const decidir = (path: string) =>
-    TestBed.runInInjectionContext(() => requiereMapeoPersonalQa(ruta(path), destino));
+  // El guard devuelve un Observable cuando consulta `/me`; aquí se resuelve de forma síncrona.
+  const decidir = (path: string) => {
+    const r = TestBed.runInInjectionContext(() => requiereMapeoPersonalQa(ruta(path), destino));
+    if (!isObservable(r)) return r;
+    let valor: unknown;
+    r.subscribe((v) => (valor = v));
+    return valor;
+  };
   const url = (r: unknown) => TestBed.inject(Router).serializeUrl(r as UrlTree);
 
-  it('fuera del opt-in QA conserva la demostración pública', () => {
-    preparar(SIMULADO, false);
+  // FE-58-05 (H-58-01): la demostración solo se conserva en el entorno de demostración autorizado.
+  it('fuera del opt-in QA conserva la demostración solo en el entorno de demostración', () => {
+    preparar(SIMULADO, false, true);
     expect(decidir('sesiones')).toBeTrue();
+  });
+
+  it('fuera del opt-in QA y sin entorno de demostración redirige a login', () => {
+    preparar(SIMULADO, false, false);
+    expect(url(decidir('sesiones'))).toBe('/login');
   });
 
   it('sin sesión redirige a login', () => {
@@ -112,7 +145,7 @@ describe('FE-54 guard de personal con mapeo (sesión y mapeo simulados)', () => 
     expect(url(decidir('sesiones'))).toBe('/login');
   });
 
-  it('con el mapeo oficial vigente toda ruta queda pendiente, incluso con permisos y rol ADMINISTRADOR', () => {
+  it('con el mapeo oficial vigente ninguna ruta se abre, incluso con permisos y rol ADMINISTRADOR', () => {
     preparar(null);
     estado.set(
       sesionCon(
@@ -123,7 +156,7 @@ describe('FE-54 guard de personal con mapeo (sesión y mapeo simulados)', () => 
     for (const s of DASHBOARD_SECCIONES)
       expect(url(decidir(s.ruta)))
         .withContext(s.ruta)
-        .toBe('/dashboard?aviso=permisos-pendientes');
+        .toBe('/dashboard?aviso=habilitacion-pendiente');
   });
 
   it('ruta aprobada (simulada) autoriza con el permiso exigido', () => {
@@ -136,7 +169,7 @@ describe('FE-54 guard de personal con mapeo (sesión y mapeo simulados)', () => 
     preparar(SIMULADO);
     estado.set(sesionCon(['GESTIONAR_SESION'], 'ADMINISTRADOR'));
     expect(url(decidir('sesiones'))).toBe('/dashboard?aviso=permiso-insuficiente');
-    expect(url(decidir('convocatorias'))).toBe('/dashboard?aviso=permisos-pendientes');
+    expect(url(decidir('convocatorias'))).toBe('/dashboard?aviso=habilitacion-pendiente');
   });
 
   it('una sesión expirada (p. ej. tras un 401) vuelve a login', () => {

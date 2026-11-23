@@ -16,6 +16,11 @@ import { SesionPersonalM1 } from './m1-personal-sesion';
     @if (texto(); as mensaje) {
       <section class="aviso-acceso" role="status" aria-live="polite">
         <p>{{ mensaje }}</p>
+        @if (rolSesion(); as rol) {
+          <p class="permisos" data-prueba="rol-sesion">
+            Rol de la sesión: <code>{{ rol }}</code>
+          </p>
+        }
         @if (permisos(); as lista) {
           <p class="permisos">
             Permisos efectivos de la sesión:
@@ -59,6 +64,14 @@ export class AvisoAccesoPersonal {
   protected readonly texto = computed(() => {
     const clave = this.aviso();
     return clave && Object.hasOwn(AVISOS_ACCESO, clave) ? AVISOS_ACCESO[clave] : null;
+  });
+
+  /** FE-58: solo ante `rol-insuficiente`, el rol real devuelto por `/me` (informativo). */
+  protected readonly rolSesion = computed(() => {
+    const estado = this.sesion.estado();
+    return this.aviso() === 'rol-insuficiente' && estado.tipo === 'valida'
+      ? estado.identidad.rol
+      : null;
   });
 
   protected readonly permisos = computed(() => {
