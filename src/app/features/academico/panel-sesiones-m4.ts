@@ -48,6 +48,10 @@ export const MENSAJES_M4: Readonly<Record<string, string>> = {
     'El caso no existe o no está publicado: solo se programan casos publicados.',
   'M4-SESION-DUPLICADA': 'Ya existe una sesión con el mismo caso, docente y rango de fechas.',
   'M4-ESTADO-INVALIDO': 'La transición de estado no está permitida para la sesión.',
+  // FE-57: `SesionOperacionNoPermitidaException` (409), observado en QA real al pedir una
+  // transición que el estado actual no admite (por ejemplo, si otra pestaña ya la cambió).
+  'M4-OPERACION-NO-PERMITIDA':
+    'La sesión no admite esa operación en su estado actual. Vuelve a consultarla.',
   'M4-CONVOCATORIA-DUPLICADA': 'El estudiante ya está convocado a esta sesión.',
   'M4-CONVOCATORIA-NO-PERMITIDA': 'La sesión ya no admite convocatorias en su estado actual.',
   'M4-SESION-CON-CONVOCATORIAS': 'La sesión ya tiene convocatorias y no admite ese cambio.',
