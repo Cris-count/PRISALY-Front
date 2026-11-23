@@ -11,4 +11,6 @@ export const environment = {
   personalQaHabilitado: false,
   production: false,
   apiBaseUrl: 'http://localhost:8080/api',
+  /** Ciudad 3D contra la señalización local de PS2-LAB-03; solo en http://127.0.0.1:4213. */
+  simuladorUnrealLocal: true,
 };
