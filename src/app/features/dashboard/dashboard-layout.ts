@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   HostListener,
+  computed,
   inject,
   signal,
   viewChild,
@@ -22,7 +23,8 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { filter, map, tap } from 'rxjs';
-import { DASHBOARD_NAVEGACION } from './dashboard-secciones';
+import { MAPEO_RUTAS_PERSONAL } from '../autenticacion/m1-mapeo-rutas';
+import { hayRutasHabilitadas, NAVEGACION_PRESENTACION, seccionesPorRol } from './navegacion-rol';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -71,7 +73,13 @@ export class DashboardLayout {
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
   private readonly botonMenu = viewChild<ElementRef<HTMLButtonElement>>('botonMenu');
-  protected readonly secciones = DASHBOARD_NAVEGACION;
+  private readonly mapeo = inject(MAPEO_RUTAS_PERSONAL);
+  /** DC-FE-UX-ROLES-24: banner técnico solo en QA ordinario (sin rutas efectivamente habilitadas). */
+  protected readonly avisoTecnicoQa = this.qaPersonal && !hayRutasHabilitadas(this.mapeo);
+  /** Menú por rol efectivo de `/me`; se vacía al cerrar sesión o cambiar de identidad. */
+  protected readonly secciones = computed(() =>
+    this.sesion ? seccionesPorRol(this.sesion.estado(), this.mapeo) : NAVEGACION_PRESENTACION,
+  );
   protected readonly menuAbierto = signal(false);
   protected readonly menuContraido = signal(false);
   protected readonly titulo = toSignal(

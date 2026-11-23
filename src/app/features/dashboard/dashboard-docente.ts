@@ -1,3 +1,4 @@
+import { crearModoDocenteOperativo } from './navegacion-rol';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -40,6 +41,8 @@ import { RecorridoDocente } from '../academico/recorrido-docente';
   ],
 })
 export class DashboardDocente {
+  /** DC-FE-UX-ROLES-24: solo paneles reales con sesión docente verificada. */
+  protected readonly operativo = crearModoDocenteOperativo();
   private readonly ruta = inject(ActivatedRoute);
   protected readonly seccion = toSignal(
     this.ruta.data.pipe(map((data) => data['seccion'] as DashboardSeccion)),

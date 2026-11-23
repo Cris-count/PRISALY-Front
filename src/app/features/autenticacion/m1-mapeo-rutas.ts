@@ -1,4 +1,6 @@
 import { InjectionToken } from '@angular/core';
+import { environment } from '../../../environments/environment';
+import { mapeoConHabilitacionQa } from './habilitacion-qa-navegacion';
 
 /**
  * Requisito de acceso a una ruta de personal. Solo lo fija Dirección Central con Ingrid Backend.
@@ -114,7 +116,11 @@ export const MAPEO_RUTAS_PERSONAL_OFICIAL: Readonly<Record<string, MapeoRutaPers
 
 export const MAPEO_RUTAS_PERSONAL = new InjectionToken<Readonly<Record<string, MapeoRutaPersonal>>>(
   'MAPEO_RUTAS_PERSONAL',
-  { providedIn: 'root', factory: () => MAPEO_RUTAS_PERSONAL_OFICIAL },
+  {
+    providedIn: 'root',
+    // Solo `qa-navegacion` (QA no productivo con lista explícita) habilita rutas autorizadas.
+    factory: () => mapeoConHabilitacionQa(MAPEO_RUTAS_PERSONAL_OFICIAL, environment),
+  },
 );
 
 export type DecisionRuta =

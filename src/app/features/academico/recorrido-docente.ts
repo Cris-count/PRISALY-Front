@@ -63,7 +63,7 @@ export const PASOS_RECORRIDO: readonly PasoRecorrido[] = [
   template: `
     @if (sesionValida()) {
       <nav class="recorrido" aria-label="Recorrido docente">
-        <p class="titulo">Recorrido docente</p>
+        <p class="titulo">Pasos del caso</p>
         <ol>
           @for (paso of pasos; track paso.titulo; let i = $index) {
             <li>
@@ -72,28 +72,16 @@ export const PASOS_RECORRIDO: readonly PasoRecorrido[] = [
                 [queryParams]="parametros()"
                 [attr.aria-current]="paso.etapa === etapa() ? 'step' : null"
                 [title]="paso.detalle"
-                >{{ i + 1 }}. {{ paso.titulo }}</a
+                >{{ paso.titulo }}</a
               >
             </li>
           }
         </ol>
-        <p class="contexto" data-prueba="contexto-recorrido">
-          @if (caso(); as c) {
-            Caso activo: {{ c.titulo }} · {{ c.estado }} (última lectura del servidor).
-          } @else if (idCaso(); as id) {
-            Caso activo: <code>{{ id }}</code> (pendiente de consulta).
-          } @else {
-            Sin caso activo.
-          }
-          @if (idSesion(); as s) {
-            Sesión activa: <code>{{ s }}</code
-            >.
-          }
-        </p>
-        <p class="nota">
-          Los enlaces solo conservan identificadores; cada pantalla los vuelve a consultar en el
-          servidor y aplica su propio control de acceso.
-        </p>
+        @if (caso(); as c) {
+          <p class="contexto" data-prueba="contexto-recorrido">
+            Caso: {{ c.titulo }} · {{ c.estado }}
+          </p>
+        }
       </nav>
     }
   `,
@@ -115,15 +103,15 @@ export const PASOS_RECORRIDO: readonly PasoRecorrido[] = [
     ol {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.25rem 1rem;
+      gap: 0.5rem 1.5rem;
       margin: 0;
-      padding-left: 1.25rem;
+      padding: 0;
+      list-style: none;
     }
     a[aria-current] {
       font-weight: 700;
     }
-    .contexto,
-    .nota {
+    .contexto {
       margin: 0.25rem 0 0;
       font-size: 0.9rem;
     }
