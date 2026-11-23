@@ -717,6 +717,6 @@ describe('FE-55 el recorrido no eleva privilegios (configuración de rutas y gua
     http.expectOne(`${B}/v1/personal/me`).flush({ ...respuesta, accessToken: null });
     const router = TestBed.inject(Router);
     await router.navigateByUrl(`/dashboard/sesiones?caso=${C}&sesion=${S}`);
-    expect(router.url).toBe('/dashboard?aviso=permisos-pendientes');
+    expect(router.url).toBe('/dashboard?aviso=habilitacion-pendiente');
   });
 });

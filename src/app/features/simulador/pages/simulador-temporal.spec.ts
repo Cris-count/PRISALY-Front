@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../../app.routes';
+// FE-58 H-58-01: la ruta técnica solo existe en el entorno demo; esta prueba la ejercita en ese entorno.
+import { provideEntornoDemostracionAutorizado } from '../../autenticacion/entorno-demostracion';
 import { FABRICA_MUNDO, FabricaMundo } from '../mundo-tecnico/puerto-mundo';
 import { SimuladorTemporal } from './simulador-temporal';
 import type { ControlMundo } from '../mundo-tecnico/phaser-mundo';
@@ -106,7 +108,7 @@ describe('ciclo de vida del mundo técnico', () => {
       const control = jasmine.createSpyObj<ControlMundo>('ControlMundo', ['irA', 'direccion', 'suspenderInteraccion', 'consultarEstado', 'actualizarTamano', 'destruir']);
       controles.push(control); emitir({ tipo: 'listo', posicion: { x: 0, y: 0 } }); return control;
     };
-    TestBed.configureTestingModule({ providers: [provideRouter(routes), { provide: FABRICA_MUNDO, useValue: fabrica }] });
+    TestBed.configureTestingModule({ providers: [provideRouter(routes), provideEntornoDemostracionAutorizado(), { provide: FABRICA_MUNDO, useValue: fabrica }] });
     const harness = await RouterTestingHarness.create('/simulador-tecnico-2d5');
     await esperarCreacion();
     expect(controles.length).toBe(1);

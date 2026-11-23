@@ -6,6 +6,7 @@ import {
   map,
   Observable,
   of,
+  share,
   Subject,
   switchMap,
   takeUntil,
@@ -22,6 +23,12 @@ import {
   PersonalMeResponse,
 } from './m1-personal.models';
 
+/** Resultado de `actualizarIdentidad`: solo `vigente` permite decidir con la identidad mostrada. */
+export type VerificacionIdentidad = 'vigente' | 'no-vigente' | 'no-disponible';
+
+/** H-58-02: ventana en la que una identidad recién confirmada se reutiliza sin volver a `/me`. */
+export const VIGENCIA_IDENTIDAD_MS = 15_000;
+
 /** Preparación aislada. No se instancia desde login, rutas ni arranque.
  * No restaura sesiones, calcula expiraciones, renueva tokens ni inicia HTTP al construirse.
  */
@@ -33,6 +40,12 @@ export class SesionPersonalM1 {
   private readonly cancelar = new Subject<void>();
   private ocupada = false;
   private revisionVerificada = -1;
+  /** H-58-02: consulta `/me` compartida entre solicitantes concurrentes. */
+  private actualizacionEnCurso: Observable<VerificacionIdentidad> | null = null;
+  private readonly confirmacionPendiente = signal(false);
+  private generacionIdentidad = 0;
+  private confirmadaEn = 0;
+  private readonly reloj: () => number = () => Date.now();
 
   readonly estado = computed<EstadoSesionPersonal>(() => {
     const estado = this.interno();
@@ -116,6 +129,104 @@ export class SesionPersonalM1 {
     );
   }
 
+  /**
+   * H-58-02. Vuelve a consultar `GET /v1/personal/me` para decidir la navegación con permisos y rol
+   * vigentes. No crea ni renueva credenciales y no cambia el estado a «pendiente» mientras consulta.
+   *
+   * - Una sola consulta compartida para solicitantes concurrentes; sin intervalos automáticos.
+   * - `forzar = false` reutiliza una identidad confirmada hace menos de `VIGENCIA_IDENTIDAD_MS`.
+   * - Una respuesta tardía (otra credencial, cierre, nuevo inicio de sesión) se descarta.
+   * - 401: la credencial ya se limpió en el interceptor/API; la sesión queda `expirada`.
+   * - 403 de `/me` (cuenta inactiva o denegada): la identidad deja de ser utilizable.
+   * - Error de red o de servicio: `no-disponible`; se conserva la sesión pero no se concede acceso.
+   */
+  actualizarIdentidad(forzar = false): Observable<VerificacionIdentidad> {
+    const actual = this.interno();
+    if (this.ocupada || actual.tipo !== 'valida' || this.estado().tipo !== 'valida')
+      return of('no-vigente');
+    if (
+      !forzar &&
+      this.revisionVerificada === this.memoria.revision() &&
+      this.reloj() - this.confirmadaEn < VIGENCIA_IDENTIDAD_MS
+    )
+      return of('vigente');
+    if (this.actualizacionEnCurso) return this.actualizacionEnCurso;
+
+    const revision = this.memoria.revision();
+    const generacion = this.generacionIdentidad;
+    const userId = actual.identidad.userId;
+    // La respuesta solo se aplica si sigue siendo la misma credencial y la misma identidad.
+    const vigenteAun = () =>
+      this.memoria.revision() === revision &&
+      this.generacionIdentidad === generacion &&
+      !this.ocupada &&
+      (() => {
+        const e = this.interno();
+        return e.tipo === 'valida' && e.identidad.userId === userId;
+      })();
+
+    const consulta = this.api.consultarIdentidad().pipe(
+      map((identidad): VerificacionIdentidad => {
+        if (!vigenteAun()) return 'no-vigente';
+        if (identidad.userId !== userId) {
+          this.memoria.limpiar();
+          this.interno.set({ tipo: 'expirada' });
+          return 'no-vigente';
+        }
+        this.interno.set(this.confirmarIdentidad(identidad));
+        this.confirmacionPendiente.set(false);
+        this.revisionVerificada = revision;
+        this.confirmadaEn = this.reloj();
+        return 'vigente';
+      }),
+      catchError((error: unknown): Observable<VerificacionIdentidad> => {
+        if (!vigenteAun()) return of('no-vigente');
+        this.confirmadaEn = 0;
+        const tipo = error instanceof FalloAutenticacionPersonal ? error.tipo : 'desconocido';
+        const fallo: FalloSesionPersonal = {
+          tipo,
+          mensaje:
+            error instanceof FalloAutenticacionPersonal
+              ? error.message
+              : 'No fue posible verificar la sesión de personal.',
+        };
+        if (tipo === 'sesion-no-valida' || tipo === 'sesion-cambiada') {
+          this.memoria.limpiar();
+          this.interno.set({ tipo: 'expirada', fallo });
+          return of('no-vigente');
+        }
+        if (tipo === 'acceso-denegado') {
+          this.memoria.limpiar();
+          this.interno.set({ tipo: 'acceso-denegado', fallo });
+          return of('no-vigente');
+        }
+        return of('no-disponible');
+      }),
+      takeUntil(this.cancelar),
+      finalize(() => {
+        if (this.actualizacionEnCurso === compartida) this.actualizacionEnCurso = null;
+      }),
+    );
+    const compartida = consulta.pipe(share());
+    this.actualizacionEnCurso = compartida;
+    return compartida;
+  }
+
+  /** Un 403 exige una confirmación iniciada después del rechazo, sin cerrar la sesión. */
+  confirmarTrasDenegacion(): Observable<VerificacionIdentidad> {
+    if (!this.confirmacionPendiente()) {
+      this.confirmacionPendiente.set(true);
+      this.generacionIdentidad++;
+      this.confirmadaEn = 0;
+      this.actualizacionEnCurso = null;
+    }
+    return this.actualizarIdentidad(true);
+  }
+
+  identidadRequiereConfirmacion(): boolean {
+    return this.confirmacionPendiente();
+  }
+
   /** Invalidación local; no afirma revocación en Backend. También cancela lecturas tardías. */
   invalidarSesion(): void {
     this.cancelar.next();
@@ -123,10 +234,26 @@ export class SesionPersonalM1 {
     this.interno.set({ tipo: 'expirada' });
   }
 
+  /**
+   * FE-58. Rol exacto de `/v1/personal/me` (sensible a mayúsculas, como el control
+   * `exigirAdministrador` del Backend). No se deduce de los permisos ni concede operaciones.
+   */
+  tieneRol(rol: string): boolean {
+    const estado = this.estado();
+    return (
+      estado.tipo === 'valida' &&
+      !this.confirmacionPendiente() &&
+      typeof rol === 'string' &&
+      rol.length > 0 &&
+      estado.identidad.rol === rol
+    );
+  }
+
   tienePermisos(permisos: readonly string[]): boolean {
     const estado = this.estado();
     return (
       estado.tipo === 'valida' &&
+      !this.confirmacionPendiente() &&
       permisos.length > 0 &&
       permisos.every(
         (permiso) =>
@@ -161,7 +288,13 @@ export class SesionPersonalM1 {
       let terminada = false;
       return defer(trabajo).pipe(
         tap((estado) => {
-          if (estado.tipo === 'valida') this.revisionVerificada = this.memoria.revision();
+          if (estado.tipo === 'valida') {
+            this.revisionVerificada = this.memoria.revision();
+            this.generacionIdentidad++;
+            this.confirmacionPendiente.set(false);
+            this.actualizacionEnCurso = null;
+            this.confirmadaEn = 0;
+          }
           this.interno.set(estado);
           terminada = true;
         }),

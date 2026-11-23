@@ -11,6 +11,8 @@
  */
 export const environment = {
   personalQaHabilitado: false,
+  /** H-58-01 (opción B): las demostraciones solo existen en el entorno `demo`. */
+  demostracionesHabilitadas: false,
   production: true,
   apiBaseUrl: '/api',
 };

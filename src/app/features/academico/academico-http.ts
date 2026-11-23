@@ -10,6 +10,7 @@ import { API_CONFIG } from '../../core/config/api.config';
 import { clasificarErrorApi, FalloApi } from '../../core/http/clasificar-error-api';
 import { M1_PERSONAL_LOCAL } from '../autenticacion/m1-personal-http';
 import { CredencialPersonalMemoria } from '../autenticacion/m1-personal-memoria';
+import { VigilanciaAccesoPersonal } from '../autenticacion/vigilancia-acceso-personal';
 
 /** Marca explícita de las solicitudes académicas de personal (M1 administración, M3, M4). */
 export const SOLICITUD_ACADEMICA = new HttpContextToken<boolean>(() => false);
@@ -75,6 +76,7 @@ export const personalAcademicoInterceptor: HttpInterceptorFn = (solicitud, sigui
   if (relativa === null || !esRutaAcademicaAutorizada(solicitud.method, relativa))
     return siguiente(solicitud);
   const memoria = inject(CredencialPersonalMemoria);
+  const vigilancia = inject(VigilanciaAccesoPersonal);
   const revision = memoria.revision();
   const token = memoria.leerParaHttp();
   const peticion = token
@@ -88,6 +90,20 @@ export const personalAcademicoInterceptor: HttpInterceptorFn = (solicitud, sigui
         memoria.revision() === revision
       )
         memoria.limpiar();
+      // H-58-02: un 403 puede indicar permisos revocados. Se confirma `/me` una vez (compartida);
+      // la operación denegada no se reintenta y la sesión no se cierra.
+      if (
+        error instanceof HttpErrorResponse &&
+        error.status === 403 &&
+        memoria.revision() === revision
+      ) {
+        // La señal de vigilancia nunca sustituye ni oculta el error original de la operación.
+        try {
+          vigilancia.operacionDenegada();
+        } catch {
+          /* sin efecto sobre la respuesta */
+        }
+      }
       return throwError(() => error);
     }),
   );

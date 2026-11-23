@@ -9,6 +9,7 @@ import {
   UrlTree,
 } from '@angular/router';
 import { provideApiConfig } from '../../core/config/api.config';
+import { provideEntornoDemostracionAutorizado } from './entorno-demostracion';
 import { requiereMapeoPersonalQa, requiereSesionPersonalQa } from './m1-personal-rutas-qa';
 import { personalM1Interceptor, provideM1PersonalLocal } from './m1-personal-http';
 import { SesionPersonalM1 } from './m1-personal-sesion';
@@ -17,7 +18,7 @@ describe('Guards QA sin mapeo oficial de permisos (HTTP simulado)', () => {
   let http: HttpTestingController;
   const ruta = {} as ActivatedRouteSnapshot;
   const destino = {} as RouterStateSnapshot;
-  function preparar(qa = true): void {
+  function preparar(qa = true, demostracion = false): void {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -25,6 +26,7 @@ describe('Guards QA sin mapeo oficial de permisos (HTTP simulado)', () => {
         provideHttpClient(withInterceptors([personalM1Interceptor])),
         provideHttpClientTesting(),
         ...(qa ? [provideM1PersonalLocal()] : []),
+        ...(demostracion ? [provideEntornoDemostracionAutorizado()] : []),
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -33,10 +35,21 @@ describe('Guards QA sin mapeo oficial de permisos (HTTP simulado)', () => {
     return TestBed.inject(Router).serializeUrl(resultado as UrlTree);
   }
   afterEach(() => http.verify());
-  it('conserva la navegación de demostración fuera de QA sin iniciar sesión ni HTTP', () => {
-    preparar(false);
+  // FE-58-05 (H-58-01): la demostración solo existe en el entorno de demostración autorizado.
+  it('conserva la navegación de demostración fuera de QA solo en el entorno de demostración', () => {
+    preparar(false, true);
     expect(TestBed.runInInjectionContext(() => requiereSesionPersonalQa(ruta, destino))).toBeTrue();
     expect(TestBed.runInInjectionContext(() => requiereMapeoPersonalQa(ruta, destino))).toBeTrue();
+    http.expectNone(() => true);
+  });
+  it('fuera de QA y sin entorno de demostración redirige a login sin HTTP', () => {
+    preparar(false, false);
+    expect(url(TestBed.runInInjectionContext(() => requiereSesionPersonalQa(ruta, destino)))).toBe(
+      '/login',
+    );
+    expect(url(TestBed.runInInjectionContext(() => requiereMapeoPersonalQa(ruta, destino)))).toBe(
+      '/login',
+    );
     http.expectNone(() => true);
   });
   it('rechaza acceso directo sin sesión, también tras recarga', () => {

@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
+import { provideEntornoDemostracionAutorizado } from '../autenticacion/entorno-demostracion';
 import { ParticipacionGateway } from '../simulador/services/participacion.gateway';
 import { DASHBOARD_NAVEGACION, DASHBOARD_SECCIONES } from './dashboard-secciones';
 
@@ -25,6 +26,9 @@ describe('Dashboard público de demostración', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),
+        // FE-58-05 (H-58-01): esta suite prueba el dashboard demostrativo, que solo existe en el
+        // entorno de demostración autorizado.
+        provideEntornoDemostracionAutorizado(),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ParticipacionGateway, useValue: gateway },

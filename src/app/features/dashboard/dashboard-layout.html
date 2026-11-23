@@ -190,6 +190,7 @@
       </p>
     }
     @if (mostrarContenido()) {
+      <app-estado-verificacion-acceso />
       <router-outlet />
     } @else if (sesion) {
       <app-estado-acceso-personal [estado]="sesion.estadoPanel()" />
