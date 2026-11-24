@@ -1,3 +1,5 @@
+import { USUARIOS_DEMO_LOCALES } from '../app/features/autenticacion/usuarios-demo-locales';
+
 /**
  * Configuración de desarrollo local (`ng serve`).
  *
@@ -5,7 +7,7 @@
  * PRISALY-Backen/app/src/main/resources/application.yml:
  * `APP_PORT=8080`, `context-path: /api` y CORS para `http://localhost:4200`.
  *
- * No incluir credenciales ni secretos.
+ * Las cuentas de `usuariosDemo` solo abren la interfaz local. No son usuarios del servidor.
  */
 export const environment = {
   personalQaHabilitado: false,
@@ -13,4 +15,5 @@ export const environment = {
   demostracionesHabilitadas: false,
   production: false,
   apiBaseUrl: 'http://localhost:8080/api',
+  usuariosDemo: USUARIOS_DEMO_LOCALES,
 };

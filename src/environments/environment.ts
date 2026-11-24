@@ -1,3 +1,5 @@
+import { UsuarioDemoLocal } from '../app/features/autenticacion/usuarios-demo-locales';
+
 /**
  * Configuración de despliegue (build de producción).
  *
@@ -15,4 +17,6 @@ export const environment = {
   demostracionesHabilitadas: false,
   production: true,
   apiBaseUrl: '/api',
+  /** Producción no publica cuentas de demostración. */
+  usuariosDemo: [] as readonly UsuarioDemoLocal[],
 };

@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { map, Observable } from 'rxjs';
+import { AccesoDemoLocal } from './acceso-demo-local';
 import { DEMOSTRACIONES_HABILITADAS, salidaSinDemostracion } from './entorno-demostracion';
 import { M1_PERSONAL_LOCAL } from './m1-personal-http';
 import { requiereSesionPersonalM1 } from './m1-personal-guards';
@@ -13,8 +14,14 @@ import { VigilanciaAccesoPersonal } from './vigilancia-acceso-personal';
  * entorno de demostración autorizado (H-58-01, opción B). En producción redirige a `/login`.
  */
 export const requiereSesionPersonalQa: CanActivateFn = (ruta, estado) => {
-  if (!inject(M1_PERSONAL_LOCAL))
-    return inject(DEMOSTRACIONES_HABILITADAS) || salidaSinDemostracion();
+  if (!inject(M1_PERSONAL_LOCAL)) {
+    if (inject(DEMOSTRACIONES_HABILITADAS)) return true;
+    const demo = inject(AccesoDemoLocal);
+    if (demo.esPersonal()) return true;
+    if (demo.actual()?.rol === 'ESTUDIANTE')
+      return inject(Router).createUrlTree(['/dashboard/estudiante']);
+    return salidaSinDemostracion();
+  }
   return requiereSesionPersonalM1(ruta, estado);
 };
 
@@ -30,8 +37,23 @@ export const requiereSesionPersonalQa: CanActivateFn = (ruta, estado) => {
  * La autorización nunca depende de parámetros de URL: solo de la ruta configurada y de `/me`.
  */
 export const requiereMapeoPersonalQa: CanActivateFn = (ruta, estado) => {
-  if (!inject(M1_PERSONAL_LOCAL))
-    return inject(DEMOSTRACIONES_HABILITADAS) || salidaSinDemostracion();
+  if (!inject(M1_PERSONAL_LOCAL)) {
+    if (inject(DEMOSTRACIONES_HABILITADAS)) return true;
+    const demo = inject(AccesoDemoLocal).actual();
+    const router = inject(Router);
+    if (!demo) return salidaSinDemostracion();
+    if (demo.rol === 'ESTUDIANTE') return router.createUrlTree(['/dashboard/estudiante']);
+    const camino = ruta.routeConfig?.path ?? '';
+    const decision = decidirRuta(
+      inject(MAPEO_RUTAS_PERSONAL)[camino],
+      true,
+      (permisos) => permisos.every((codigo) => demo.permisos.includes(codigo)),
+      (rolExigido) => demo.rol === rolExigido,
+    );
+    return decision === 'autorizada'
+      ? true
+      : router.createUrlTree(['/dashboard'], { queryParams: { aviso: avisoDeDecision(decision) } });
+  }
   const sesionOk = requiereSesionPersonalM1(ruta, estado);
   if (sesionOk !== true) return sesionOk;
   const sesion = inject(SesionPersonalM1);

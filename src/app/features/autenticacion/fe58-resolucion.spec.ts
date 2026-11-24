@@ -38,7 +38,7 @@ import { VigilanciaAccesoPersonal } from './vigilancia-acceso-personal';
 
 /**
  * FE-58-05 (DC-FE-58-IMPLEMENTACION-CONTROLADA-05). Toda ruta «habilitada» de este archivo es una
- * SIMULACIÓN identificada: el mapeo oficial no habilita ninguna. HTTP simulado en todas las pruebas.
+ * SIMULACIÓN identificada; DC-FE-59 habilitó el mapeo oficial para QA. HTTP simulado en todas las pruebas.
  */
 const B = '/api-prueba';
 const YO = '11111111-1111-4111-8111-111111111111';
@@ -108,8 +108,8 @@ describe('FE-58-05 tres modalidades de requisito (unitarias)', () => {
   });
 });
 
-describe('FE-58-05 matriz aprobada incorporada sin habilitar (mapeo oficial)', () => {
-  it('refleja exactamente la resolución DC-FE-58-RESOLUCION-04', () => {
+describe('FE-58-05 matriz aprobada habilitada en QA (DC-FE-59)', () => {
+  it('refleja los requisitos FE-58 y la habilitación FE-59', () => {
     const m = MAPEO_RUTAS_PERSONAL_OFICIAL;
     expect(m['usuarios-docentes'].aprobado).toEqual({ rol: 'ADMINISTRADOR', permisos: [] });
     expect(m['configuracion'].aprobado).toEqual({ sesion: true, permisos: [] });
@@ -117,12 +117,14 @@ describe('FE-58-05 matriz aprobada incorporada sin habilitar (mapeo oficial)', (
     expect(m['rubricas'].aprobado).toEqual({ permisos: ['CONSULTAR_CASO'] });
     expect(m['sesiones'].aprobado).toEqual({ permisos: ['GESTIONAR_SESION'] });
     expect(m['convocatorias'].aprobado).toEqual({ permisos: ['GESTIONAR_SESION'] });
+    expect(m['estudiantes'].aprobado).toEqual({ rol: 'ADMINISTRADOR', permisos: [] });
+    expect(m['vista-general'].aprobado).toEqual({ rol: 'ADMINISTRADOR', permisos: [] });
+    expect(m['mi-perfil'].aprobado).toEqual({ sesion: true, permisos: [] });
     for (const entrada of Object.values(m)) {
-      expect(entrada.habilitada).withContext(entrada.ruta).toBeFalse();
-      expect(entrada.resolucion).withContext(entrada.ruta).toBe('DC-FE-58-RESOLUCION-04');
+      expect(entrada.habilitada).withContext(entrada.ruta).toBeTrue();
       expect(decidirRuta(entrada, true, todos, todos))
         .withContext(entrada.ruta)
-        .toBe('preparada');
+        .toBe('autorizada');
     }
   });
 });
@@ -300,6 +302,8 @@ describe('FE-58-05 guard y vigilancia con ruta habilitada (SIMULACIÓN)', () => 
     ...MAPEO_RUTAS_PERSONAL_OFICIAL,
     sesiones: { ...MAPEO_RUTAS_PERSONAL_OFICIAL['sesiones'], habilitada: true },
     configuracion: { ...MAPEO_RUTAS_PERSONAL_OFICIAL['configuracion'], habilitada: true },
+    // SIMULACIÓN: ruta aprobada pero no habilitada, para probar el estado «preparada».
+    rubricas: { ...MAPEO_RUTAS_PERSONAL_OFICIAL['rubricas'], habilitada: false },
   };
   const rutas: Routes = [
     { path: 'login', component: Pantalla },

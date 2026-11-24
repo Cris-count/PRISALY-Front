@@ -182,6 +182,47 @@ h3 {
   font-size: var(--t-base);
   line-height: 1.45;
 }
+.tarjetas-resumen {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.resumen-rol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  min-width: 0;
+  min-height: 9rem;
+  padding: 1.125rem 1rem;
+  border: 1px solid var(--p-borde);
+  border-radius: var(--inicio-radio);
+  background: #fafdff;
+  box-shadow:
+    var(--inicio-sombra),
+    inset 0 -2px #0755b8;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.resumen-rol h3,
+.resumen-rol p {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.resumen-rol p {
+  margin: 0;
+  color: var(--p-sec);
+  line-height: 1.45;
+}
+.estado-rol {
+  margin-top: auto;
+  color: #064795;
+  font-weight: 700;
+}
+.nav-texto,
+.resumen-rol,
+.acceso-contenido {
+  overflow-wrap: normal;
+  word-break: normal;
+}
 .disponibilidad {
   grid-column: 2;
   display: flex;

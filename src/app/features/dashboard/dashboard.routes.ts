@@ -21,6 +21,30 @@ export const DASHBOARD_ROUTES: Routes = [
         loadComponent: () => import('./dashboard-inicio').then((m) => m.DashboardInicio),
       },
       {
+        path: 'estudiantes',
+        canActivate: [requiereMapeoPersonalQa],
+        title: 'Gestión de estudiantes · PRISALY',
+        data: { titulo: 'Gestión de estudiantes', preparacion: 'estudiantes' },
+        loadComponent: () =>
+          import('./preparacion-institucional').then((m) => m.PreparacionInstitucional),
+      },
+      {
+        path: 'vista-general',
+        canActivate: [requiereMapeoPersonalQa],
+        title: 'Vista general · PRISALY',
+        data: { titulo: 'Vista general', preparacion: 'vista-general' },
+        loadComponent: () =>
+          import('./preparacion-institucional').then((m) => m.PreparacionInstitucional),
+      },
+      {
+        path: 'mi-perfil',
+        canActivate: [requiereMapeoPersonalQa],
+        title: 'Mi perfil · PRISALY',
+        data: { titulo: 'Mi perfil', preparacion: 'perfil' },
+        loadComponent: () =>
+          import('./preparacion-institucional').then((m) => m.PreparacionInstitucional),
+      },
+      {
         path: DASHBOARD_ESTUDIANTE.ruta,
         // H-58-01: presentación estudiantil demostrativa, solo en el entorno de demostración.
         canActivate: [requiereEntornoDemostracion],

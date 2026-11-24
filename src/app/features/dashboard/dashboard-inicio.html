@@ -1,5 +1,66 @@
 <div class="pagina">
   <app-aviso-acceso-personal />
+  @if (menu(); as menu) {
+    <section class="bienvenida" aria-labelledby="bienvenida-rol">
+      <div class="bienvenida-texto">
+        <p class="ceja">{{ menu.length > 1 && menu[1].titulo === 'Gestión de docentes' ? 'ADMINISTRACIÓN' : 'DOCENTE' }}</p>
+        <h1 id="bienvenida-rol">Hola, {{ nombre() }}</h1>
+        <p class="descripcion">
+          @if (menu.length > 1 && menu[1].titulo === 'Gestión de docentes') {
+            Gestión de docentes, estudiantes y supervisión. Ninguna cifra se inventa: sin contrato de
+            resumen, el indicador queda no disponible.
+          } @else {
+            Casos, rúbricas, sesiones y convocatorias de tu alcance. Consultar un caso no autoriza
+            crearlo, editarlo ni publicarlo. Una convocatoria registrada no es un correo entregado.
+          }
+        </p>
+      </div>
+    </section>
+    @if (menu.length > 1 && menu[1].titulo === 'Gestión de docentes') {
+      <section aria-labelledby="indicadores-admin">
+        <h2 id="indicadores-admin">Resumen</h2>
+        <div class="tarjetas tarjetas-resumen">
+          @for (indicador of indicadores; track indicador) {
+            <article class="resumen-rol">
+              <h3>{{ indicador }}</h3>
+              <p>Información no disponible. No hay un contrato de este indicador.</p>
+              <span class="estado-rol">Sin dato de resumen</span>
+            </article>
+          }
+        </div>
+        <p>
+          El alta de docentes no usa una contraseña predeterminada. El aprovisionamiento docente
+          sigue pendiente, así que la operación permanece bloqueada.
+        </p>
+      </section>
+    }
+    <section aria-labelledby="accesos-rol">
+      <h2 id="accesos-rol">Accesos de esta experiencia</h2>
+      @if (menu.length === 0) {
+        <p>Tu rol no tiene una experiencia asignada. No se muestran secciones de otros roles.</p>
+      }
+      <div class="tarjetas">
+        @for (entrada of menu; track entrada.titulo) {
+          @if (entrada.ruta) {
+            <a
+              class="acceso"
+              [routerLink]="entrada.aviso ? '/dashboard' : ['/dashboard', entrada.ruta]"
+              [queryParams]="entrada.aviso ? { aviso: entrada.aviso } : null"
+            >
+              <svg class="icono-acceso" viewBox="0 0 24 24" aria-hidden="true">
+                <path [attr.d]="entrada.icono" />
+              </svg>
+              <div class="acceso-contenido">
+                <h3>{{ entrada.titulo }}</h3>
+                <p>{{ entrada.descripcion }}</p>
+              </div>
+              <span class="disponibilidad">{{ entrada.aviso ? 'Restringido' : 'Abrir' }}</span>
+            </a>
+          }
+        }
+      </div>
+    </section>
+  } @else {
   <div class="ciudad-inicio" aria-hidden="true">
     <img src="images/inicio-ciudad.webp" alt="" width="800" height="1200" /><img
       class="logo-plaza"
@@ -82,4 +143,5 @@
   <footer class="pie-pagina">
     <span>PRISALY · Psicología Social</span><span>Interfaz de demostración · Sin datos reales</span>
   </footer>
+  }
 </div>

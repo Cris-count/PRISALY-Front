@@ -433,7 +433,7 @@ describe('FE-58 H-58-02 revalidación periódica de /me (tiempo simulado)', () =
     expect(llamadasMe).toBe(antes);
   });
 
-  it('18: el mapeo oficial conserva las seis rutas sin habilitar', () => {
+  it('18: el mapeo oficial habilita las rutas aprobadas para QA', () => {
     for (const ruta of [
       'usuarios-docentes',
       'configuracion',
@@ -442,7 +442,7 @@ describe('FE-58 H-58-02 revalidación periódica de /me (tiempo simulado)', () =
       'sesiones',
       'convocatorias',
     ])
-      expect(MAPEO_RUTAS_PERSONAL_OFICIAL[ruta].habilitada).withContext(ruta).toBeFalse();
+      expect(MAPEO_RUTAS_PERSONAL_OFICIAL[ruta].habilitada).withContext(ruta).toBeTrue();
   });
 
   it('medición: llamadas a /me en un recorrido representativo simulado', async () => {

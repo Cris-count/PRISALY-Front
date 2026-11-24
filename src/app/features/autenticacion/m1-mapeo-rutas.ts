@@ -49,11 +49,14 @@ export interface MapeoRutaPersonal {
 }
 
 const RESOLUCION_FE58 = 'DC-FE-58-RESOLUCION-04';
+const RESOLUCION_FE59 = 'DC-FE-59-HABILITACION-FUNCIONAL-02';
 
 /**
  * Matriz aprobada por Dirección Central (DC-FE-58-RESOLUCION-04) incorporada como requisito.
- * **Ninguna ruta está habilitada**: la resolución exige completar la verificación QA y obtener la
- * autorización de habilitación. Activar una ruta exige cambiar `habilitada` en revisión.
+ *
+ * DC-FE-59-HABILITACION-FUNCIONAL-02 autoriza la habilitación controlada de navegación en QA de las
+ * rutas aprobadas: `habilitada: true` y `verificacionQa: 'verificada'`. El guard sigue decidiendo
+ * con `/me` y los permisos reales del Backend; habilitar la navegación no concede operaciones.
  */
 export const MAPEO_RUTAS_PERSONAL_OFICIAL: Readonly<Record<string, MapeoRutaPersonal>> = {
   'usuarios-docentes': {
@@ -61,54 +64,81 @@ export const MAPEO_RUTAS_PERSONAL_OFICIAL: Readonly<Record<string, MapeoRutaPers
     permisosBackend: [],
     rolBackend: 'ADMINISTRADOR',
     aprobado: { rol: 'ADMINISTRADOR', permisos: [] },
-    habilitada: false,
+    habilitada: true,
     resolucion: RESOLUCION_FE58,
-    verificacionQa: 'pendiente',
+    verificacionQa: 'verificada',
   },
   'casos-academicos': {
     ruta: 'casos-academicos',
     permisosBackend: ['CREAR_CASO', 'CONSULTAR_CASO', 'MODIFICAR_CASO', 'PUBLICAR_CASO'],
     rolBackend: null,
     aprobado: { permisos: ['CONSULTAR_CASO'] },
-    habilitada: false,
+    habilitada: true,
     resolucion: RESOLUCION_FE58,
-    verificacionQa: 'pendiente',
+    verificacionQa: 'verificada',
   },
   rubricas: {
     ruta: 'rubricas',
     permisosBackend: ['CONSULTAR_CASO', 'MODIFICAR_CASO'],
     rolBackend: null,
     aprobado: { permisos: ['CONSULTAR_CASO'] },
-    habilitada: false,
+    habilitada: true,
     resolucion: RESOLUCION_FE58,
-    verificacionQa: 'pendiente',
+    verificacionQa: 'verificada',
   },
   sesiones: {
     ruta: 'sesiones',
     permisosBackend: ['GESTIONAR_SESION'],
     rolBackend: null,
     aprobado: { permisos: ['GESTIONAR_SESION'] },
-    habilitada: false,
+    habilitada: true,
     resolucion: RESOLUCION_FE58,
-    verificacionQa: 'pendiente',
+    verificacionQa: 'verificada',
   },
   convocatorias: {
     ruta: 'convocatorias',
     permisosBackend: ['GESTIONAR_SESION'],
     rolBackend: null,
     aprobado: { permisos: ['GESTIONAR_SESION'] },
-    habilitada: false,
+    habilitada: true,
     resolucion: RESOLUCION_FE58,
-    verificacionQa: 'pendiente',
+    verificacionQa: 'verificada',
   },
   configuracion: {
     ruta: 'configuracion',
     permisosBackend: [],
     rolBackend: null,
     aprobado: { sesion: true, permisos: [] },
-    habilitada: false,
+    habilitada: true,
     resolucion: RESOLUCION_FE58,
-    verificacionQa: 'pendiente',
+    verificacionQa: 'verificada',
+  },
+  estudiantes: {
+    ruta: 'estudiantes',
+    permisosBackend: [],
+    rolBackend: 'ADMINISTRADOR',
+    aprobado: { rol: 'ADMINISTRADOR', permisos: [] },
+    habilitada: true,
+    resolucion: RESOLUCION_FE59,
+    verificacionQa: 'verificada',
+  },
+  'vista-general': {
+    ruta: 'vista-general',
+    permisosBackend: [],
+    rolBackend: 'ADMINISTRADOR',
+    aprobado: { rol: 'ADMINISTRADOR', permisos: [] },
+    habilitada: true,
+    resolucion: RESOLUCION_FE59,
+    verificacionQa: 'verificada',
+  },
+  'mi-perfil': {
+    ruta: 'mi-perfil',
+    permisosBackend: [],
+    rolBackend: null,
+    aprobado: { sesion: true, permisos: [] },
+    habilitada: true,
+    resolucion: RESOLUCION_FE59,
+    verificacionQa: 'verificada',
   },
 };
 

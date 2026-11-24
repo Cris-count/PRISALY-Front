@@ -31,35 +31,83 @@
     [class.lateral--abierta]="menuAbierto()"
     aria-label="Navegación del dashboard"
   >
-    <a class="marca" routerLink="/dashboard" aria-label="PRISALY: inicio del dashboard">
+    <a
+      class="marca"
+      [routerLink]="demo.actual()?.rol === 'ESTUDIANTE' ? '/dashboard/estudiante' : '/dashboard'"
+      aria-label="PRISALY: inicio del dashboard"
+    >
       <img src="images/prisaly-logo.png" alt="PRISALY" width="112" height="84" />
       <span>ESPACIO ACADÉMICO</span>
     </a>
     <p class="grupo">EXPLORAR</p>
     <nav aria-label="Secciones de PRISALY" (click)="cerrarMenu()">
-      <a
-        routerLink="/dashboard"
-        aria-label="Inicio"
-        title="Inicio"
-        routerLinkActive="activo"
-        [routerLinkActiveOptions]="{ exact: true }"
-        ariaCurrentWhenActive="page"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 10 12 3l9 7v11h-7v-7h-4v7H3z" /></svg
-        ><span class="nav-texto">Inicio</span>
-      </a>
-      @for (seccion of secciones; track seccion.ruta) {
+      @if (menuDeSesion(); as menu) {
+        @for (entrada of menu; track entrada.titulo) {
+          @if (entrada.aviso) {
+            <a
+              class="entrada-pendiente"
+              routerLink="/dashboard"
+              [queryParams]="{ aviso: entrada.aviso }"
+              [attr.aria-label]="entrada.titulo + '. No disponible'"
+              [title]="entrada.titulo + ' · No disponible'"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path [attr.d]="entrada.icono" /></svg
+              ><span class="nav-texto">{{ entrada.titulo }}<small>No disponible</small></span>
+            </a>
+          } @else {
+            <a
+              [routerLink]="entrada.ruta ? ['/dashboard', entrada.ruta] : '/dashboard'"
+              [attr.aria-label]="entrada.titulo"
+              [title]="entrada.titulo"
+              routerLinkActive="activo"
+              [routerLinkActiveOptions]="entrada.ruta ? {} : { exact: true }"
+              ariaCurrentWhenActive="page"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path [attr.d]="entrada.icono" /></svg
+              ><span class="nav-texto">{{ entrada.titulo }}</span>
+            </a>
+          }
+        }
+      } @else if (demo.actual()?.rol === 'ESTUDIANTE') {
+        @for (entrada of menuEstudiante; track entrada.ancla) {
+          <a
+            routerLink="/dashboard/estudiante"
+            [fragment]="entrada.ancla"
+            [attr.aria-label]="entrada.titulo"
+            [title]="entrada.titulo"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3 2 9l10 6 10-6-10-6Zm-8 8.2V17l8 4 8-4v-5.8l-8 4.2-8-4.2Z" /></svg
+            ><span class="nav-texto">{{ entrada.titulo }}</span>
+          </a>
+        }
+      } @else {
         <a
-          [routerLink]="['/dashboard', seccion.ruta]"
-          [attr.aria-label]="seccion.titulo"
-          [title]="seccion.titulo"
+          routerLink="/dashboard"
+          aria-label="Inicio"
+          title="Inicio"
           routerLinkActive="activo"
+          [routerLinkActiveOptions]="{ exact: true }"
           ariaCurrentWhenActive="page"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="seccion.icono" /></svg
-          ><span class="nav-texto">{{ seccion.titulo }}</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 10 12 3l9 7v11h-7v-7h-4v7H3z" /></svg
+          ><span class="nav-texto">Inicio</span>
         </a>
+        @for (seccion of secciones; track seccion.ruta) {
+          <a
+            [routerLink]="['/dashboard', seccion.ruta]"
+            [attr.aria-label]="seccion.titulo"
+            [title]="seccion.titulo"
+            routerLinkActive="activo"
+            ariaCurrentWhenActive="page"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="seccion.icono" /></svg
+            ><span class="nav-texto">{{ seccion.titulo }}</span>
+          </a>
+        }
       }
     </nav>
     <div class="lateral-pie">
@@ -70,11 +118,23 @@
         <p>
           {{
             qaPersonal
-              ? 'QA de personal. Rutas administrativas y docentes pendientes del mapeo oficial de permisos.'
-              : 'Explora las vistas sin iniciar sesión.'
+              ? 'QA de personal. La navegación de las secciones aprobadas está habilitada; las operaciones siguen dependiendo del Backend.'
+              : demo.actual()
+                ? 'Presentación local. Las pantallas están abiertas; las operaciones protegidas siguen en el Backend.'
+                : 'Explora las vistas sin iniciar sesión.'
           }}
         </p>
-        @if (sesion) {
+        @if (demo.actual(); as cuenta) {
+          <button
+            class="volver cierre-personal"
+            type="button"
+            aria-label="Cerrar sesión de demostración"
+            (click)="cerrarSesion()"
+          >
+            <span aria-hidden="true">⏻</span><span class="nav-texto">Cerrar sesión</span>
+          </button>
+          <p>{{ cuenta.nombre }} · {{ cuenta.espacio }}</p>
+        } @else if (sesion) {
           <button
             class="volver cierre-personal"
             aria-label="Cerrar sesión de personal o reintentar cierre"
@@ -136,11 +196,18 @@
         <p class="contexto">
           PRISALY <span aria-hidden="true">/</span>
           {{
-            titulo() === 'Inicio'
-              ? 'Espacio Académico'
-              : titulo() === 'Usuarios y docentes'
-                ? 'Administración'
-                : 'Dashboard'
+            menuDeSesion()?.length &&
+            menuDeSesion()?.some((entrada) => entrada.titulo === 'Gestión de docentes')
+              ? 'Administración'
+              : menuDeSesion()?.some((entrada) => entrada.titulo === 'Casos académicos')
+                ? 'Docente'
+                : demo.actual()?.rol === 'ESTUDIANTE'
+                  ? 'Mi espacio de aprendizaje'
+                : titulo() === 'Inicio'
+                  ? 'Espacio Académico'
+                  : titulo() === 'Usuarios y docentes'
+                    ? 'Administración'
+                    : 'Dashboard'
           }}
         </p>
         <p class="titulo-pantalla">{{ titulo() }}</p>
@@ -176,6 +243,10 @@
             {{ estado.tipo === 'valida' ? estado.identidad.nombre : 'Sesión no verificada'
             }}<small>Personal · QA</small>
           </div>
+        } @else if (demo.actual(); as cuenta) {
+          <div>
+            {{ cuenta.nombre }}<small>{{ cuenta.espacio }} · local</small>
+          </div>
         } @else {
           <div>Perfil demostrativo<small>Sin sesión autenticada</small></div>
         }
@@ -185,8 +256,8 @@
   <div class="area">
     @if (qaPersonal) {
       <p role="status">
-        QA de personal · Permisos por ruta pendientes de confirmación. Las interfaces
-        administrativas y docentes no están habilitadas.
+        QA de personal · La navegación por rol está habilitada conforme a DC-FE-59. Las operaciones
+        protegidas siguen requiriendo los permisos reales del Backend.
       </p>
     }
     @if (mostrarContenido()) {

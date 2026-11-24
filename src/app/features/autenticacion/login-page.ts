@@ -11,8 +11,10 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { computed } from '@angular/core';
+import { AccesoDemoLocal, USUARIOS_DEMO } from './acceso-demo-local';
 import { M1_PERSONAL_LOCAL } from './m1-personal-http';
 import { SesionPersonalM1 } from './m1-personal-sesion';
+import { UsuarioDemoLocal } from './usuarios-demo-locales';
 
 @Component({
   selector: 'app-login-page',
@@ -23,6 +25,8 @@ import { SesionPersonalM1 } from './m1-personal-sesion';
 })
 export class LoginPage {
   protected readonly qaPersonal = inject(M1_PERSONAL_LOCAL);
+  protected readonly usuariosDemo = inject(USUARIOS_DEMO);
+  private readonly accesoDemo = inject(AccesoDemoLocal);
   private readonly sesion = this.qaPersonal ? inject(SesionPersonalM1) : null;
   private readonly router = inject(Router);
   protected readonly enviando = computed(() => {
@@ -129,8 +133,33 @@ export class LoginPage {
         });
       return;
     }
+    const correo = this.formulario.controls.correo.value.trim().toLowerCase();
+    const clave = this.formulario.controls.clave.value;
+    const demo = this.usuariosDemo.find(
+      (usuario) => usuario.correo === correo && usuario.clave === clave,
+    );
+    this.formulario.controls.clave.reset();
+    this.mostrarClave.set(false);
+    if (demo) {
+      this.entrarDemo(demo);
+      return;
+    }
     this.aviso.set(
       'Esta pantalla es una demostración visual. La autenticación todavía no está conectada',
+    );
+  }
+
+  protected usarDemo(usuario: UsuarioDemoLocal): void {
+    this.formulario.controls.correo.setValue(usuario.correo);
+    this.formulario.controls.clave.setValue(usuario.clave);
+    this.aviso.set('');
+    this.entrarDemo(usuario);
+  }
+
+  private entrarDemo(usuario: UsuarioDemoLocal): void {
+    this.accesoDemo.entrar(usuario);
+    void this.router.navigateByUrl(
+      usuario.rol === 'ESTUDIANTE' ? '/dashboard/estudiante' : '/dashboard',
     );
   }
 }

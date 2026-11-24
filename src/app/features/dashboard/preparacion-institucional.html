@@ -1,0 +1,48 @@
+<div class="pagina">
+  <a class="regreso" routerLink="/dashboard">← Volver al inicio</a>
+  @switch (tipo()) {
+    @case ('estudiantes') {
+      <h1>Gestión de estudiantes</h1>
+      <p role="status">
+        No hay contrato autorizado para un listado institucional. Esta pantalla no envía
+        identificadores académicos ni activa la cuenta estudiantil.
+      </p>
+      <p>La creación, la búsqueda y el detalle permanecen bloqueados. No hay contraseña inicial.</p>
+    }
+    @case ('vista-general') {
+      <h1>Vista general</h1>
+      <p>
+        Resumen de disponibilidad. No es acceso a los datos ni permiso para modificarlos.
+      </p>
+      <ul>
+        <li>Usuarios y docentes: la pantalla está abierta. El alta real sigue pendiente de M1 y de D-05.</li>
+        <li>Estudiantes: la pantalla está abierta. No hay listado autorizado y DD-02 sigue apagado.</li>
+        <li>Casos y rúbricas: la consulta exige CONSULTAR_CASO. Crear, editar y publicar siguen aparte.</li>
+        <li>Sesiones y convocatorias: exigen GESTIONAR_SESION. Registrar una convocatoria no entrega el correo.</li>
+        <li>Participaciones y evaluación: sin contrato. No hay resultados académicos ni M6.</li>
+        <li>Notificaciones: sin consulta HTTP del estudiante. Un aviso registrado no es un correo enviado.</li>
+      </ul>
+    }
+    @default {
+      <h1>Mi perfil</h1>
+      @if (perfil(); as cuenta) {
+        <dl>
+          <dt>Nombre</dt>
+          <dd>{{ cuenta.nombre }}</dd>
+          <dt>Correo</dt>
+          <dd>{{ cuenta.correo }}</dd>
+          <dt>Rol</dt>
+          <dd>{{ cuenta.rol }}</dd>
+          <dt>Sesión</dt>
+          <dd>{{ cuenta.origen }}</dd>
+        </dl>
+      } @else {
+        <p role="status">No hay una sesión confirmada para mostrar.</p>
+      }
+      <p>
+        No se muestra el token ni el hash de contraseña. El cierre de sesión está en el menú
+        lateral. La actualización de datos no tiene contrato en esta pantalla.
+      </p>
+    }
+  }
+</div>

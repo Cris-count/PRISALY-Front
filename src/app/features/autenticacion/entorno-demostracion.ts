@@ -1,6 +1,7 @@
 import { inject, InjectionToken, Provider } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { AccesoDemoLocal } from './acceso-demo-local';
 import { M1_PERSONAL_LOCAL } from './m1-personal-http';
 
 /**
@@ -32,6 +33,18 @@ export function salidaSinDemostracion() {
     : inject(Router).createUrlTree(['/login']);
 }
 
-/** Rutas que solo son demostración (presentación sin datos reales ni sesión). */
-export const requiereEntornoDemostracion: CanActivateFn = () =>
-  inject(DEMOSTRACIONES_HABILITADAS) === true || salidaSinDemostracion();
+/**
+ * Rutas que solo son demostración (presentación sin datos reales ni sesión).
+ * La cuenta local de estudiante abre únicamente `/dashboard/estudiante`.
+ * El simulador sigue exigiendo el entorno demo.
+ */
+export const requiereEntornoDemostracion: CanActivateFn = (ruta) => {
+  if (inject(DEMOSTRACIONES_HABILITADAS) === true) return true;
+  if (
+    ruta.routeConfig?.path === 'estudiante' &&
+    inject(AccesoDemoLocal).actual()?.rol === 'ESTUDIANTE'
+  ) {
+    return true;
+  }
+  return salidaSinDemostracion();
+};

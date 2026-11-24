@@ -680,7 +680,7 @@ describe('FE-55 el recorrido no eleva privilegios (configuración de rutas y gua
     }
   });
 
-  it('con sesión real simulada y mapeo pendiente, el enlace del recorrido se redirige', async () => {
+  it('con mapeo habilitado, el docente con GESTIONAR_SESION abre sesiones', async () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
@@ -716,7 +716,10 @@ describe('FE-55 el recorrido no eleva privilegios (configuración de rutas y gua
     http.expectOne(`${B}/v1/personal/autenticar`).flush(respuesta);
     http.expectOne(`${B}/v1/personal/me`).flush({ ...respuesta, accessToken: null });
     const router = TestBed.inject(Router);
-    await router.navigateByUrl(`/dashboard/sesiones?caso=${C}&sesion=${S}`);
-    expect(router.url).toBe('/dashboard?aviso=habilitacion-pendiente');
+    const nav = router.navigateByUrl(`/dashboard/sesiones?caso=${C}&sesion=${S}`);
+    await new Promise((r) => setTimeout(r, 20));
+    http.expectOne(`${B}/v1/personal/me`).flush({ ...respuesta, accessToken: null });
+    await nav;
+    expect(router.url.startsWith('/dashboard/sesiones')).toBeTrue();
   });
 });

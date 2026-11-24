@@ -162,6 +162,25 @@ button {
 .iniciar span {
   font-size: 1.2rem;
 }
+.cuentas-demo {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+.cuentas-demo p {
+  color: #53647b;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.cuentas-demo button {
+  min-height: 2.6rem;
+  border: 1px solid #c5d4ea;
+  border-radius: 1rem;
+  background: #f4f8ff;
+  color: #0b3f86;
+  font-weight: 700;
+  cursor: pointer;
+}
 .nota {
   color: #53647b;
   font-size: 0.75rem;

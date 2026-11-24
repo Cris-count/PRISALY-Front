@@ -138,12 +138,25 @@
           @if (qaPersonal) {
             Entorno QA de personal · Utiliza únicamente credenciales desechables autorizadas.
           } @else {
-            Demostración visual · La autenticación todavía no está disponible. No ingreses
-            credenciales reales.
+            Demostración visual · La autenticación institucional todavía no está disponible.
+            @if (usuariosDemo.length) {
+              Las cuentas locales solo abren la interfaz.
+            }
+            No ingreses credenciales reales.
           }
         </p>
         <p class="aviso" role="status" aria-live="polite">{{ aviso() }}</p>
       </form>
+      @if (!qaPersonal && usuariosDemo.length) {
+        <div class="cuentas-demo">
+          <p>Cuentas locales de presentación. No existen en el servidor. Clave: DemoLocal!234</p>
+          @for (usuario of usuariosDemo; track usuario.correo) {
+            <button type="button" (click)="usarDemo(usuario)">
+              Entrar como {{ usuario.espacio }}
+            </button>
+          }
+        </div>
+      }
       @if (!qaPersonal) {
         <a class="explorar-demo" routerLink="/dashboard"
           >Explorar interfaz de demostración <span aria-hidden="true">→</span></a

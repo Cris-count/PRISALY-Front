@@ -155,3 +155,23 @@
     margin-top: 1.4rem;
   }
 }
+.entrada-pendiente {
+  background: #052650e6;
+}
+.entrada-pendiente:hover {
+  background: #174e8c;
+}
+.nav-texto {
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.nav-texto small {
+  display: block;
+  margin-top: 0.05rem;
+  color: #ffd27a;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}

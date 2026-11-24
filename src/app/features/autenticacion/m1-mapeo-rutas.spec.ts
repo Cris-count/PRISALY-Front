@@ -39,22 +39,21 @@ function sesionCon(permisos: string[], rol = 'DOCENTE'): EstadoSesionPersonal {
 }
 
 describe('FE-54 mapeo oficial ruta–permiso', () => {
-  // FE-58-05: la matriz aprobada (DC-FE-58-RESOLUCION-04) se incorpora como requisito, pero
-  // ninguna ruta tiene habilitación efectiva hasta completar la verificación QA (antes: aprobado null).
-  it('ninguna ruta está habilitada aunque su requisito esté aprobado', () => {
+  // DC-FE-59-HABILITACION-FUNCIONAL-02: las rutas aprobadas quedan habilitadas para QA.
+  it('las rutas aprobadas quedan habilitadas y verificadas en QA', () => {
     for (const s of DASHBOARD_SECCIONES) {
       expect(MAPEO_RUTAS_PERSONAL_OFICIAL[s.ruta]).withContext(s.ruta).toBeDefined();
-      expect(MAPEO_RUTAS_PERSONAL_OFICIAL[s.ruta].habilitada).withContext(s.ruta).toBeFalse();
+      expect(MAPEO_RUTAS_PERSONAL_OFICIAL[s.ruta].habilitada).withContext(s.ruta).toBeTrue();
       expect(MAPEO_RUTAS_PERSONAL_OFICIAL[s.ruta].verificacionQa)
         .withContext(s.ruta)
-        .toBe('pendiente');
+        .toBe('verificada');
     }
   });
 
   it('decidirRuta nunca autoriza por omisión, rol ni permisos documentados', () => {
     const todos = () => true;
     expect(decidirRuta(undefined, true, todos)).toBe('pendiente');
-    expect(decidirRuta(MAPEO_RUTAS_PERSONAL_OFICIAL['sesiones'], true, todos)).toBe('preparada');
+    expect(decidirRuta(MAPEO_RUTAS_PERSONAL_OFICIAL['sesiones'], true, todos)).toBe('autorizada');
     const vacio: MapeoRutaPersonal = {
       ruta: 'x',
       permisosBackend: [],
@@ -145,7 +144,7 @@ describe('FE-54 guard de personal con mapeo (sesión y mapeo simulados)', () => 
     expect(url(decidir('sesiones'))).toBe('/login');
   });
 
-  it('con el mapeo oficial vigente ninguna ruta se abre, incluso con permisos y rol ADMINISTRADOR', () => {
+  it('con el mapeo oficial habilitado, ADMINISTRADOR con permisos abre las secciones aprobadas', () => {
     preparar(null);
     estado.set(
       sesionCon(
@@ -153,10 +152,7 @@ describe('FE-54 guard de personal con mapeo (sesión y mapeo simulados)', () => 
         'ADMINISTRADOR',
       ),
     );
-    for (const s of DASHBOARD_SECCIONES)
-      expect(url(decidir(s.ruta)))
-        .withContext(s.ruta)
-        .toBe('/dashboard?aviso=habilitacion-pendiente');
+    for (const s of DASHBOARD_SECCIONES) expect(decidir(s.ruta)).withContext(s.ruta).toBeTrue();
   });
 
   it('ruta aprobada (simulada) autoriza con el permiso exigido', () => {
@@ -169,7 +165,7 @@ describe('FE-54 guard de personal con mapeo (sesión y mapeo simulados)', () => 
     preparar(SIMULADO);
     estado.set(sesionCon(['GESTIONAR_SESION'], 'ADMINISTRADOR'));
     expect(url(decidir('sesiones'))).toBe('/dashboard?aviso=permiso-insuficiente');
-    expect(url(decidir('convocatorias'))).toBe('/dashboard?aviso=habilitacion-pendiente');
+    expect(decidir('convocatorias')).toBeTrue();
   });
 
   it('una sesión expirada (p. ej. tras un 401) vuelve a login', () => {

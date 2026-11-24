@@ -28,8 +28,8 @@ import { SesionPersonalM1 } from './m1-personal-sesion';
 /**
  * FE-58. Requisito de rol en el mapeo ruta–permiso. Todas las aprobaciones de este archivo son
  * SIMULACIONES identificadas para probar el mecanismo; no modifican `MAPEO_RUTAS_PERSONAL_OFICIAL`.
- * FE-58-05: las simulaciones fijan `habilitada: true`; el mapeo oficial incorpora la matriz aprobada
- * por Dirección Central pero mantiene todas las rutas sin habilitar.
+ * DC-FE-59-HABILITACION-FUNCIONAL-02: el mapeo oficial incorpora la matriz aprobada y habilita las
+ * rutas para QA.
  */
 const conRequisito = (
   aprobado: MapeoRutaPersonal['aprobado'],
@@ -40,15 +40,15 @@ const todos = () => true;
 const ninguno = () => false;
 
 describe('FE-58 decidirRuta con requisito de rol (unitarias, aprobaciones simuladas)', () => {
-  it('el mapeo oficial no habilita ninguna ruta: administración queda preparada, no abierta', () => {
+  it('el mapeo oficial habilita las rutas aprobadas y administración queda abierta por rol', () => {
     for (const m of Object.values(MAPEO_RUTAS_PERSONAL_OFICIAL))
-      expect(m.habilitada).withContext(m.ruta).toBeFalse();
+      expect(m.habilitada).withContext(m.ruta).toBeTrue();
     expect(MAPEO_RUTAS_PERSONAL_OFICIAL['usuarios-docentes'].aprobado).toEqual({
       rol: 'ADMINISTRADOR',
       permisos: [],
     });
     expect(decidirRuta(MAPEO_RUTAS_PERSONAL_OFICIAL['usuarios-docentes'], true, todos, todos)).toBe(
-      'preparada',
+      'autorizada',
     );
   });
 
@@ -225,10 +225,10 @@ describe('FE-58 guard con requisito de rol (sesión y mapeo simulados)', () => {
   };
   const url = (r: unknown) => TestBed.inject(Router).serializeUrl(r as UrlTree);
 
-  it('con el mapeo oficial, un ADMINISTRADOR real queda en habilitación pendiente', () => {
+  it('con el mapeo oficial habilitado, un ADMINISTRADOR real abre administración', () => {
     preparar(null);
     estado.set(sesionCon('ADMINISTRADOR', []));
-    expect(url(decidir('usuarios-docentes'))).toBe('/dashboard?aviso=habilitacion-pendiente');
+    expect(decidir('usuarios-docentes')).toBeTrue();
   });
 
   it('administración simulada por rol: un docente con todos los permisos recibe rol-insuficiente', () => {
