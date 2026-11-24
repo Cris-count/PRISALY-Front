@@ -8,4 +8,12 @@ export const environment = {
   demostracionesHabilitadas: true,
   production: false,
   apiBaseUrl: '/api',
+  /**
+   * DC-FULLSTACK-DEMO-ESTUDIANTE-04: entrada estudiantil demostrativa (verificación local, sin
+   * Backend). Solo el hash SHA-256 de la clave de prueba; nunca la clave en claro.
+   */
+  estudianteDemo: {
+    correo: 'estudiante.demo@prisaly.local',
+    hashClave: '46d374f5a394e3652e67573c606d2ffeafb169b3759cec9880d55f781c46dc47',
+  },
 };

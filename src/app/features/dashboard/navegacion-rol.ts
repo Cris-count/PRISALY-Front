@@ -43,6 +43,11 @@ export function seccionesPorRol(
     decidirRuta(mapeo[ruta], true, tiene, (r) => r === rol);
   return DASHBOARD_SECCIONES.filter(
     (s) => delRol.includes(s.ruta) && decision(s.ruta) === 'autorizada',
+  ).map((s) =>
+    // DC-FE-60: etiqueta del panel administrador.
+    rol === 'ADMINISTRADOR' && s.ruta === 'usuarios-docentes'
+      ? { ...s, titulo: 'Gestión de docentes' }
+      : s,
   );
 }
 
@@ -69,3 +74,62 @@ export function crearModoDocenteOperativo(): Signal<boolean> {
   const habilitadas = hayRutasHabilitadas(inject(MAPEO_RUTAS_PERSONAL));
   return computed(() => habilitadas && sesion?.estado().tipo === 'valida');
 }
+
+/** Opción del menú lateral del espacio estudiantil demostrativo. */
+export interface OpcionEstudiante {
+  readonly titulo: string;
+  readonly icono: string;
+  /** Sección de la página `Mi espacio de aprendizaje` a la que se desplaza. */
+  readonly ancla?: string;
+  /** Ruta propia (simulador de demostración, protegido por `requiereEntornoDemostracion`). */
+  readonly ruta?: string;
+}
+
+/**
+ * Menú del espacio estudiantil (demostración; sin sesión M1). Solo opciones estudiantiles:
+ * ni administración, ni casos, ni rúbricas. Las secciones son las de la propia página.
+ */
+export const NAVEGACION_ESTUDIANTE: readonly OpcionEstudiante[] = [
+  {
+    titulo: 'Mi espacio de aprendizaje',
+    ruta: '/dashboard/estudiante',
+    icono: 'M2 9 12 4l10 5-10 5L2 9M6 11v6c4 3 8 3 12 0v-6M22 9v8',
+  },
+  {
+    titulo: 'Mis sesiones',
+    ancla: 'sesiones-estudiante',
+    icono: 'M3 5h18v16H3zM7 2v6M17 2v6M3 10h18M7 14h3M14 14h3M7 17h3',
+  },
+  {
+    titulo: 'Mis convocatorias',
+    ancla: 'convocatorias-estudiante',
+    icono: 'M3 10v4h5l11 5V5L8 10H3M8 14l2 7h4l-3-6M22 9v6',
+  },
+  {
+    titulo: 'Mis actividades',
+    ancla: 'participaciones-estudiante',
+    icono:
+      'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-3.87M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
+  },
+  {
+    titulo: 'Notificaciones',
+    ancla: 'titulo-notificaciones',
+    icono: 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',
+  },
+  {
+    titulo: 'Recorrido estudiantil',
+    ancla: 'titulo-recorrido-visual',
+    icono: 'M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4',
+  },
+  {
+    titulo: 'Mi perfil',
+    ruta: '/dashboard/perfil',
+    icono: 'M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10',
+  },
+  {
+    titulo: 'Simulador',
+    ruta: '/simulador-integrado',
+    icono:
+      'M6 11h4M8 9v4M15 12h.01M18 10h.01M17.3 5H6.7a4 4 0 0 0-4 3.6L2 15a3 3 0 0 0 5.3 2.2L9 15h6l1.7 2.2A3 3 0 0 0 22 15l-.7-6.4a4 4 0 0 0-4-3.6',
+  },
+];

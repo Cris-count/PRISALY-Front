@@ -22,10 +22,17 @@ describe('DC-FE-UX-ROLES-24 navegación por rol', () => {
   it('docente sin GESTIONAR_SESION: no ve sesiones ni convocatorias', () => {
     expect(rutas(valida('DOCENTE', ['CONSULTAR_CASO']))).toEqual(['casos-academicos', 'rubricas']);
   });
-  it('administrador: sin opciones estudiantiles ni docentes; admin aún no habilitado', () => {
+  it('administrador: opciones administrativas, sin estudiantiles ni docentes', () => {
     const r = rutas(valida('ADMINISTRADOR', ['CONSULTAR_CASO', 'GESTIONAR_SESION']));
     expect(r).not.toContain('estudiante');
-    expect(r).toEqual([]);
+    expect(r).toEqual(['usuarios-docentes', 'configuracion']);
+    // DC-FE-60: etiqueta del panel administrador.
+    expect(seccionesPorRol(valida('ADMINISTRADOR', []), qaNav).map((x) => x.titulo)).toEqual([
+      'Gestión de docentes',
+      'Configuración',
+    ]);
+    // En producción / QA ordinario sigue sin rutas.
+    expect(rutas(valida('ADMINISTRADOR', []), MAPEO_RUTAS_PERSONAL_OFICIAL)).toEqual([]);
   });
   it('rol de semilla QA (`DocenteBruno`) con permisos docentes: secciones docentes, sin estudiante', () => {
     const r = rutas(valida('DocenteBruno', ['CONSULTAR_CASO', 'GESTIONAR_SESION']));

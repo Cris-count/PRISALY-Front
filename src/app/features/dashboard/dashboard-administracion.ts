@@ -1,3 +1,4 @@
+import { crearModoDocenteOperativo } from './navegacion-rol';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { EstadoPanel, TipoEstadoPanel } from './estado-panel';
@@ -16,6 +17,8 @@ import { PanelAdministracionM1 } from '../academico/panel-administracion-m1';
   ],
 })
 export class DashboardAdministracion {
+  /** DC-FE-UX-ROLES-24: solo el panel real con sesión verificada en `qa-navegacion`. */
+  protected readonly operativo = crearModoDocenteOperativo();
   // Ejemplos de presentación: no representan respuestas de servicios ni permisos efectivos.
   protected readonly ejemplos: readonly {
     estado: TipoEstadoPanel;

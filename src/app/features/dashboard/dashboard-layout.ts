@@ -24,7 +24,13 @@ import {
 } from '@angular/router';
 import { filter, map, tap } from 'rxjs';
 import { MAPEO_RUTAS_PERSONAL } from '../autenticacion/m1-mapeo-rutas';
-import { hayRutasHabilitadas, NAVEGACION_PRESENTACION, seccionesPorRol } from './navegacion-rol';
+import { SesionEstudianteDemo } from '../autenticacion/acceso-estudiante-demo';
+import {
+  hayRutasHabilitadas,
+  NAVEGACION_ESTUDIANTE,
+  NAVEGACION_PRESENTACION,
+  seccionesPorRol,
+} from './navegacion-rol';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -90,6 +96,37 @@ export class DashboardLayout {
     ),
     { initialValue: (this.ruta.firstChild?.snapshot?.data['titulo'] as string) ?? 'Inicio' },
   );
+
+  /** Ruta hija activa (p. ej. `estudiante`). */
+  private readonly rutaHija = toSignal(
+    this.router.events.pipe(
+      filter((evento): evento is NavigationEnd => evento instanceof NavigationEnd),
+      map(() => this.ruta.firstChild?.snapshot?.routeConfig?.path ?? ''),
+    ),
+    { initialValue: this.ruta.firstChild?.snapshot?.routeConfig?.path ?? '' },
+  );
+  /**
+   * DC-FE-UX-ROLES-24: en «Mi espacio de aprendizaje» sin sesión de personal válida, el menú
+   * lateral muestra solo las opciones estudiantiles (demostración, sin sesión M1).
+   */
+  protected readonly espacioEstudiante = computed(
+    () =>
+      this.sesion?.estado().tipo !== 'valida' &&
+      (this.rutaHija() === 'estudiante' ||
+        (this.rutaHija() === 'perfil' && this.estudianteDemo.activa() !== null)),
+  );
+  protected readonly opcionesEstudiante = NAVEGACION_ESTUDIANTE;
+  /** Sesión estudiantil demostrativa (solo memoria, solo entorno demo; no es M1). */
+  protected readonly estudianteDemo = inject(SesionEstudianteDemo);
+
+  protected salirDemoEstudiante(): void {
+    this.estudianteDemo.cerrar();
+    void this.router.navigateByUrl('/login');
+  }
+
+  protected irASeccion(ancla: string): void {
+    document.getElementById(ancla)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 
   @HostListener('document:keydown.escape')
   protected cerrarMenu(): void {

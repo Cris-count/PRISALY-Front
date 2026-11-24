@@ -144,10 +144,23 @@
         </p>
         <p class="aviso" role="status" aria-live="polite">{{ aviso() }}</p>
       </form>
+      @if (qaPersonal) {
+        <a
+          class="acceso-estudiante"
+          routerLink="/estudiante/acceso"
+          data-prueba="acceso-estudiante-real"
+          >Soy estudiante: acceder con código <span aria-hidden="true">→</span></a
+        >
+      }
       @if (!qaPersonal) {
         <a class="explorar-demo" routerLink="/dashboard"
           >Explorar interfaz de demostración <span aria-hidden="true">→</span></a
         >
+        @if (demostraciones) {
+          <a class="explorar-demo" routerLink="/acceso-estudiante" data-prueba="entrada-estudiante"
+            >Entrar como estudiante (demostración) <span aria-hidden="true">→</span></a
+          >
+        }
       }
     </div>
   </div>
