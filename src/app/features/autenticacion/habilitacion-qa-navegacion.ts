@@ -3,9 +3,12 @@ import type { MapeoRutaPersonal } from './m1-mapeo-rutas';
 /**
  * DC-FULLSTACK-DEMO-URGENTE-03. Rutas docentes cuya integración con el Backend real se verificó
  * (DC-FULLSTACK-INTEGRACION-DOCENTE-01) y que Dirección Central autorizó habilitar **solo** en la
- * configuración local `qa-navegacion`. La administración de docentes no se incluye.
+ * configuración local `qa-navegacion`. Ampliado a las rutas administrativas (usuarios-docentes,
+ * configuracion) por autorización expresa para revisar la vista del administrador en QA local.
  */
 export const RUTAS_AUTORIZADAS_QA_NAVEGACION: readonly string[] = [
+  'usuarios-docentes',
+  'configuracion',
   'casos-academicos',
   'rubricas',
   'sesiones',

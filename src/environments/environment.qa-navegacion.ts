@@ -9,5 +9,12 @@ export const environment = {
   personalQaHabilitado: true,
   demostracionesHabilitadas: false,
   apiBaseUrl: 'http://localhost:18094/api',
-  rutasPersonalHabilitadasQa: ['casos-academicos', 'rubricas', 'sesiones', 'convocatorias'],
+  rutasPersonalHabilitadasQa: [
+    'usuarios-docentes',
+    'configuracion',
+    'casos-academicos',
+    'rubricas',
+    'sesiones',
+    'convocatorias',
+  ],
 };

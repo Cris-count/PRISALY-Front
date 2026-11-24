@@ -28,6 +28,15 @@ export const DASHBOARD_ROUTES: Routes = [
         data: { titulo: DASHBOARD_ESTUDIANTE.titulo },
         loadComponent: () => import('./dashboard-estudiante').then((m) => m.DashboardEstudiante),
       },
+      {
+        // DC-FE-60: «Mi perfil». Mismo requisito que Inicio (sesión de personal válida, o el
+        // entorno demo); solo muestra la identidad de `/me`, sin operaciones.
+        path: 'perfil',
+        canActivate: [requiereSesionPersonalQa],
+        title: 'Mi perfil · PRISALY',
+        data: { titulo: 'Mi perfil' },
+        loadComponent: () => import('./dashboard-perfil').then((m) => m.DashboardPerfil),
+      },
       ...DASHBOARD_SECCIONES.map((seccion) => ({
         path: seccion.ruta,
         canActivate: [requiereMapeoPersonalQa],

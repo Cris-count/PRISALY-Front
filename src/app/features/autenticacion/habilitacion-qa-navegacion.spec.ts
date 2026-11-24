@@ -40,13 +40,20 @@ describe('qa-navegacion: habilitación local controlada', () => {
         .toEqual([]);
   });
 
-  it('qa-navegacion habilita exactamente las cuatro rutas docentes verificadas', () => {
+  it('qa-navegacion habilita exactamente las rutas autorizadas (docentes y administrativas)', () => {
     expect(entornoQaNavegacion.production).toBeFalse();
     expect(entornoQaNavegacion.personalQaHabilitado).toBeTrue();
     expect(entornoQaNavegacion.demostracionesHabilitadas).toBeFalse();
     expect(
       habilitadas(mapeoConHabilitacionQa(MAPEO_RUTAS_PERSONAL_OFICIAL, entornoQaNavegacion)),
-    ).toEqual(['casos-academicos', 'convocatorias', 'rubricas', 'sesiones']);
+    ).toEqual([
+      'casos-academicos',
+      'configuracion',
+      'convocatorias',
+      'rubricas',
+      'sesiones',
+      'usuarios-docentes',
+    ]);
   });
 
   it('no cambia requisitos: solo `habilitada`', () => {
@@ -68,14 +75,16 @@ describe('qa-navegacion: habilitación local controlada', () => {
     expect(decidirRuta(m['sesiones'], true, (p) => p.includes('CONSULTAR_CASO'))).toBe(
       'insuficiente',
     );
+    // usuarios-docentes exige el rol exacto ADMINISTRADOR: los permisos no lo sustituyen.
+    expect(decidirRuta(m['usuarios-docentes'], true, () => true)).toBe('rol-insuficiente');
     expect(
       decidirRuta(
         m['usuarios-docentes'],
         true,
         () => true,
-        () => true,
+        (r) => r === 'ADMINISTRADOR',
       ),
-    ).toBe('preparada');
+    ).toBe('autorizada');
   });
 
   it('rechaza listas que intenten habilitar rutas no autorizadas o entornos productivos', () => {
@@ -87,9 +96,7 @@ describe('qa-navegacion: habilitación local controlada', () => {
           ...extra,
         }),
       );
-    expect(pide({ rutasPersonalHabilitadasQa: ['usuarios-docentes', 'configuracion'] })).toEqual(
-      [],
-    );
+    expect(pide({ rutasPersonalHabilitadasQa: ['inexistente', '__proto__'] })).toEqual([]);
     expect(pide({ rutasPersonalHabilitadasQa: ['casos-academicos', 'inexistente', 7] })).toEqual([
       'casos-academicos',
     ]);

@@ -178,7 +178,10 @@ describe('Dashboard público de demostración', () => {
       const enlaces = Array.from(lateral.querySelectorAll<HTMLAnchorElement>('nav a'));
       const rutas = [
         '/dashboard',
-        ...DASHBOARD_NAVEGACION.map((s) => '/dashboard/' + s.ruta),
+        // DC-FE-UX-ROLES-24: el espacio estudiantil tiene su propio menú (se prueba aparte).
+        ...DASHBOARD_NAVEGACION.filter((s) => s.ruta !== 'estudiante').map(
+          (s) => '/dashboard/' + s.ruta,
+        ),
         '/dashboard',
       ];
       function identidad() {
@@ -432,6 +435,20 @@ describe('Dashboard público de demostración', () => {
     expect(raiz().querySelector('nav [aria-current="page"]')?.textContent).toContain(
       'Mi espacio de aprendizaje',
     );
+    // DC-FE-UX-ROLES-24: menú lateral exclusivamente estudiantil.
+    const opciones = Array.from(raiz().querySelectorAll('aside nav a'), (a) =>
+      a.textContent?.trim(),
+    );
+    expect(opciones).toEqual([
+      'Mi espacio de aprendizaje',
+      'Mis sesiones',
+      'Mis convocatorias',
+      'Mis actividades',
+      'Notificaciones',
+      'Recorrido estudiantil',
+      'Mi perfil',
+      'Simulador',
+    ]);
     await pulsar('.regreso');
     expect(raiz().querySelector('#bienvenida-dashboard')).not.toBeNull();
   });

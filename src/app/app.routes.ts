@@ -1,4 +1,6 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
+import { M1_PERSONAL_LOCAL } from './features/autenticacion/m1-personal-http';
 import { requiereEntornoDemostracion } from './features/autenticacion/entorno-demostracion';
 
 /**
@@ -14,6 +16,23 @@ export const routes: Routes = [
     path: 'login',
     title: 'Iniciar sesión · PRISALY',
     loadComponent: () => import('./features/autenticacion/login-page').then((m) => m.LoginPage),
+  },
+  {
+    // DC-FE-60: acceso estudiantil real por código (DD-02 B). Solo en builds QA de integración;
+    // el servidor responde 501 mientras DD-02 no esté activado.
+    path: 'estudiante/acceso',
+    title: 'Acceso estudiantil · PRISALY',
+    canActivate: [() => inject(M1_PERSONAL_LOCAL) || inject(Router).createUrlTree(['/login'])],
+    loadComponent: () =>
+      import('./features/autenticacion/acceso-estudiante-real').then((m) => m.AccesoEstudianteReal),
+  },
+  {
+    // DC-FULLSTACK-DEMO-ESTUDIANTE-04: solo en el entorno demo; fuera de él el guard redirige.
+    path: 'acceso-estudiante',
+    title: 'Entrar como estudiante · PRISALY',
+    canActivate: [requiereEntornoDemostracion],
+    loadComponent: () =>
+      import('./features/autenticacion/acceso-estudiante-demo').then((m) => m.AccesoEstudianteDemo),
   },
   {
     path: 'dashboard',
