@@ -35,33 +35,79 @@
       <img src="images/prisaly-logo.png" alt="PRISALY" width="112" height="84" />
       <span>ESPACIO ACADÉMICO</span>
     </a>
-    <p class="grupo">EXPLORAR</p>
-    <nav aria-label="Secciones de PRISALY" (click)="cerrarMenu()">
-      <a
-        routerLink="/dashboard"
-        aria-label="Inicio"
-        title="Inicio"
-        routerLinkActive="activo"
-        [routerLinkActiveOptions]="{ exact: true }"
-        ariaCurrentWhenActive="page"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 10 12 3l9 7v11h-7v-7h-4v7H3z" /></svg
-        ><span class="nav-texto">Inicio</span>
-      </a>
-      @for (seccion of secciones; track seccion.ruta) {
+    @if (espacioEstudiante()) {
+      <p class="grupo">MI ESPACIO</p>
+      <nav aria-label="Espacio estudiantil" data-prueba="nav-estudiante" (click)="cerrarMenu()">
+        @for (opcion of opcionesEstudiante; track opcion.titulo) {
+          @if (opcion.ruta) {
+            <a
+              [routerLink]="opcion.ruta"
+              [attr.aria-label]="opcion.titulo"
+              [title]="opcion.titulo"
+              routerLinkActive="activo"
+              [routerLinkActiveOptions]="{ exact: true }"
+              ariaCurrentWhenActive="page"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="opcion.icono" /></svg
+              ><span class="nav-texto">{{ opcion.titulo }}</span>
+            </a>
+          } @else {
+            <a
+              routerLink="/dashboard/estudiante"
+              [fragment]="opcion.ancla"
+              [attr.aria-label]="opcion.titulo"
+              [title]="opcion.titulo"
+              (click)="irASeccion(opcion.ancla!)"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="opcion.icono" /></svg
+              ><span class="nav-texto">{{ opcion.titulo }}</span>
+            </a>
+          }
+        }
+      </nav>
+    } @else {
+      <p class="grupo">EXPLORAR</p>
+      <nav aria-label="Secciones de PRISALY" (click)="cerrarMenu()">
         <a
-          [routerLink]="['/dashboard', seccion.ruta]"
-          [attr.aria-label]="seccion.titulo"
-          [title]="seccion.titulo"
+          routerLink="/dashboard"
+          aria-label="Inicio"
+          title="Inicio"
           routerLinkActive="activo"
+          [routerLinkActiveOptions]="{ exact: true }"
           ariaCurrentWhenActive="page"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="seccion.icono" /></svg
-          ><span class="nav-texto">{{ seccion.titulo }}</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 10 12 3l9 7v11h-7v-7h-4v7H3z" /></svg
+          ><span class="nav-texto">Inicio</span>
         </a>
-      }
-    </nav>
+        @for (seccion of secciones(); track seccion.ruta) {
+          <a
+            [routerLink]="['/dashboard', seccion.ruta]"
+            [attr.aria-label]="seccion.titulo"
+            [title]="seccion.titulo"
+            routerLinkActive="activo"
+            ariaCurrentWhenActive="page"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="seccion.icono" /></svg
+            ><span class="nav-texto">{{ seccion.titulo }}</span>
+          </a>
+        }
+        @if (sesion?.estado()?.tipo === 'valida') {
+          <a
+            routerLink="/dashboard/perfil"
+            aria-label="Mi perfil"
+            title="Mi perfil"
+            routerLinkActive="activo"
+            ariaCurrentWhenActive="page"
+            data-prueba="nav-perfil"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10" /></svg
+            ><span class="nav-texto">Mi perfil</span>
+          </a>
+        }
+      </nav>
+    }
     <div class="lateral-pie">
       <div class="nota-demo">
         <span class="resumen-demo"
@@ -69,11 +115,18 @@
         >
         <p>
           {{
-            qaPersonal
+            avisoTecnicoQa
               ? 'QA de personal. Rutas administrativas y docentes pendientes del mapeo oficial de permisos.'
-              : 'Explora las vistas sin iniciar sesión.'
+              : qaPersonal
+                ? 'Entorno QA local. Las operaciones las autoriza el servidor.'
+                : 'Explora las vistas sin iniciar sesión.'
           }}
         </p>
+        @if (estudianteDemo.activa()) {
+          <button class="volver cierre-personal" type="button" (click)="salirDemoEstudiante()">
+            <span aria-hidden="true">⏻</span><span class="nav-texto">Salir de la demostración</span>
+          </button>
+        }
         @if (sesion) {
           <button
             class="volver cierre-personal"
@@ -174,22 +227,35 @@
         @if (sesion?.estado(); as estado) {
           <div>
             {{ estado.tipo === 'valida' ? estado.identidad.nombre : 'Sesión no verificada'
-            }}<small>Personal · QA</small>
+            }}<small>{{
+              estado.tipo === 'valida' && estado.identidad.rol === 'ADMINISTRADOR'
+                ? 'Administración'
+                : estado.tipo === 'valida'
+                  ? 'Personal académico'
+                  : 'Personal · QA'
+            }}</small>
           </div>
         } @else {
-          <div>Perfil demostrativo<small>Sin sesión autenticada</small></div>
+          @if (estudianteDemo.activa(); as demo) {
+            <div data-prueba="perfil-estudiante-demo">
+              Estudiante (demostración)<small>{{ demo.correo }} · sin sesión M1</small>
+            </div>
+          } @else {
+            <div>Perfil demostrativo<small>Sin sesión autenticada</small></div>
+          }
         }
       </div>
     </div>
   </header>
   <div class="area">
-    @if (qaPersonal) {
+    @if (avisoTecnicoQa) {
       <p role="status">
         QA de personal · Permisos por ruta pendientes de confirmación. Las interfaces
         administrativas y docentes no están habilitadas.
       </p>
     }
     @if (mostrarContenido()) {
+      <app-estado-verificacion-acceso />
       <router-outlet />
     } @else if (sesion) {
       <app-estado-acceso-personal [estado]="sesion.estadoPanel()" />

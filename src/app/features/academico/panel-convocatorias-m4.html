@@ -1,0 +1,98 @@
+<section class="panel" aria-labelledby="convocatorias-m4-titulo">
+  <h2 id="convocatorias-m4-titulo">Convocatorias</h2>
+  <p class="etiqueta-real">Datos reales del servidor. Solo se convoca en sesiones sin iniciar.</p>
+
+  @if (!sesionValida()) {
+    <p class="mensaje">Inicia sesión de personal para gestionar convocatorias.</p>
+  } @else {
+    @if (aviso(); as a) {
+      <p
+        class="mensaje"
+        [class.error]="a.tipo === 'error'"
+        [class.exito]="a.tipo === 'exito'"
+        role="status"
+        aria-live="polite"
+      >
+        {{ a.texto }}
+      </p>
+    }
+    @if (ocupado()) {
+      <p role="status">Procesando…</p>
+    }
+
+    <div class="fila">
+      <div class="acciones">
+        <button type="button" (click)="cargarSesiones()" [disabled]="ocupado()">
+          Consultar sesiones
+        </button>
+      </div>
+      @if (sesiones(); as lista) {
+        @if (lista.length === 0) {
+          <p>No hay sesiones programadas.</p>
+        } @else {
+          <div class="acciones">
+            @for (s of lista; track s.id) {
+              <button
+                type="button"
+                (click)="seleccionar(s)"
+                [disabled]="ocupado()"
+                [attr.aria-pressed]="seleccionada()?.id === s.id"
+              >
+                {{ s.titulo }} · {{ etiqueta[s.estado] }}
+              </button>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    @if (seleccionada(); as s) {
+      <div class="fila">
+        <h3>Convocatorias de «{{ s.titulo }}»</h3>
+        @if (convocatorias(); as lista) {
+          @if (lista.length === 0) {
+            <p>La sesión no tiene estudiantes convocados.</p>
+          } @else {
+            <table class="tabla" aria-label="Estudiantes convocados">
+              <thead>
+                <tr>
+                  <th>Estudiante</th>
+                  <th>Convocado</th>
+                  <th>Autorización</th>
+                  <th>Retiro</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of lista; track c.id) {
+                  <tr>
+                    <td class="mono">{{ c.estudianteId }}</td>
+                    <td>{{ fecha(c.convocadoEn) }}</td>
+                    <td>{{ c.estadoAutorizacion ?? '—' }}</td>
+                    <td>{{ fecha(c.fechaRetiro) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        }
+
+        @if (admiteCambios(s.estado)) {
+          <form class="fila" [formGroup]="form" (ngSubmit)="convocar()">
+            <label
+              >Identificador del estudiante (UUID)
+              <input formControlName="estudianteId" autocomplete="off" spellcheck="false" />
+            </label>
+            @if (form.controls.estudianteId.touched && form.controls.estudianteId.invalid) {
+              <span class="error-campo">Introduce un UUID válido.</span>
+            }
+            <div class="acciones">
+              <button type="submit" [disabled]="ocupado()">Convocar estudiante</button>
+            </div>
+          </form>
+        } @else {
+          <p class="mensaje">La sesión ya se inició o finalizó: no admite nuevas convocatorias.</p>
+        }
+      </div>
+    }
+  }
+</section>

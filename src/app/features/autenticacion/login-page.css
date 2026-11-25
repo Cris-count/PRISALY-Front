@@ -184,7 +184,8 @@ button {
   background: #edf4ff;
   padding: 0.75rem;
 }
-.explorar-demo {
+.explorar-demo,
+.acceso-estudiante {
   display: block;
   margin-top: 1.2rem;
   border-top: 1px solid #dce5f1;
@@ -194,7 +195,8 @@ button {
   text-align: center;
   text-decoration: none;
 }
-.explorar-demo:hover {
+.explorar-demo:hover,
+.acceso-estudiante:hover {
   text-decoration: underline;
 }
 .pie {

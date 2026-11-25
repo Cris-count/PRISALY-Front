@@ -29,286 +29,298 @@
         preserveAspectRatio="xMidYMid meet"
       />
     </svg>
-    <div class="accion-principal">
-      <button type="button" disabled aria-describedby="limites-docentes">
-        ＋ Crear convocatoria</button
-      ><small>Pendiente de integración</small>
-    </div>
-    <p class="identidad">Sin sesión docente autenticada · Solo presentación</p>
-  </header>
-  <app-estado-panel
-    class="integracion-convocatorias"
-    estado="pendiente"
-    mensaje="Interfaz visual en preparación. Las operaciones académicas no están disponibles y requieren integración institucional autorizada."
-  />
-  <p class="nota-resumen" id="nota-resumen">
-    Ejemplos visuales · Cifras estáticas, sin consultas ni cálculos reales.
-  </p>
-  <div class="resumen-convocatorias" role="list" aria-describedby="nota-resumen">
-    @for (
-      resumen of [
-        {
-          numero: '8',
-          titulo: 'Convocatorias totales',
-          color: 'azul',
-          icono: 'M3 9h4l12-5v16L7 15H3zM7 15l2 7h4l-2-6M22 8v8',
-        },
-        {
-          numero: '3',
-          titulo: 'En curso',
-          color: 'naranja',
-          icono: 'M3 5h18v17H3zM7 2v6M17 2v6M3 11h18M7 15h2M13 15h2M7 19h2',
-        },
-        {
-          numero: '4',
-          titulo: 'Finalizadas',
-          color: 'verde',
-          icono: 'M8 12l3 3 6-7M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
-        },
-        {
-          numero: '1',
-          titulo: 'Próximas',
-          color: 'violeta',
-          icono: 'M5 2h14M5 22h14M6 2v4l6 6-6 6v4M18 2v4l-6 6 6 6v4',
-        },
-      ];
-      track resumen.titulo
-    ) {
-      <article class="tarjeta-resumen" [attr.data-acento]="resumen.color" role="listitem">
-        <span class="icono-resumen" aria-hidden="true"
-          ><svg viewBox="0 0 24 24"><path [attr.d]="resumen.icono" /></svg
-        ></span>
-        <div>
-          <strong>{{ resumen.numero }}</strong>
-          <p>{{ resumen.titulo }}</p>
-        </div>
-      </article>
+    @if (!operativo()) {
+      <div class="accion-principal">
+        <button type="button" disabled aria-describedby="limites-docentes">
+          ＋ Crear convocatoria</button
+        ><small>Pendiente de integración</small>
+      </div>
     }
-  </div>
-  <div class="gestion-convocatorias">
-    <section
-      class="panel-docente listado-convocatorias"
-      aria-labelledby="titulo-listado-convocatorias"
-    >
-      <div class="cabecera-listado">
-        <h2 id="titulo-listado-convocatorias">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 4h15M7 12h15M7 20h15M2 4h1M2 12h1M2 20h1" /></svg
-          >Listado de convocatorias
-        </h2>
-        <div class="filtros-convocatorias">
-          <label for="estado-convocatoria-demo"
-            >Estado<select id="estado-convocatoria-demo" disabled>
-              <option>Todos los estados</option>
-            </select></label
-          ><label for="buscar-convocatoria-demo"
-            >Buscar convocatoria<input
-              id="buscar-convocatoria-demo"
-              type="search"
-              placeholder="Buscar convocatoria…"
-              disabled
-          /></label>
-        </div>
-      </div>
-      <p id="nota-listado" class="nota">
-        Ejemplo visual estático · No son convocatorias reales. Sin fechas ni participantes
-        consultados.
-      </p>
-      <div
-        class="tabla-convocatorias"
-        tabindex="0"
-        role="region"
-        aria-label="Tabla demostrativa de convocatorias"
+    @if (operativo()) {
+      <p class="identidad">Sesión docente verificada por el servidor</p>
+    } @else {
+      <p class="identidad">Sin sesión docente autenticada · Solo presentación</p>
+    }
+  </header>
+  <app-recorrido-docente etapa="convocatorias" />
+  <app-panel-convocatorias-m4 />
+  @if (!operativo()) {
+    <app-estado-panel
+      class="integracion-convocatorias"
+      estado="pendiente"
+      mensaje="Interfaz visual en preparación. Las operaciones académicas no están disponibles y requieren integración institucional autorizada."
+    />
+    <p class="nota-resumen" id="nota-resumen">
+      Ejemplos visuales · Cifras estáticas, sin consultas ni cálculos reales.
+    </p>
+    <div class="resumen-convocatorias" role="list" aria-describedby="nota-resumen">
+      @for (
+        resumen of [
+          {
+            numero: '8',
+            titulo: 'Convocatorias totales',
+            color: 'azul',
+            icono: 'M3 9h4l12-5v16L7 15H3zM7 15l2 7h4l-2-6M22 8v8',
+          },
+          {
+            numero: '3',
+            titulo: 'En curso',
+            color: 'naranja',
+            icono: 'M3 5h18v17H3zM7 2v6M17 2v6M3 11h18M7 15h2M13 15h2M7 19h2',
+          },
+          {
+            numero: '4',
+            titulo: 'Finalizadas',
+            color: 'verde',
+            icono: 'M8 12l3 3 6-7M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
+          },
+          {
+            numero: '1',
+            titulo: 'Próximas',
+            color: 'violeta',
+            icono: 'M5 2h14M5 22h14M6 2v4l6 6-6 6v4M18 2v4l-6 6 6 6v4',
+          },
+        ];
+        track resumen.titulo
+      ) {
+        <article class="tarjeta-resumen" [attr.data-acento]="resumen.color" role="listitem">
+          <span class="icono-resumen" aria-hidden="true"
+            ><svg viewBox="0 0 24 24"><path [attr.d]="resumen.icono" /></svg
+          ></span>
+          <div>
+            <strong>{{ resumen.numero }}</strong>
+            <p>{{ resumen.titulo }}</p>
+          </div>
+        </article>
+      }
+    </div>
+    <div class="gestion-convocatorias">
+      <section
+        class="panel-docente listado-convocatorias"
+        aria-labelledby="titulo-listado-convocatorias"
       >
-        <table aria-describedby="nota-listado">
-          <caption>
-            Cifras y filas de muestra independientes · Sin registros del Backend
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Convocatoria</th>
-              <th scope="col">Tipo</th>
-              <th scope="col">Apertura</th>
-              <th scope="col">Cierre</th>
-              <th scope="col">Estado</th>
-              <th scope="col">Acciones</th>
-            </tr>
-          </thead>
-          <tbody data-demostracion="visual">
-            @for (
-              fila of [
-                {
-                  nombre: 'Concurso de análisis de casos',
-                  tipo: 'Académica',
-                  estado: 'En curso',
-                  color: 'curso',
-                },
-                {
-                  nombre: 'Participación en proyecto de investigación',
-                  tipo: 'Investigación',
-                  estado: 'En curso',
-                  color: 'curso',
-                },
-                {
-                  nombre: 'Seminario de Psicología Social',
-                  tipo: 'Formación',
-                  estado: 'Finalizada',
-                  color: 'finalizada',
-                },
-                {
-                  nombre: 'Convocatoria de roles para casos académicos',
-                  tipo: 'Académica',
-                  estado: 'Finalizada',
-                  color: 'finalizada',
-                },
-                {
-                  nombre: 'Voluntariado en acompañamiento de casos',
-                  tipo: 'Extensión',
-                  estado: 'Próxima',
-                  color: 'proxima',
-                },
-              ];
-              track fila.nombre
-            ) {
+        <div class="cabecera-listado">
+          <h2 id="titulo-listado-convocatorias">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4h15M7 12h15M7 20h15M2 4h1M2 12h1M2 20h1" /></svg
+            >Listado de convocatorias
+          </h2>
+          <div class="filtros-convocatorias">
+            <label for="estado-convocatoria-demo"
+              >Estado<select id="estado-convocatoria-demo" disabled>
+                <option>Todos los estados</option>
+              </select></label
+            ><label for="buscar-convocatoria-demo"
+              >Buscar convocatoria<input
+                id="buscar-convocatoria-demo"
+                type="search"
+                placeholder="Buscar convocatoria…"
+                disabled
+            /></label>
+          </div>
+        </div>
+        <p id="nota-listado" class="nota">
+          Ejemplo visual estático · No son convocatorias reales. Sin fechas ni participantes
+          consultados.
+        </p>
+        <div
+          class="tabla-convocatorias"
+          tabindex="0"
+          role="region"
+          aria-label="Tabla demostrativa de convocatorias"
+        >
+          <table aria-describedby="nota-listado">
+            <caption>
+              Cifras y filas de muestra independientes · Sin registros del Backend
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">{{ fila.nombre }}</th>
-                <td>
-                  <span class="tipo-demo">{{ fila.tipo }}</span>
-                </td>
-                <td>Sin fecha</td>
-                <td>Sin fecha</td>
-                <td>
-                  <span class="estado-demo" [attr.data-estado]="fila.color">{{ fila.estado }}</span>
-                </td>
-                <td>
-                  <div class="acciones-fila">
-                    <button
-                      type="button"
-                      disabled
-                      aria-label="Ver ejemplo — pendiente de integración"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg></button
-                    ><button
-                      type="button"
-                      disabled
-                      aria-label="Editar ejemplo — pendiente de integración"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="m3 17 14-14 4 4L7 21H3zM14 6l4 4" />
-                      </svg></button
-                    ><button
-                      type="button"
-                      disabled
-                      aria-label="Más opciones — pendiente de integración"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <circle cx="4" cy="12" r="1" />
-                        <circle cx="12" cy="12" r="1" />
-                        <circle cx="20" cy="12" r="1" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
+                <th scope="col">Convocatoria</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Apertura</th>
+                <th scope="col">Cierre</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acciones</th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      <app-estado-panel
-        estado="sin-datos"
-        mensaje="Sin registros consultados en esta demostración. La información estará disponible cuando se habilite su integración."
-      />
-    </section>
-    <section class="panel-docente opciones-convocatorias" aria-labelledby="gestion-convocatorias">
-      <h2 id="gestion-convocatorias">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m9 2 6 0 1 4 4 1 2 5-3 3 0 5-5 2-3-3-5 0-2-5 3-3z" />
-          <circle cx="12" cy="12" r="3" /></svg
-        >Gestión de convocatorias
-      </h2>
-      <p class="nota">Todas las acciones: pendientes de integración.</p>
-      <div class="opciones-convocatoria">
-        @for (
-          opcion of [
-            {
-              titulo: 'Crear convocatoria',
-              descripcion: 'Registra una nueva oportunidad.',
-              icono: 'M12 3v18M3 12h18',
-            },
-            {
-              titulo: 'Editar convocatoria',
-              descripcion: 'Actualiza la información.',
-              icono: 'm3 17 14-14 4 4L7 21H3zM14 6l4 4',
-            },
-            {
-              titulo: 'Gestionar participantes',
-              descripcion: 'Revisa y administra inscripciones.',
-              icono:
-                'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-4M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
-            },
-            {
-              titulo: 'Seguimiento',
-              descripcion: 'Visualiza el alcance y resultados.',
-              icono: 'M2 14h4v8H2zM10 8h4v14h-4zM18 2h4v20h-4z',
-            },
-            {
-              titulo: 'Reportes',
-              descripcion: 'Descarga reportes de participación.',
-              icono: 'M12 2v14m-5-5 5 5 5-5M3 16v6h18v-6',
-            },
-          ];
-          track opcion.titulo
-        ) {
+            </thead>
+            <tbody data-demostracion="visual">
+              @for (
+                fila of [
+                  {
+                    nombre: 'Concurso de análisis de casos',
+                    tipo: 'Académica',
+                    estado: 'En curso',
+                    color: 'curso',
+                  },
+                  {
+                    nombre: 'Participación en proyecto de investigación',
+                    tipo: 'Investigación',
+                    estado: 'En curso',
+                    color: 'curso',
+                  },
+                  {
+                    nombre: 'Seminario de Psicología Social',
+                    tipo: 'Formación',
+                    estado: 'Finalizada',
+                    color: 'finalizada',
+                  },
+                  {
+                    nombre: 'Convocatoria de roles para casos académicos',
+                    tipo: 'Académica',
+                    estado: 'Finalizada',
+                    color: 'finalizada',
+                  },
+                  {
+                    nombre: 'Voluntariado en acompañamiento de casos',
+                    tipo: 'Extensión',
+                    estado: 'Próxima',
+                    color: 'proxima',
+                  },
+                ];
+                track fila.nombre
+              ) {
+                <tr>
+                  <th scope="row">{{ fila.nombre }}</th>
+                  <td>
+                    <span class="tipo-demo">{{ fila.tipo }}</span>
+                  </td>
+                  <td>Sin fecha</td>
+                  <td>Sin fecha</td>
+                  <td>
+                    <span class="estado-demo" [attr.data-estado]="fila.color">{{
+                      fila.estado
+                    }}</span>
+                  </td>
+                  <td>
+                    <div class="acciones-fila">
+                      <button
+                        type="button"
+                        disabled
+                        aria-label="Ver ejemplo — pendiente de integración"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg></button
+                      ><button
+                        type="button"
+                        disabled
+                        aria-label="Editar ejemplo — pendiente de integración"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="m3 17 14-14 4 4L7 21H3zM14 6l4 4" />
+                        </svg></button
+                      ><button
+                        type="button"
+                        disabled
+                        aria-label="Más opciones — pendiente de integración"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="4" cy="12" r="1" />
+                          <circle cx="12" cy="12" r="1" />
+                          <circle cx="20" cy="12" r="1" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <app-estado-panel
+          estado="sin-datos"
+          mensaje="Sin registros consultados en esta demostración. La información estará disponible cuando se habilite su integración."
+        />
+      </section>
+      <section class="panel-docente opciones-convocatorias" aria-labelledby="gestion-convocatorias">
+        <h2 id="gestion-convocatorias">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 2 6 0 1 4 4 1 2 5-3 3 0 5-5 2-3-3-5 0-2-5 3-3z" />
+            <circle cx="12" cy="12" r="3" /></svg
+          >Gestión de convocatorias
+        </h2>
+        <p class="nota">Todas las acciones: pendientes de integración.</p>
+        <div class="opciones-convocatoria">
+          @for (
+            opcion of [
+              {
+                titulo: 'Crear convocatoria',
+                descripcion: 'Registra una nueva oportunidad.',
+                icono: 'M12 3v18M3 12h18',
+              },
+              {
+                titulo: 'Editar convocatoria',
+                descripcion: 'Actualiza la información.',
+                icono: 'm3 17 14-14 4 4L7 21H3zM14 6l4 4',
+              },
+              {
+                titulo: 'Gestionar participantes',
+                descripcion: 'Revisa y administra inscripciones.',
+                icono:
+                  'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-4M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
+              },
+              {
+                titulo: 'Seguimiento',
+                descripcion: 'Visualiza el alcance y resultados.',
+                icono: 'M2 14h4v8H2zM10 8h4v14h-4zM18 2h4v20h-4z',
+              },
+              {
+                titulo: 'Reportes',
+                descripcion: 'Descarga reportes de participación.',
+                icono: 'M12 2v14m-5-5 5 5 5-5M3 16v6h18v-6',
+              },
+            ];
+            track opcion.titulo
+          ) {
+            <button type="button" disabled aria-describedby="limites-docentes">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="opcion.icono" /></svg
+              ><span
+                ><strong>{{ opcion.titulo }}</strong
+                ><small>{{ opcion.descripcion }}</small></span
+              ><span class="flecha" aria-hidden="true">›</span>
+            </button>
+          }
+        </div>
+      </section>
+    </div>
+    <details class="preparacion-convocatorias">
+      <summary>Preparación institucional de convocatorias · No disponible</summary>
+      <h2>{{ vista.consulta }}</h2>
+      <p>No se han consultado registros. Este espacio no contiene datos académicos reales.</p>
+      <h2>{{ vista.organizacion }}</h2>
+      <p>Esquema demostrativo sin datos académicos reales. No es un editor de contenido.</p>
+      <app-estructura-docente [bloques]="vista.bloques" />
+      <div class="acciones-docentes">
+        @for (accion of vista.acciones; track accion) {
           <button type="button" disabled aria-describedby="limites-docentes">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="opcion.icono" /></svg
-            ><span
-              ><strong>{{ opcion.titulo }}</strong
-              ><small>{{ opcion.descripcion }}</small></span
-            ><span class="flecha" aria-hidden="true">›</span>
+            {{ accion }}<span>Pendiente de integración</span>
           </button>
         }
       </div>
-    </section>
-  </div>
-  <details class="preparacion-convocatorias">
-    <summary>Preparación institucional de convocatorias · No disponible</summary>
-    <h2>{{ vista.consulta }}</h2>
-    <p>No se han consultado registros. Este espacio no contiene datos académicos reales.</p>
-    <h2>{{ vista.organizacion }}</h2>
-    <p>Esquema demostrativo sin datos académicos reales. No es un editor de contenido.</p>
-    <app-estructura-docente [bloques]="vista.bloques" />
-    <div class="acciones-docentes">
-      @for (accion of vista.acciones; track accion) {
-        <button type="button" disabled aria-describedby="limites-docentes">
-          {{ accion }}<span>Pendiente de integración</span>
-        </button>
-      }
-    </div>
-    <fieldset disabled aria-describedby="nota-convocatoria">
-      <legend>Campos previstos · no disponibles</legend>
-      <label for="sesion-convocatoria">Sesión académica</label
-      ><select id="sesion-convocatoria">
-        <option>Consulta de sesiones pendiente</option></select
-      ><label for="destinatarios-convocatoria">Destinatarios</label
-      ><input
-        id="destinatarios-convocatoria"
-        type="text"
-        placeholder="Sin destinatarios consultados"
-      /><label for="condiciones-convocatoria">Condiciones</label
-      ><textarea
-        id="condiciones-convocatoria"
-        rows="2"
-        placeholder="Pendientes de consulta institucional"
-      ></textarea>
-      <p id="nota-convocatoria">Esquema visual sin envío de formularios, mensajes ni correos.</p>
-    </fieldset>
-  </details>
-  <p id="limites-docentes" class="nota">{{ vista.nota }}</p>
-  <p class="pie-convocatorias">
-    <strong>Implementación pendiente</strong> · No se crean, guardan ni modifican registros en esta
-    interfaz.
-  </p>
+      <fieldset disabled aria-describedby="nota-convocatoria">
+        <legend>Campos previstos · no disponibles</legend>
+        <label for="sesion-convocatoria">Sesión académica</label
+        ><select id="sesion-convocatoria">
+          <option>Consulta de sesiones pendiente</option></select
+        ><label for="destinatarios-convocatoria">Destinatarios</label
+        ><input
+          id="destinatarios-convocatoria"
+          type="text"
+          placeholder="Sin destinatarios consultados"
+        /><label for="condiciones-convocatoria">Condiciones</label
+        ><textarea
+          id="condiciones-convocatoria"
+          rows="2"
+          placeholder="Pendientes de consulta institucional"
+        ></textarea>
+        <p id="nota-convocatoria">Esquema visual sin envío de formularios, mensajes ni correos.</p>
+      </fieldset>
+    </details>
+    <p id="limites-docentes" class="nota">{{ vista.nota }}</p>
+    <p class="pie-convocatorias">
+      <strong>Implementación pendiente</strong> · No se crean, guardan ni modifican registros en
+      esta interfaz.
+    </p>
+  }
 </div>

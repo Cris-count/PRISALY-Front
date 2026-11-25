@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
+import { provideEntornoDemostracionAutorizado } from '../autenticacion/entorno-demostracion';
 import { ParticipacionGateway } from '../simulador/services/participacion.gateway';
 import { DASHBOARD_NAVEGACION, DASHBOARD_SECCIONES } from './dashboard-secciones';
 
@@ -25,6 +26,9 @@ describe('Dashboard público de demostración', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),
+        // FE-58-05 (H-58-01): esta suite prueba el dashboard demostrativo, que solo existe en el
+        // entorno de demostración autorizado.
+        provideEntornoDemostracionAutorizado(),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ParticipacionGateway, useValue: gateway },
@@ -174,7 +178,10 @@ describe('Dashboard público de demostración', () => {
       const enlaces = Array.from(lateral.querySelectorAll<HTMLAnchorElement>('nav a'));
       const rutas = [
         '/dashboard',
-        ...DASHBOARD_NAVEGACION.map((s) => '/dashboard/' + s.ruta),
+        // DC-FE-UX-ROLES-24: el espacio estudiantil tiene su propio menú (se prueba aparte).
+        ...DASHBOARD_NAVEGACION.filter((s) => s.ruta !== 'estudiante').map(
+          (s) => '/dashboard/' + s.ruta,
+        ),
         '/dashboard',
       ];
       function identidad() {
@@ -428,6 +435,20 @@ describe('Dashboard público de demostración', () => {
     expect(raiz().querySelector('nav [aria-current="page"]')?.textContent).toContain(
       'Mi espacio de aprendizaje',
     );
+    // DC-FE-UX-ROLES-24: menú lateral exclusivamente estudiantil.
+    const opciones = Array.from(raiz().querySelectorAll('aside nav a'), (a) =>
+      a.textContent?.trim(),
+    );
+    expect(opciones).toEqual([
+      'Mi espacio de aprendizaje',
+      'Mis sesiones',
+      'Mis convocatorias',
+      'Mis actividades',
+      'Notificaciones',
+      'Recorrido estudiantil',
+      'Mi perfil',
+      'Simulador',
+    ]);
     await pulsar('.regreso');
     expect(raiz().querySelector('#bienvenida-dashboard')).not.toBeNull();
   });

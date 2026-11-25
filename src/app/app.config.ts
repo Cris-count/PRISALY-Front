@@ -9,6 +9,7 @@ import {
 } from './features/autenticacion/m1-personal-http';
 
 import { routes } from './app.routes';
+import { personalAcademicoInterceptor } from './features/academico/academico-http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -16,7 +17,11 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withFetch(),
-      withInterceptors(environment.personalQaHabilitado ? [personalM1Interceptor] : []),
+      withInterceptors(
+        environment.personalQaHabilitado
+          ? [personalM1Interceptor, personalAcademicoInterceptor]
+          : [],
+      ),
     ),
     ...(environment.personalQaHabilitado ? [provideM1PersonalLocal()] : []),
   ],

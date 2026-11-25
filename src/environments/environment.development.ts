@@ -9,6 +9,8 @@
  */
 export const environment = {
   personalQaHabilitado: false,
+  /** H-58-01: desarrollo no es un entorno de demostración autorizado (usar `--configuration demo`). */
+  demostracionesHabilitadas: false,
   production: false,
   apiBaseUrl: 'http://localhost:8080/api',
   /** Ciudad 3D contra la señalización local de PS2-LAB-03; solo en http://127.0.0.1:4213. */

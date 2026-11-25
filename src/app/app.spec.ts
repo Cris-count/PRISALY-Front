@@ -3,12 +3,15 @@ import { provideRouter, Router } from '@angular/router';
 
 import { App } from './app';
 import { routes } from './app.routes';
+import { provideEntornoDemostracionAutorizado } from './features/autenticacion/entorno-demostracion';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes)],
+      // FE-58 H-58-01: el layout se comprueba sobre dashboard y simulador demostrativos, que solo
+      // existen en el entorno demo; el bloqueo fuera de demo se prueba en fe58-simulador.spec.ts.
+      providers: [provideRouter(routes), provideEntornoDemostracionAutorizado()],
     }).compileComponents();
   });
 

@@ -1,4 +1,5 @@
 <div class="pagina">
+  <app-aviso-acceso-personal />
   <div class="ciudad-inicio" aria-hidden="true">
     <img src="images/inicio-ciudad.webp" alt="" width="800" height="1200" /><img
       class="logo-plaza"
@@ -49,7 +50,7 @@
       <h2 id="secciones-dashboard">Explora la plataforma</h2>
     </div>
     <div class="tarjetas">
-      @for (seccion of secciones; track seccion.ruta) {
+      @for (seccion of secciones(); track seccion.ruta) {
         @let icono =
           seccion.ruta === 'casos-academicos'
             ? 'M2 7l10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5'

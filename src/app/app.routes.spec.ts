@@ -3,6 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { routes } from './app.routes';
+import { provideEntornoDemostracionAutorizado } from './features/autenticacion/entorno-demostracion';
 import { ParticipacionGateway } from './features/simulador/services/participacion.gateway';
 
 describe('Rutas públicas de presentación', () => {
@@ -19,22 +20,29 @@ describe('Rutas públicas de presentación', () => {
       'finalizarIntento',
     ]);
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), { provide: ParticipacionGateway, useValue: gateway }],
+      providers: [
+        provideRouter(routes),
+        { provide: ParticipacionGateway, useValue: gateway },
+        // FE-58-05 (H-58-01): el inicio público del dashboard solo existe en el entorno de
+        // demostración autorizado; el bloqueo en producción se prueba en fe58-resolucion.spec.ts.
+        provideEntornoDemostracionAutorizado(),
+      ],
     });
   });
 
   for (const ruta of ['/', '/login', '/dashboard', '/simulador', '/simulador-unreal', '/simulador-tecnico-2d5', '/simulador-integrado', '/ruta-inexistente']) {
     it(`resuelve ${ruta} hacia el inicio público sin atribuir identidad ni iniciar intentos`, async () => {
       const harness = await RouterTestingHarness.create(ruta);
-      const esUnreal = ruta === '/simulador' || ruta === '/simulador-unreal' || ruta === '/simulador-integrado';
+      const esUnreal = ruta === '/simulador' || ruta === '/simulador-unreal';
       const esTecnico = ruta === '/simulador-tecnico-2d5';
+      const esIntegrado = ruta === '/simulador-integrado';
       const esDashboard = ruta === '/dashboard';
       expect(TestBed.inject(Router).url).toBe(
-        esUnreal ? '/simulador-unreal' : esTecnico ? '/simulador-tecnico-2d5' : esDashboard ? '/dashboard' : '/login',
+        esUnreal ? '/simulador-unreal' : esTecnico ? '/simulador-tecnico-2d5' : esIntegrado ? '/simulador-integrado' : esDashboard ? '/dashboard' : '/login',
       );
       expect(
         harness.routeNativeElement?.querySelector(
-          esUnreal ? '#titulo-disponibilidad' : esTecnico ? '#simulador-titulo' : esDashboard ? '#bienvenida-dashboard' : 'form',
+          esUnreal ? '#titulo-disponibilidad' : esTecnico ? '#simulador-titulo' : esIntegrado ? '.pantalla-inicio-integrada' : esDashboard ? '#bienvenida-dashboard' : 'form',
         ),
       ).not.toBeNull();
       for (const operacion of Object.values(gateway)) {

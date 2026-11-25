@@ -1,3 +1,4 @@
+import { DEMOSTRACIONES_HABILITADAS } from './entorno-demostracion';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -23,6 +24,8 @@ import { SesionPersonalM1 } from './m1-personal-sesion';
 })
 export class LoginPage {
   protected readonly qaPersonal = inject(M1_PERSONAL_LOCAL);
+  /** DC-FULLSTACK-DEMO-ESTUDIANTE-04: enlace a la entrada estudiantil solo en el entorno demo. */
+  protected readonly demostraciones = inject(DEMOSTRACIONES_HABILITADAS) === true;
   private readonly sesion = this.qaPersonal ? inject(SesionPersonalM1) : null;
   private readonly router = inject(Router);
   protected readonly enviando = computed(() => {

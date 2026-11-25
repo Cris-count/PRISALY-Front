@@ -1,0 +1,152 @@
+<section class="panel" aria-labelledby="casos-m3-titulo">
+  <h2 id="casos-m3-titulo">Casos académicos</h2>
+  <p class="etiqueta-real">
+    Datos reales del servidor. Estados y reglas de publicación los aplica el Backend.
+  </p>
+
+  @if (!sesionValida()) {
+    <p class="mensaje">Inicia sesión de personal para gestionar casos.</p>
+  } @else {
+    @if (aviso(); as a) {
+      <p
+        class="mensaje"
+        [class.error]="a.tipo === 'error'"
+        [class.exito]="a.tipo === 'exito'"
+        role="status"
+        aria-live="polite"
+      >
+        {{ a.texto }}
+      </p>
+    }
+    @if (ocupado()) {
+      <p role="status">Procesando…</p>
+    }
+
+    <form class="fila" [formGroup]="formCrear" (ngSubmit)="crear()">
+      <h3>Crear caso (borrador)</h3>
+      <div class="campos">
+        <label
+          >Título
+          <input formControlName="titulo" maxlength="150" />
+        </label>
+        <label
+          >Tiempo estimado (minutos)
+          <input formControlName="minutos" type="number" min="1" max="1440" />
+        </label>
+      </div>
+      <label
+        >Historia
+        <textarea formControlName="historia" rows="3"></textarea>
+      </label>
+      <label
+        >Desarrollo situacional
+        <textarea formControlName="desarrolloSituacional" rows="3"></textarea>
+      </label>
+      @if (formCrear.touched && formCrear.invalid) {
+        <span class="error-campo"
+          >El título (máx. 150) y un tiempo estimado mayor que cero son obligatorios.</span
+        >
+      }
+      <div class="acciones"><button type="submit" [disabled]="ocupado()">Crear caso</button></div>
+    </form>
+
+    <form class="fila" [formGroup]="formConsultar" (ngSubmit)="consultarPorId()">
+      <h3>Consultar caso</h3>
+      <label
+        >Identificador del caso (UUID)
+        <input formControlName="idCaso" autocomplete="off" spellcheck="false" />
+      </label>
+      @if (formConsultar.controls.idCaso.touched && formConsultar.controls.idCaso.invalid) {
+        <span class="error-campo">Introduce un UUID válido.</span>
+      }
+      <div class="acciones"><button type="submit" [disabled]="ocupado()">Consultar</button></div>
+      @if (store.casos().length > 0) {
+        <p>Casos de esta sesión:</p>
+        <ul>
+          @for (c of store.casos(); track c.idCaso) {
+            <li>
+              <button type="button" (click)="consultar(c.idCaso)" [disabled]="ocupado()">
+                {{ c.titulo }} · {{ c.estado }}
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="etiqueta-real">
+          El servidor no publica un listado de casos: aparecerán aquí los que crees o consultes en
+          esta sesión.
+        </p>
+      }
+    </form>
+
+    @if (caso(); as c) {
+      <div class="fila">
+        <h3>Detalle</h3>
+        <table class="tabla" aria-label="Detalle del caso">
+          <tbody>
+            <tr>
+              <th>Identificador</th>
+              <td class="mono">{{ c.idCaso }}</td>
+            </tr>
+            <tr>
+              <th>Título</th>
+              <td>{{ c.titulo }}</td>
+            </tr>
+            <tr>
+              <th>Estado</th>
+              <td>{{ c.estado }}</td>
+            </tr>
+            <tr>
+              <th>Tiempo estimado</th>
+              <td>{{ c.tiempoEstimadoSegundos / 60 }} min</td>
+            </tr>
+            <tr>
+              <th>Versión (ETag)</th>
+              <td>{{ etag() ? 'recibida' : 'no disponible' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        @if (siguientePaso(); as paso) {
+          <p class="etiqueta-real" data-prueba="siguiente-paso">{{ paso }}</p>
+        }
+
+        @if (requiereReconsulta()) {
+          <div class="acciones">
+            <button type="button" (click)="consultar(c.idCaso)" [disabled]="ocupado()">
+              Volver a consultar el caso
+            </button>
+          </div>
+        }
+
+        <form class="fila" [formGroup]="formEditar" (ngSubmit)="guardarEdicion()">
+          <h3>Editar caso</h3>
+          <div class="campos">
+            <label
+              >Título
+              <input formControlName="titulo" maxlength="150" />
+            </label>
+            <label
+              >Tiempo estimado (minutos)
+              <input formControlName="minutos" type="number" min="1" max="1440" />
+            </label>
+          </div>
+          @if (formEditar.touched && formEditar.invalid) {
+            <span class="error-campo">Título y tiempo estimado válidos son obligatorios.</span>
+          }
+          <div class="acciones">
+            <button type="submit" [disabled]="ocupado() || requiereReconsulta() || !etag()">
+              Guardar cambios
+            </button>
+            <button
+              type="button"
+              (click)="publicar()"
+              [disabled]="ocupado() || requiereReconsulta() || !etag()"
+            >
+              Solicitar publicación
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  }
+</section>

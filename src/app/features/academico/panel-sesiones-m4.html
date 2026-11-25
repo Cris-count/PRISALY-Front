@@ -1,0 +1,190 @@
+<section class="panel" aria-labelledby="sesiones-m4-titulo">
+  <h2 id="sesiones-m4-titulo">Programación de sesiones</h2>
+  <p class="etiqueta-real">
+    Datos reales del servidor. Solo se admiten casos publicados; las transiciones las valida el
+    Backend.
+  </p>
+
+  @if (!sesionValida()) {
+    <p class="mensaje">Inicia sesión de personal para gestionar sesiones.</p>
+  } @else {
+    @if (aviso(); as a) {
+      <p
+        class="mensaje"
+        [class.error]="a.tipo === 'error'"
+        [class.exito]="a.tipo === 'exito'"
+        role="status"
+        aria-live="polite"
+      >
+        {{ a.texto }}
+      </p>
+    }
+    @if (ocupado()) {
+      <p role="status">Procesando…</p>
+    }
+
+    <div class="fila">
+      <div class="acciones">
+        <button type="button" (click)="listar()" [disabled]="ocupado()">Consultar sesiones</button>
+      </div>
+      @if (sesiones(); as lista) {
+        @if (lista.length === 0) {
+          <p>No hay sesiones programadas.</p>
+        } @else {
+          <table class="tabla" aria-label="Sesiones programadas">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Estado</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of lista; track s.id) {
+                <tr>
+                  <td>{{ s.titulo }}</td>
+                  <td>{{ etiqueta[s.estado] }}</td>
+                  <td>{{ fecha(s.fechaInicio) }}</td>
+                  <td>{{ fecha(s.fechaFin) }}</td>
+                  <td>
+                    <button type="button" (click)="consultar(s.id)" [disabled]="ocupado()">
+                      Ver detalle
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    </div>
+
+    <form class="fila" [formGroup]="formCrear" (ngSubmit)="crear()">
+      <h3>Programar sesión</h3>
+      <label
+        >Caso (UUID de un caso publicado)
+        <input formControlName="casoId" autocomplete="off" spellcheck="false" />
+      </label>
+      @if (casosPublicados().length > 0) {
+        <p>Casos publicados de esta sesión (estado de la última lectura del servidor):</p>
+        <div class="acciones" data-prueba="casos-publicados">
+          @for (c of casosPublicados(); track c.idCaso) {
+            <button type="button" (click)="usarCaso(c.idCaso)">
+              {{ c.titulo }} · {{ c.estado }}
+            </button>
+          }
+        </div>
+      }
+      @if (casosNoPublicados().length > 0) {
+        <p class="etiqueta-real" data-prueba="casos-no-publicados">
+          Casos recordados aún no publicados (M4 los rechaza):
+          @for (c of casosNoPublicados(); track c.idCaso; let ultimo = $last) {
+            {{ c.titulo }} · {{ c.estado }}{{ ultimo ? '' : '; ' }}
+          }
+        </p>
+      }
+      <div class="campos">
+        <label>Título <input formControlName="titulo" maxlength="150" /></label>
+        <label>Inicio <input formControlName="fechaInicio" type="datetime-local" /></label>
+        <label>Fin <input formControlName="fechaFin" type="datetime-local" /></label>
+        <label
+          >Tiempo máximo de participación (minutos)
+          <input formControlName="minutosMaximos" type="number" min="1"
+        /></label>
+        <label>Lugar físico <input formControlName="lugarFisico" maxlength="200" /></label>
+      </div>
+      <label
+        >Mensaje para los estudiantes
+        <textarea formControlName="mensajePersonalizado" rows="2"></textarea>
+      </label>
+      @if (formCrear.touched && formCrear.invalid) {
+        <span class="error-campo">
+          @if (formCrear.hasError('rango')) {
+            La fecha de fin debe ser posterior al inicio.
+          } @else {
+            Caso (UUID), título, fechas y tiempo máximo son obligatorios.
+          }
+        </span>
+      }
+      <div class="acciones">
+        <button type="submit" [disabled]="ocupado()">Programar sesión</button>
+      </div>
+    </form>
+
+    @if (seleccionada(); as s) {
+      <div class="fila">
+        <h3>Detalle de la sesión</h3>
+        <table class="tabla" aria-label="Detalle de la sesión">
+          <tbody>
+            <tr>
+              <th>Identificador</th>
+              <td class="mono">{{ s.id }}</td>
+            </tr>
+            <tr>
+              <th>Caso</th>
+              <td class="mono">{{ s.casoId }}</td>
+            </tr>
+            <tr>
+              <th>Estado</th>
+              <td>{{ etiqueta[s.estado] }}</td>
+            </tr>
+            <tr>
+              <th>Inicio real</th>
+              <td>{{ fecha(s.fechaInicioReal) }}</td>
+            </tr>
+            <tr>
+              <th>Fin real</th>
+              <td>{{ fecha(s.fechaFinReal) }}</td>
+            </tr>
+            <tr>
+              <th>Tiempo máximo</th>
+              <td>{{ s.tiempoMaximoParticipacionSegundos / 60 }} min</td>
+            </tr>
+          </tbody>
+        </table>
+
+        @if (!admiteCambios(s.estado)) {
+          <p class="mensaje">
+            La sesión ya no admite cambios de programación ni convocatorias (solo antes de iniciar).
+          </p>
+        } @else {
+          <form class="fila" [formGroup]="formEditar" (ngSubmit)="guardarEdicion()">
+            <h3>Editar programación</h3>
+            <div class="campos">
+              <label>Título <input formControlName="titulo" maxlength="150" /></label>
+              <label>Inicio <input formControlName="fechaInicio" type="datetime-local" /></label>
+              <label>Fin <input formControlName="fechaFin" type="datetime-local" /></label>
+              <label>Lugar físico <input formControlName="lugarFisico" maxlength="200" /></label>
+            </div>
+            <label
+              >Mensaje <textarea formControlName="mensajePersonalizado" rows="2"></textarea>
+            </label>
+            @if (formEditar.touched && formEditar.invalid) {
+              <span class="error-campo"
+                >Revisa título y fechas (el fin debe ser posterior al inicio).</span
+              >
+            }
+            <div class="acciones">
+              <button type="submit" [disabled]="ocupado()">Guardar programación</button>
+            </div>
+          </form>
+        }
+
+        <div class="fila">
+          <h3>Estado</h3>
+          @if (siguiente[s.estado]; as nuevo) {
+            <div class="acciones">
+              <button type="button" (click)="cambiarEstado(nuevo)" [disabled]="ocupado()">
+                Pasar a «{{ etiqueta[nuevo] }}»
+              </button>
+            </div>
+          } @else {
+            <p>La sesión está finalizada: no admite más transiciones.</p>
+          }
+        </div>
+      </div>
+    }
+  }
+</section>

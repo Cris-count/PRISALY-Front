@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { DASHBOARD_ESTUDIANTE, DASHBOARD_SECCIONES } from './dashboard-secciones';
 import { VISTAS_DOCENTES } from './docente-vistas';
+import { requiereEntornoDemostracion } from '../autenticacion/entorno-demostracion';
 import {
   requiereMapeoPersonalQa,
   requiereSesionPersonalQa,
@@ -21,9 +22,20 @@ export const DASHBOARD_ROUTES: Routes = [
       },
       {
         path: DASHBOARD_ESTUDIANTE.ruta,
+        // H-58-01: presentación estudiantil demostrativa, solo en el entorno de demostración.
+        canActivate: [requiereEntornoDemostracion],
         title: `${DASHBOARD_ESTUDIANTE.titulo} · PRISALY`,
         data: { titulo: DASHBOARD_ESTUDIANTE.titulo },
         loadComponent: () => import('./dashboard-estudiante').then((m) => m.DashboardEstudiante),
+      },
+      {
+        // DC-FE-60: «Mi perfil». Mismo requisito que Inicio (sesión de personal válida, o el
+        // entorno demo); solo muestra la identidad de `/me`, sin operaciones.
+        path: 'perfil',
+        canActivate: [requiereSesionPersonalQa],
+        title: 'Mi perfil · PRISALY',
+        data: { titulo: 'Mi perfil' },
+        loadComponent: () => import('./dashboard-perfil').then((m) => m.DashboardPerfil),
       },
       ...DASHBOARD_SECCIONES.map((seccion) => ({
         path: seccion.ruta,

@@ -71,6 +71,28 @@
                   "with": "src/environments/environment.qa.ts"
                 }
               ]
+            },
+            "demo": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.demo.ts"
+                }
+              ]
+            },
+            "qa-navegacion": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.qa-navegacion.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -86,6 +108,12 @@
             },
             "qa": {
               "buildTarget": "PRISALY-Front:build:qa"
+            },
+            "demo": {
+              "buildTarget": "PRISALY-Front:build:demo"
+            },
+            "qa-navegacion": {
+              "buildTarget": "PRISALY-Front:build:qa-navegacion"
             }
           },
           "defaultConfiguration": "development"

@@ -1,3 +1,4 @@
+import { crearModoDocenteOperativo } from './navegacion-rol';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -8,10 +9,24 @@ import { DashboardSesiones } from './dashboard-sesiones';
 import { DashboardConvocatorias } from './dashboard-convocatorias';
 import { EstadoPanel } from './estado-panel';
 import { EstructuraDocente } from './estructura-docente';
+import { PanelCasosM3 } from '../academico/panel-casos-m3';
+import { PanelRubricaM3 } from '../academico/panel-rubrica-m3';
+import { PanelContenidoM3 } from '../academico/panel-contenido-m3';
+import { RecorridoDocente } from '../academico/recorrido-docente';
 
 @Component({
   selector: 'app-dashboard-docente',
-  imports: [RouterLink, EstadoPanel, EstructuraDocente, DashboardSesiones, DashboardConvocatorias],
+  imports: [
+    RouterLink,
+    EstadoPanel,
+    EstructuraDocente,
+    DashboardSesiones,
+    DashboardConvocatorias,
+    PanelCasosM3,
+    PanelRubricaM3,
+    PanelContenidoM3,
+    RecorridoDocente,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-docente.html',
   styleUrls: [
@@ -26,6 +41,8 @@ import { EstructuraDocente } from './estructura-docente';
   ],
 })
 export class DashboardDocente {
+  /** DC-FE-UX-ROLES-24: solo paneles reales con sesión docente verificada. */
+  protected readonly operativo = crearModoDocenteOperativo();
   private readonly ruta = inject(ActivatedRoute);
   protected readonly seccion = toSignal(
     this.ruta.data.pipe(map((data) => data['seccion'] as DashboardSeccion)),

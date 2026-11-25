@@ -75,198 +75,209 @@
         <rect x="313" y="198" width="51" height="40" rx="8" />
       </g>
     </svg>
-    <div class="accion-banner">
-      <button type="button" disabled aria-describedby="limites-docentes">＋ Programar sesión</button
-      ><small>Pendiente de integración</small>
-    </div>
-    <p class="identidad">
-      Entorno demostrativo · Sin sesión docente autenticada · Solo presentación
-    </p>
+    @if (!operativo()) {
+      <div class="accion-banner">
+        <button type="button" disabled aria-describedby="limites-docentes">
+          ＋ Programar sesión</button
+        ><small>Pendiente de integración</small>
+      </div>
+    }
+    @if (operativo()) {
+      <p class="identidad">Sesión docente verificada por el servidor</p>
+    } @else {
+      <p class="identidad">
+        Entorno demostrativo · Sin sesión docente autenticada · Solo presentación
+      </p>
+    }
   </header>
-  <app-estado-panel
-    class="integracion"
-    estado="pendiente"
-    mensaje="Interfaz visual en preparación. Las operaciones académicas requieren integración institucional autorizada."
-  />
-  <div class="resumen-sesiones">
-    <section class="panel-docente resumen" aria-labelledby="consulta-docente">
-      <span class="icono grande azul" aria-hidden="true">▦</span>
-      <div>
-        <h2 id="consulta-docente">{{ vista.consulta }}</h2>
-        <p>
-          No se han consultado registros reales. Este espacio no contiene datos académicos reales.
-        </p>
-      </div>
-      <svg class="mini-ilustracion" viewBox="0 0 120 110" aria-hidden="true">
-        <rect
-          x="12"
-          y="20"
-          width="88"
-          height="80"
-          rx="10"
-          fill="#d9efff"
-          stroke="#85b5e0"
-          stroke-width="2"
-        />
-        <path d="M12 45V30q0-10 10-10h68q10 0 10 10v15Z" fill="#0879d1" />
-        <path d="M34 12v18M78 12v18" stroke="#9ddfff" stroke-width="7" stroke-linecap="round" />
-        <path
-          d="M28 59h13v11H28Zm22 0h13v11H50Zm22 0h13v11H72ZM28 77h13v11H28Zm22 0h13v11H50Z"
-          fill="#80c7f4"
-        />
-        <circle cx="93" cy="88" r="19" fill="#ffa72b" />
-        <path d="m84 87 7 7 12-14" fill="none" stroke="#fff" stroke-width="4" />
-      </svg>
-    </section>
-    <section class="panel-docente resumen" aria-labelledby="preparacion-sesiones">
-      <span class="icono grande naranja" aria-hidden="true">◇</span>
-      <div>
-        <h2 id="preparacion-sesiones">{{ vista.organizacion }}</h2>
-        <p>Esquema demostrativo sin datos académicos reales. No es un editor de contenido.</p>
-      </div>
-      <svg class="mini-ilustracion" viewBox="0 0 120 110" aria-hidden="true">
-        <path d="m18 20 86 3-8 67H10Z" fill="#0879d1" />
-        <path d="m24 29 70 3-6 49H18Z" fill="#e4f7ff" />
-        <path d="m0 90 103-2 10 10H7Z" fill="#0b5497" />
-        <path
-          d="m30 43 4 4 7-9m-13 22 4 4 7-9m-13 22 4 4 7-9M48 44h30M45 61h30M42 78h30"
-          fill="none"
-          stroke="#1592d8"
-          stroke-width="3"
-        />
-        <path d="m63 14 28-12 28 12-28 13Z" fill="#147bca" />
-        <path d="M73 21v19q18 14 35-1V21" fill="#0755b8" />
-        <path d="M117 15v26" stroke="#f4ae30" stroke-width="3" />
-      </svg>
-    </section>
-  </div>
-  <div class="gestion-sesiones">
-    <section class="panel-docente listado-sesiones" aria-labelledby="titulo-listado">
-      <div class="cabecera-listado">
-        <h2 id="titulo-listado">
-          <span class="icono azul" aria-hidden="true">☷</span>Listado de sesiones
-        </h2>
-        <div class="filtros">
-          <label for="estado-demo"
-            >Estado<select id="estado-demo" disabled>
-              <option>Todos los estados</option>
-            </select></label
-          ><label for="buscar-demo"
-            >Buscar sesión<input
-              id="buscar-demo"
-              type="search"
-              placeholder="Buscar sesión…"
-              disabled
-          /></label>
+  <app-recorrido-docente etapa="sesiones" />
+  <app-panel-sesiones-m4 />
+  @if (!operativo()) {
+    <app-estado-panel
+      class="integracion"
+      estado="pendiente"
+      mensaje="Interfaz visual en preparación. Las operaciones académicas requieren integración institucional autorizada."
+    />
+    <div class="resumen-sesiones">
+      <section class="panel-docente resumen" aria-labelledby="consulta-docente">
+        <span class="icono grande azul" aria-hidden="true">▦</span>
+        <div>
+          <h2 id="consulta-docente">{{ vista.consulta }}</h2>
+          <p>
+            No se han consultado registros reales. Este espacio no contiene datos académicos reales.
+          </p>
         </div>
-      </div>
-      <p id="nota-tabla" class="etiqueta-demo">
-        Ejemplos de diseño · No son sesiones ni casos reales. Sin fechas programadas.
-      </p>
-      <div
-        class="tabla-scroll"
-        tabindex="0"
-        role="region"
-        aria-label="Tabla de ejemplos visuales de sesiones"
-      >
-        <table aria-describedby="nota-tabla">
-          <caption>
-            Presentación visual demostrativa, sin registros consultados
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Nombre de la sesión</th>
-              <th scope="col">Caso académico</th>
-              <th scope="col">Fecha y hora</th>
-              <th scope="col">Estado</th>
-              <th scope="col">Acciones</th>
-            </tr>
-          </thead>
-          <tbody data-demostracion="visual">
-            <tr>
-              <th scope="row">Análisis del caso inicial <small>Ejemplo visual</small></th>
-              <td>Caso Fiscalía <small>Ejemplo</small></td>
-              <td>Sin fecha</td>
-              <td><span class="estado-demo programada">Programada</span></td>
-              <td><span class="accion-pendiente" aria-disabled="true">No disponibles</span></td>
-            </tr>
-            <tr>
-              <th scope="row">Trabajo en equipos <small>Ejemplo visual</small></th>
-              <td>Caso Hospital <small>Ejemplo</small></td>
-              <td>Sin fecha</td>
-              <td><span class="estado-demo curso">En curso</span></td>
-              <td><span class="accion-pendiente" aria-disabled="true">No disponibles</span></td>
-            </tr>
-            <tr>
-              <th scope="row">Socialización de evidencias <small>Ejemplo visual</small></th>
-              <td>Caso Universidad <small>Ejemplo</small></td>
-              <td>Sin fecha</td>
-              <td><span class="estado-demo pendiente">Pendiente</span></td>
-              <td><span class="accion-pendiente" aria-disabled="true">No disponibles</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <app-estado-panel
-        estado="sin-datos"
-        mensaje="Sin registros consultados en esta demostración. La información estará disponible cuando se habilite su integración."
-      />
-    </section>
-    <section class="panel-docente opciones" aria-labelledby="opciones-sesiones">
-      <h2 id="opciones-sesiones">
-        <span class="icono azul" aria-hidden="true">⚙</span>Opciones de gestión
-      </h2>
-      <div class="acciones-docentes">
-        <button type="button" disabled aria-describedby="limites-docentes">
-          <span class="icono azul" aria-hidden="true">▦</span
-          ><span
-            >Programar sesión<small>Define fecha, hora y caso académico.</small
-            ><small>Pendiente de integración</small></span
-          >
-        </button>
-        <button type="button" disabled aria-describedby="limites-docentes">
-          <span class="icono azul" aria-hidden="true">✎</span
-          ><span
-            >Editar programación<small>Ajusta la información de una sesión.</small
-            ><small>Pendiente de integración</small></span
-          >
-        </button>
-        <button type="button" disabled aria-describedby="limites-docentes">
-          <span class="icono azul" aria-hidden="true">◎</span
-          ><span
-            >Consultar sesiones<small>Revisa el historial y el estado.</small
-            ><small>Pendiente de integración</small></span
-          >
-        </button>
-        <button type="button" disabled aria-describedby="limites-docentes">
-          <span class="icono azul" aria-hidden="true">▥</span
-          ><span
-            >Seguimiento<small>Visualiza el avance y la participación.</small
-            ><small>Pendiente de integración</small></span
-          >
-        </button>
-      </div>
-    </section>
-  </div>
-  <details class="preparacion">
-    <summary>Estructura prevista y campos de programación · no disponibles</summary>
-    <h2>Preparación de la programación</h2>
-    <app-estructura-docente [bloques]="vista.bloques" />
-    <fieldset disabled aria-describedby="nota-programacion">
-      <legend>Campos previstos · no disponibles</legend>
-      <label for="caso-sesion">Caso publicado</label
-      ><select id="caso-sesion">
-        <option>Sin casos disponibles para consulta</option></select
-      ><label for="fecha-sesion">Fecha y hora previstas</label
-      ><input id="fecha-sesion" type="datetime-local" />
-      <p id="nota-programacion">
-        Programación pendiente de integración. No se pueden programar casos BORRADOR ni crear
-        sesiones desde esta vista.
-      </p>
-    </fieldset>
-  </details>
-  <p id="limites-docentes" class="nota">{{ vista.nota }}</p>
-  <p class="nota">
-    Implementación pendiente · No se crean, guardan ni modifican registros en esta interfaz.
-  </p>
+        <svg class="mini-ilustracion" viewBox="0 0 120 110" aria-hidden="true">
+          <rect
+            x="12"
+            y="20"
+            width="88"
+            height="80"
+            rx="10"
+            fill="#d9efff"
+            stroke="#85b5e0"
+            stroke-width="2"
+          />
+          <path d="M12 45V30q0-10 10-10h68q10 0 10 10v15Z" fill="#0879d1" />
+          <path d="M34 12v18M78 12v18" stroke="#9ddfff" stroke-width="7" stroke-linecap="round" />
+          <path
+            d="M28 59h13v11H28Zm22 0h13v11H50Zm22 0h13v11H72ZM28 77h13v11H28Zm22 0h13v11H50Z"
+            fill="#80c7f4"
+          />
+          <circle cx="93" cy="88" r="19" fill="#ffa72b" />
+          <path d="m84 87 7 7 12-14" fill="none" stroke="#fff" stroke-width="4" />
+        </svg>
+      </section>
+      <section class="panel-docente resumen" aria-labelledby="preparacion-sesiones">
+        <span class="icono grande naranja" aria-hidden="true">◇</span>
+        <div>
+          <h2 id="preparacion-sesiones">{{ vista.organizacion }}</h2>
+          <p>Esquema demostrativo sin datos académicos reales. No es un editor de contenido.</p>
+        </div>
+        <svg class="mini-ilustracion" viewBox="0 0 120 110" aria-hidden="true">
+          <path d="m18 20 86 3-8 67H10Z" fill="#0879d1" />
+          <path d="m24 29 70 3-6 49H18Z" fill="#e4f7ff" />
+          <path d="m0 90 103-2 10 10H7Z" fill="#0b5497" />
+          <path
+            d="m30 43 4 4 7-9m-13 22 4 4 7-9m-13 22 4 4 7-9M48 44h30M45 61h30M42 78h30"
+            fill="none"
+            stroke="#1592d8"
+            stroke-width="3"
+          />
+          <path d="m63 14 28-12 28 12-28 13Z" fill="#147bca" />
+          <path d="M73 21v19q18 14 35-1V21" fill="#0755b8" />
+          <path d="M117 15v26" stroke="#f4ae30" stroke-width="3" />
+        </svg>
+      </section>
+    </div>
+    <div class="gestion-sesiones">
+      <section class="panel-docente listado-sesiones" aria-labelledby="titulo-listado">
+        <div class="cabecera-listado">
+          <h2 id="titulo-listado">
+            <span class="icono azul" aria-hidden="true">☷</span>Listado de sesiones
+          </h2>
+          <div class="filtros">
+            <label for="estado-demo"
+              >Estado<select id="estado-demo" disabled>
+                <option>Todos los estados</option>
+              </select></label
+            ><label for="buscar-demo"
+              >Buscar sesión<input
+                id="buscar-demo"
+                type="search"
+                placeholder="Buscar sesión…"
+                disabled
+            /></label>
+          </div>
+        </div>
+        <p id="nota-tabla" class="etiqueta-demo">
+          Ejemplos de diseño · No son sesiones ni casos reales. Sin fechas programadas.
+        </p>
+        <div
+          class="tabla-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Tabla de ejemplos visuales de sesiones"
+        >
+          <table aria-describedby="nota-tabla">
+            <caption>
+              Presentación visual demostrativa, sin registros consultados
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Nombre de la sesión</th>
+                <th scope="col">Caso académico</th>
+                <th scope="col">Fecha y hora</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody data-demostracion="visual">
+              <tr>
+                <th scope="row">Análisis del caso inicial <small>Ejemplo visual</small></th>
+                <td>Caso Fiscalía <small>Ejemplo</small></td>
+                <td>Sin fecha</td>
+                <td><span class="estado-demo programada">Programada</span></td>
+                <td><span class="accion-pendiente" aria-disabled="true">No disponibles</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Trabajo en equipos <small>Ejemplo visual</small></th>
+                <td>Caso Hospital <small>Ejemplo</small></td>
+                <td>Sin fecha</td>
+                <td><span class="estado-demo curso">En curso</span></td>
+                <td><span class="accion-pendiente" aria-disabled="true">No disponibles</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Socialización de evidencias <small>Ejemplo visual</small></th>
+                <td>Caso Universidad <small>Ejemplo</small></td>
+                <td>Sin fecha</td>
+                <td><span class="estado-demo pendiente">Pendiente</span></td>
+                <td><span class="accion-pendiente" aria-disabled="true">No disponibles</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <app-estado-panel
+          estado="sin-datos"
+          mensaje="Sin registros consultados en esta demostración. La información estará disponible cuando se habilite su integración."
+        />
+      </section>
+      <section class="panel-docente opciones" aria-labelledby="opciones-sesiones">
+        <h2 id="opciones-sesiones">
+          <span class="icono azul" aria-hidden="true">⚙</span>Opciones de gestión
+        </h2>
+        <div class="acciones-docentes">
+          <button type="button" disabled aria-describedby="limites-docentes">
+            <span class="icono azul" aria-hidden="true">▦</span
+            ><span
+              >Programar sesión<small>Define fecha, hora y caso académico.</small
+              ><small>Pendiente de integración</small></span
+            >
+          </button>
+          <button type="button" disabled aria-describedby="limites-docentes">
+            <span class="icono azul" aria-hidden="true">✎</span
+            ><span
+              >Editar programación<small>Ajusta la información de una sesión.</small
+              ><small>Pendiente de integración</small></span
+            >
+          </button>
+          <button type="button" disabled aria-describedby="limites-docentes">
+            <span class="icono azul" aria-hidden="true">◎</span
+            ><span
+              >Consultar sesiones<small>Revisa el historial y el estado.</small
+              ><small>Pendiente de integración</small></span
+            >
+          </button>
+          <button type="button" disabled aria-describedby="limites-docentes">
+            <span class="icono azul" aria-hidden="true">▥</span
+            ><span
+              >Seguimiento<small>Visualiza el avance y la participación.</small
+              ><small>Pendiente de integración</small></span
+            >
+          </button>
+        </div>
+      </section>
+    </div>
+    <details class="preparacion">
+      <summary>Estructura prevista y campos de programación · no disponibles</summary>
+      <h2>Preparación de la programación</h2>
+      <app-estructura-docente [bloques]="vista.bloques" />
+      <fieldset disabled aria-describedby="nota-programacion">
+        <legend>Campos previstos · no disponibles</legend>
+        <label for="caso-sesion">Caso publicado</label
+        ><select id="caso-sesion">
+          <option>Sin casos disponibles para consulta</option></select
+        ><label for="fecha-sesion">Fecha y hora previstas</label
+        ><input id="fecha-sesion" type="datetime-local" />
+        <p id="nota-programacion">
+          Programación pendiente de integración. No se pueden programar casos BORRADOR ni crear
+          sesiones desde esta vista.
+        </p>
+      </fieldset>
+    </details>
+    <p id="limites-docentes" class="nota">{{ vista.nota }}</p>
+    <p class="nota">
+      Implementación pendiente · No se crean, guardan ni modifican registros en esta interfaz.
+    </p>
+  }
 </div>

@@ -11,6 +11,8 @@
  */
 export const environment = {
   personalQaHabilitado: false,
+  /** H-58-01 (opción B): las demostraciones solo existen en el entorno `demo`. */
+  demostracionesHabilitadas: false,
   production: true,
   apiBaseUrl: '/api',
   /** Producción no publica una sesión 3D fija: requiere asignación autenticada. */
