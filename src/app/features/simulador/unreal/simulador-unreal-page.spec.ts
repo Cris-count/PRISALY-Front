@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { LibretaStore } from '../investigacion/libreta.store';
 import { SESION_VISUAL_UNREAL, SesionVisualUnreal } from './configuracion-unreal';
 import { CARGAR_ESQUEMAS_UNREAL, cargarEsquemasBrowser } from './protocolo/cargar-esquemas-browser';
-import { Esquemas, Mensaje } from './protocolo/validador-mensaje';
+import { Esquemas, Mensaje, validarObjeto } from './protocolo/validador-mensaje';
 import { FABRICA_REPRODUCTOR_UNREAL, FabricaReproductorUnreal, ReproductorUnreal } from './reproductor-unreal';
 import { SimuladorUnrealPage } from './simulador-unreal-page';
 import { CanalPixelStreaming, TransportePixelStreaming } from './transporte-pixel-streaming';
@@ -237,6 +237,102 @@ describe('SimuladorUnrealPage', () => {
     expect(prueba.pagina.hospital.enInterior()).toBeFalse();
     expect(libreta.estado().pistas.length).toBe(1); expect(libreta.estado().notas.length).toBe(1);
     expect(prueba.pagina.hospital.recorrido()[0].visitado).toBeTrue();
+    prueba.pagina.desconectar();
+  });
+
+  /** Caída del canal de datos como la notifica `crearReproductorUnreal` (dataChannelClose / webRtcDisconnected / webRtcFailed). */
+  function caerCanal(prueba: ReturnType<typeof preparar>) {
+    prueba.reproductor.transporte.notificarDesconexion();
+    prueba.informar('desconectado');
+  }
+
+  /** Reconexión manual con un transporte nuevo sobre el mismo canal simulado, hasta superar la ventana de quietud. */
+  async function reconectar(prueba: ReturnType<typeof preparar>) {
+    const transporte = new TransportePixelStreaming(prueba.canal);
+    const siguiente: ReproductorUnreal = {
+      ...prueba.reproductor, transporte,
+      cerrar: jasmine.createSpy('cerrar-siguiente').and.callFake(() => transporte.cerrar()),
+    };
+    let informar!: Parameters<FabricaReproductorUnreal>[2];
+    prueba.fabrica.and.callFake(async (_contenedor, _sesion, callback) => { informar = callback; return siguiente; });
+    await prueba.pagina.conectar(); transporte.abrir(); informar('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' }); await prueba.fixture.whenStable();
+    await new Promise<void>(resolver => setTimeout(resolver, 1200)); await prueba.fixture.whenStable();
+  }
+
+  async function entrarAlDoctor(prueba: ReturnType<typeof preparar>) {
+    await prueba.pagina.conectar(); prueba.reproductor.transporte.abrir(); prueba.informar('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' }); await prueba.fixture.whenStable();
+    prueba.emitir('zona.entro', { zoneId: 'plaza_central' }); await prueba.fixture.whenStable();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-puerta', categoria: 'puerta' }); await prueba.fixture.whenStable();
+    prueba.emitir('edificio.entro', { zoneId: 'hospital_entrada' }); await prueba.fixture.whenStable();
+    prueba.emitir('interactuable.activado', { interactuableId: 'hosp-npc-doctor', categoria: 'npc' }); await prueba.fixture.whenStable();
+    expect(prueba.pagina.hospital.conversacion()).toBe('abierta');
+  }
+
+  it('tras una caída real del canal de datos no reconecta solo y al reconectar envía estado.restaurar con el progreso (canal simulado)', async () => {
+    const prueba = preparar();
+    const hospital = prueba.pagina.hospital;
+    const libreta = prueba.fixture.debugElement.injector.get(LibretaStore);
+    await entrarAlDoctor(prueba);
+    hospital.avanzarDialogo(); hospital.avanzarDialogo(); hospital.elegir('consultar-expediente');
+    hospital.completarTransicion(); hospital.avanzarDialogo();
+    expect(hospital.vista()?.terminado).toBeTrue();
+    await hospital.cerrarConversacion(); await prueba.fixture.whenStable();
+    expect(hospital.conversacion()).toBe('cerrada');
+    libreta.crearNota('Retomar tras la caída del canal');
+    const n0 = prueba.canal.emitUIInteraction.calls.count();
+
+    caerCanal(prueba); await prueba.fixture.whenStable();
+    expect(prueba.pagina.conectado()).toBeFalse();
+    expect(prueba.fabrica).toHaveBeenCalledTimes(1);
+    expect(prueba.reproductor.conectar).toHaveBeenCalledTimes(1);
+    expect(prueba.canal.emitUIInteraction.calls.count()).toBe(n0);
+    expect(prueba.pagina.estado()).toContain('Se perdió la conexión');
+    expect(hospital.ultimaZona()).toBe('hospital_entrada');
+    expect(hospital.enInterior()).toBeFalse();
+    expect(hospital.recorrido()[0].npcs.find(n => n.espacialId === 'hosp-npc-doctor')?.estado).toBe('completado');
+    expect(libreta.estado().pistas.length).toBe(1); expect(libreta.estado().notas.length).toBe(1);
+
+    await reconectar(prueba);
+    const nuevas = prueba.canal.emitUIInteraction.calls.allArgs().slice(n0).map(args => args[0] as Mensaje);
+    expect(nuevas.map(m => m.tipo)).toEqual(['sesion.iniciar', 'estado.restaurar', 'camara.liberar']);
+    for (const mensaje of nuevas) expect(validarObjeto(esquemas, mensaje).ok).withContext(mensaje.tipo).toBeTrue();
+    expect(nuevas[1].datos).toEqual({
+      zonaActual: 'hospital_entrada', exploracionBloqueada: false, edificiosVisitados: ['hospital_entrada'],
+      interactuables: [
+        { interactuableId: 'hosp-npc-doctor', estado: 'completado' },
+        { interactuableId: 'hosp-npc-paciente-01', estado: 'disponible' },
+        { interactuableId: 'pol-npc-oficial', estado: 'disponible' },
+        { interactuableId: 'fis-npc-fiscal', estado: 'disponible' },
+      ],
+    });
+    expect(prueba.fabrica).toHaveBeenCalledTimes(2);
+    expect(prueba.pagina.conectado()).toBeTrue();
+    expect(prueba.pagina.ubicacion()).toBe('Acceso recuperado: Hospital');
+    expect(libreta.estado().pistas.length).toBe(1); expect(libreta.estado().notas.length).toBe(1);
+    prueba.pagina.desconectar();
+  });
+
+  it('una caída real con la conversación abierta restaura al doctor como disponible (canal simulado)', async () => {
+    const prueba = preparar();
+    const hospital = prueba.pagina.hospital;
+    await entrarAlDoctor(prueba);
+    hospital.avanzarDialogo();
+    expect(hospital.recorrido()[0].npcs.find(n => n.espacialId === 'hosp-npc-doctor')?.estado).toBe('en_curso');
+    const n0 = prueba.canal.emitUIInteraction.calls.count();
+
+    caerCanal(prueba); await prueba.fixture.whenStable();
+    expect(prueba.pagina.conectado()).toBeFalse();
+    expect(hospital.conversacion()).toBe('cerrada');
+    expect(prueba.canal.emitUIInteraction.calls.count()).toBe(n0);
+
+    await reconectar(prueba);
+    const nuevas = prueba.canal.emitUIInteraction.calls.allArgs().slice(n0).map(args => args[0] as Mensaje);
+    expect(nuevas.map(m => m.tipo)).toEqual(['sesion.iniciar', 'estado.restaurar', 'camara.liberar']);
+    const interactuables = nuevas[1].datos['interactuables'] as { interactuableId: string; estado: string }[];
+    expect(interactuables.find(i => i.interactuableId === 'hosp-npc-doctor')?.estado).toBe('disponible');
+    expect(nuevas[1].datos['zonaActual']).toBe('hospital_entrada');
     prueba.pagina.desconectar();
   });
 
