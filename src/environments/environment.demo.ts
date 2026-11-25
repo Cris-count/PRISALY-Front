@@ -6,6 +6,8 @@
 export const environment = {
   personalQaHabilitado: false,
   demostracionesHabilitadas: true,
+  /** El laboratorio Unreal local solo existe en development. */
+  simuladorUnrealLocal: false,
   production: false,
   apiBaseUrl: '/api',
   /**

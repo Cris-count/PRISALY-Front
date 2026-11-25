@@ -9,6 +9,7 @@ export const environment = {
   personalQaHabilitado: true,
   demostracionesHabilitadas: false,
   apiBaseUrl: 'http://localhost:18094/api',
+  simuladorUnrealLocal: false,
   rutasPersonalHabilitadasQa: [
     'usuarios-docentes',
     'configuracion',
