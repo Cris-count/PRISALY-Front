@@ -1,0 +1,117 @@
+<div class="fila" data-prueba="participaciones-dc92">
+  <h3>Participaciones de la sesión</h3>
+
+  @if (!consultaHabilitada && !reporteHabilitado) {
+    <p class="mensaje" data-prueba="participaciones-no-habilitado">
+      Consulta de participaciones (DD-09) y reporte CSV (DD-11) no habilitados en este entorno.
+      Requieren la autorización de Dirección Central, sus interruptores en el servidor y el esquema
+      DC-92. No se realizan consultas.
+    </p>
+  } @else if (!sesionValida()) {
+    <p class="mensaje">Inicia sesión de personal para consultar las participaciones.</p>
+  } @else {
+    <p class="etiqueta-real">
+      Datos del servidor: solo el docente de la sesión ve a sus estudiantes convocados; la nota
+      aparece únicamente si está publicada.
+    </p>
+
+    <div class="acciones">
+      @if (consultaHabilitada) {
+        <button type="button" (click)="consultar()" [disabled]="cargando()">
+          {{ filas() ? 'Actualizar participaciones' : 'Consultar participaciones' }}
+        </button>
+      } @else {
+        <span class="mensaje" data-prueba="consulta-no-habilitada"
+          >Consulta de participaciones no habilitada en este entorno.</span
+        >
+      }
+      @if (reporteHabilitado) {
+        <button type="button" (click)="descargar()" [disabled]="descargando()">
+          {{ descargando() ? 'Generando CSV…' : 'Descargar CSV' }}
+        </button>
+      } @else {
+        <span class="mensaje" data-prueba="reporte-no-habilitado"
+          >Reporte CSV no habilitado en este entorno.</span
+        >
+      }
+    </div>
+
+    @if (cargando()) {
+      <p role="status" data-prueba="participaciones-cargando">Consultando participaciones…</p>
+    }
+    @if (aviso(); as a) {
+      <p class="mensaje error" role="alert" data-prueba="participaciones-error">{{ a.texto }}</p>
+    }
+    @if (avisoReporte(); as a) {
+      <p
+        class="mensaje"
+        [class.error]="a.tipo === 'error'"
+        [class.exito]="a.tipo === 'exito'"
+        role="status"
+        aria-live="polite"
+        data-prueba="reporte-aviso"
+      >
+        {{ a.texto }}
+      </p>
+    }
+
+    @if (filas(); as lista) {
+      @if (lista.length === 0) {
+        <p data-prueba="participaciones-vacio">
+          La sesión no tiene estudiantes convocados según el servidor.
+        </p>
+      } @else {
+        <table class="tabla" aria-label="Participaciones de la sesión">
+          <thead>
+            <tr>
+              <th>Estudiante</th>
+              <th>Convocatoria</th>
+              <th>Participación</th>
+              <th>Ingreso</th>
+              <th>Intentos</th>
+              <th>Intento considerado</th>
+              <th>Evaluación</th>
+              <th>Nota publicada</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of lista; track f.idConvocatoria) {
+              <tr>
+                <td>
+                  {{ f.nombreEstudiante ?? 'Sin nombre registrado' }}
+                  <span class="mono">{{ f.idEstudiante }}</span>
+                </td>
+                <td>
+                  {{ f.estadoConvocatoria ?? '—' }}
+                  @if (f.fechaRetiro) {
+                    <br />Retiro: {{ fecha(f.fechaRetiro) }}
+                  }
+                </td>
+                <td>{{ etiquetaParticipacion(f.estadoParticipacion) }}</td>
+                <td>{{ fecha(f.fechaIngreso) }}</td>
+                <td>{{ f.numeroIntentos }}</td>
+                <td>
+                  @if (f.idIntentoConsiderado) {
+                    <span class="mono">{{ f.idIntentoConsiderado }}</span>
+                    <br />{{ fecha(f.inicioIntento) }} – {{ fecha(f.finIntento) }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td>{{ etiquetaEvaluacion(f.estadoEvaluacion) }}</td>
+                <td>
+                  @if (f.calificacionPublicada !== null) {
+                    {{ f.calificacionPublicada }}
+                    <br />{{ fecha(f.fechaPublicacion) }}
+                  } @else {
+                    —
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    }
+  }
+</div>
