@@ -7,17 +7,10 @@ import { CoordinadorNarrativoInteriores } from '../services/coordinador-narrativ
 import { SesionVisualUnreal } from './configuracion-unreal';
 import { Mensaje } from './protocolo/validador-mensaje';
 import { PuenteUnreal } from './puente/puente-unreal';
+import { HOSPITAL_UNREAL, INTERIORES_NARRATIVOS_UNREAL, InteriorNarrativoUnreal, NPCS_HOSPITAL_UNREAL, NpcInteriorUnreal } from './interiores-narrativos-unreal';
+import { PLAZA_UNREAL } from './correspondencia-mundo';
 
-export const HOSPITAL_UNREAL = {
-  edificioId: 'hospital-prueba', zonaId: 'hospital_entrada', puertaId: 'hosp-puerta', npcId: 'hosp-npc-doctor',
-} as const;
-
-/** Correspondencia provisional compartida con el responsable del mundo 3D. */
-export const NPCS_HOSPITAL_UNREAL = {
-  doctor: { espacialId: HOSPITAL_UNREAL.npcId, personajeId: 'doctor', nombre: 'Dr. Mendoza', guionId: 'guion-hospital-demo' },
-  paciente: { espacialId: 'hosp-npc-paciente-01', personajeId: 'paciente-01', nombre: 'Paciente (demostración)', guionId: GUION_PACIENTE_HOSPITAL_DEMO.id },
-} as const;
-type NpcHospital = typeof NPCS_HOSPITAL_UNREAL[keyof typeof NPCS_HOSPITAL_UNREAL];
+export { HOSPITAL_UNREAL, NPCS_HOSPITAL_UNREAL } from './interiores-narrativos-unreal';
 
 export interface VistaHospital {
   readonly estado: MotorNarrativo['estado'];
@@ -26,7 +19,26 @@ export interface VistaHospital {
   readonly terminado: boolean;
 }
 
-/** Narrativa demostrativa por sesión. Solo consume mensajes existentes del catálogo v1. */
+export interface ProgresoInteriorUnreal {
+  readonly edificioId: string;
+  readonly zonaId: string;
+  readonly nombre: string;
+  readonly visitado: boolean;
+  readonly npcs: readonly {
+    readonly espacialId: string;
+    readonly nombre: string;
+    readonly estado: 'pendiente' | 'en_curso' | 'completado';
+  }[];
+}
+
+function nuevoRecorrido(): readonly ProgresoInteriorUnreal[] {
+  return INTERIORES_NARRATIVOS_UNREAL.map(e => ({
+    edificioId: e.edificioId, zonaId: e.zonaId, nombre: e.nombre, visitado: false,
+    npcs: e.npcs.map(npc => ({ espacialId: npc.espacialId, nombre: npc.nombre, estado: 'pendiente' as const })),
+  }));
+}
+
+/** Narrativa de los tres interiores. Conserva el nombre público de la integración inicial. */
 @Injectable()
 export class HospitalUnreal {
   private readonly narrativa = inject(CoordinadorNarrativoInteriores);
@@ -35,15 +47,24 @@ export class HospitalUnreal {
   private readonly narrativaPaciente = runInInjectionContext(inject(Injector), () => new CoordinadorNarrativoInteriores());
   private readonly guionesPaciente = { [HOSPITAL_UNREAL.edificioId]: GUION_PACIENTE_HOSPITAL_DEMO };
   private readonly libreta = inject(LibretaStore);
-  readonly npcActivo = signal<NpcHospital>(NPCS_HOSPITAL_UNREAL.doctor);
+  readonly edificioActivo = signal<InteriorNarrativoUnreal | null>(null);
+  readonly npcActivo = signal<NpcInteriorUnreal>(NPCS_HOSPITAL_UNREAL.doctor);
   readonly espacio = signal<'exterior' | 'entrando' | 'interior'>('exterior');
   readonly conversacion = signal<'cerrada' | 'abriendo' | 'abierta' | 'cerrando' | 'error'>('cerrada');
   readonly vista = signal<VistaHospital | null>(null);
   readonly error = signal<string | null>(null);
+  readonly recorrido = signal(nuevoRecorrido());
+  readonly ultimaZona = signal<string | null>(null);
+  readonly recuperando = signal(false);
+  readonly libretaAbierta = signal(false);
+  private readonly contextoDisponible = signal(false);
   readonly enInterior = computed(() => this.espacio() === 'interior');
   readonly modal = computed(() => this.conversacion() !== 'cerrada');
-  readonly ocupado = computed(() => this.espacio() === 'entrando' || this.modal());
-  readonly puedeDialogar = computed(() => this.enInterior() && this.conversacion() === 'abierta');
+  readonly ocupado = computed(() => this.espacio() === 'entrando' || this.modal() || this.libretaAbierta() || this.recuperando());
+  readonly puedeDialogar = computed(() => this.enInterior() && this.edificioActivo() !== null && this.conversacion() === 'abierta' && !this.libretaAbierta());
+  readonly puedeAbrirLibreta = computed(() => this.contextoDisponible() && !this.recuperando() && this.espacio() !== 'entrando' && ['cerrada', 'abierta'].includes(this.conversacion()));
+  readonly conversacionesTerminadas = computed(() => this.recorrido().flatMap(e => e.npcs).filter(n => n.estado === 'completado').length);
+  readonly totalConversaciones = computed(() => this.recorrido().flatMap(e => e.npcs).length);
   private puente: PuenteUnreal | null = null;
   private contexto: string | null = null;
   private sesion: string | null = null;
@@ -59,10 +80,13 @@ export class HospitalUnreal {
       this.libreta.reiniciarDemostracion();
       this.npcActivo.set(NPCS_HOSPITAL_UNREAL.doctor);
       this.vista.set(null);
+      this.recorrido.set(nuevoRecorrido());
+      this.ultimaZona.set(null);
     }
     this.contexto = contexto;
     this.sesion = sesion.sesion;
     this.puente = puente;
+    this.contextoDisponible.set(true);
     this.error.set(null);
   }
 
@@ -74,29 +98,72 @@ export class HospitalUnreal {
     this.sesion = null;
     this.espacio.set('exterior');
     this.conversacion.set('cerrada');
+    this.edificioActivo.set(null);
+    this.libretaAbierta.set(false);
+    this.recuperando.set(false);
+  }
+
+  abrirLibreta(): void { if (this.puedeAbrirLibreta()) this.libretaAbierta.set(true); }
+  cerrarLibreta(): void { this.libretaAbierta.set(false); }
+
+  /** v1 restaura las zonas exteriores; se recupera el acceso, no coordenadas interiores. */
+  async restaurarEstadoVisual(): Promise<string | null> {
+    const puente = this.puente, revision = this.revision, zona = this.ultimaZona();
+    if (!puente || !zona) return null;
+    const vigente = () => this.puente === puente && this.revision === revision;
+    const recorrido = this.recorrido();
+    this.recuperando.set(true);
+    this.cerrarLibreta();
+    try {
+      await puente.enviar('estado.restaurar', {
+        zonaActual: zona,
+        interactuables: recorrido.flatMap(e => e.npcs.map(n => ({
+          interactuableId: n.espacialId, estado: n.estado === 'completado' ? 'completado' : 'disponible',
+        }))),
+        edificiosVisitados: recorrido.filter(e => e.visitado).map(e => e.zonaId),
+        exploracionBloqueada: false,
+      });
+      if (!vigente()) return null;
+      await puente.enviar('camara.liberar', {});
+      // MUNDO-24 suprime hechos espaciales durante 1 s tras estado.restaurar.
+      // Mantener los controles cerrados hasta superar esa ventana evita perder edificio.entro.
+      await new Promise<void>(resolver => setTimeout(resolver, 1100));
+      return vigente() ? zona : null;
+    } finally {
+      if (vigente()) this.recuperando.set(false);
+    }
   }
 
   async procesar(mensaje: Mensaje): Promise<void> {
     if (!this.puente || this.puente.bloqueado || mensaje.sesion !== this.sesion || mensaje.origen !== 'unreal') return;
     const datos = mensaje.datos;
-    if (mensaje.tipo === 'edificio.entro' && datos['zoneId'] === HOSPITAL_UNREAL.zonaId) {
+    const interior = this.edificioActivo();
+    if (mensaje.tipo === 'zona.entro' && this.espacio() === 'exterior' &&
+        (datos['zoneId'] === PLAZA_UNREAL.zonaId || INTERIORES_NARRATIVOS_UNREAL.some(e => e.zonaId === datos['zoneId']))) {
+      this.ultimaZona.set(datos['zoneId'] as string);
+    } else if (mensaje.tipo === 'edificio.entro' && interior && datos['zoneId'] === interior.zonaId) {
       // El ack de puerta.abrir no acredita por sí solo que la sala esté lista.
       if (this.espacio() === 'entrando') {
         this.cancelarEspera();
         this.espacio.set('interior');
         this.error.set(null);
+        this.ultimaZona.set(interior.zonaId);
+        this.recorrido.update(actual => actual.map(e => e.edificioId === interior.edificioId ? { ...e, visitado: true } : e));
       }
-    } else if (mensaje.tipo === 'edificio.salio' && datos['zoneId'] === HOSPITAL_UNREAL.zonaId) {
+    } else if (mensaje.tipo === 'edificio.salio' && interior && datos['zoneId'] === interior.zonaId) {
       if (this.espacio() === 'exterior') return;
       this.guardar();
       ++this.revision; // Ningún ack tardío vuelve a abrir el diálogo tras salir.
       this.cancelarEspera();
       this.espacio.set('exterior');
       this.conversacion.set('cerrada');
-    } else if (mensaje.tipo === 'interactuable.activado') {
-      if (datos['interactuableId'] === HOSPITAL_UNREAL.puertaId && datos['categoria'] === 'puerta') await this.abrirPuerta();
-      else if (datos['categoria'] === 'npc') {
-        const npc = Object.values(NPCS_HOSPITAL_UNREAL).find(n => n.espacialId === datos['interactuableId']);
+      this.edificioActivo.set(null);
+    } else if (mensaje.tipo === 'interactuable.activado' && !this.libretaAbierta() && !this.recuperando()) {
+      if (datos['categoria'] === 'puerta') {
+        const destino = INTERIORES_NARRATIVOS_UNREAL.find(e => e.puertaId === datos['interactuableId']);
+        if (destino) await this.abrirPuerta(destino);
+      } else if (datos['categoria'] === 'npc') {
+        const npc = interior?.npcs.find(n => n.espacialId === datos['interactuableId']);
         if (npc) await this.abrirConversacion(npc);
       }
     }
@@ -104,24 +171,24 @@ export class HospitalUnreal {
 
   avanzarDialogo(): void {
     if (!this.puedeDialogar()) return;
-    this.narrativaActual.avanzarDialogo(HOSPITAL_UNREAL.edificioId);
+    this.narrativaActual.avanzarDialogo(this.edificioActivo()!.edificioId);
     this.refrescar();
   }
 
   elegir(decisionId: string): void {
     if (!this.puedeDialogar() || !this.vista()?.decisiones.some(d => d.id === decisionId)) return;
-    this.narrativaActual.elegirOpcion(HOSPITAL_UNREAL.edificioId, decisionId);
+    this.narrativaActual.elegirOpcion(this.edificioActivo()!.edificioId, decisionId);
     this.refrescar(); // El coordinador real registra la pista mediante su adaptador.
   }
 
   completarTransicion(): void {
     if (!this.puedeDialogar()) return;
-    this.narrativaActual.completarTransicion(HOSPITAL_UNREAL.edificioId);
+    this.narrativaActual.completarTransicion(this.edificioActivo()!.edificioId);
     this.refrescar();
   }
 
   async cerrarConversacion(): Promise<void> {
-    if (!this.puente || !this.enInterior() || !this.modal() || ['abriendo', 'cerrando'].includes(this.conversacion())) return;
+    if (!this.puente || !this.enInterior() || !this.modal() || this.libretaAbierta() || ['abriendo', 'cerrando'].includes(this.conversacion())) return;
     const puente = this.puente, revision = this.revision;
     const npc = this.npcActivo();
     const vigente = () => this.puente === puente && this.revision === revision;
@@ -149,28 +216,33 @@ export class HospitalUnreal {
     }
   }
 
-  private async abrirPuerta(): Promise<void> {
-    if (!this.puente || this.espacio() !== 'exterior') return;
+  private async abrirPuerta(interior: InteriorNarrativoUnreal): Promise<void> {
+    if (!this.puente || this.espacio() !== 'exterior' || this.ocupado()) return;
     const puente = this.puente, revision = this.revision;
+    this.edificioActivo.set(interior);
+    this.npcActivo.set(interior.npcs[0]);
+    this.vista.set(null);
     this.espacio.set('entrando');
     this.error.set(null);
     this.esperaEntrada = setTimeout(() => {
       if (this.puente === puente && this.revision === revision && this.espacio() === 'entrando') {
-        this.error.set('El mundo todavía no confirmó la entrada al Hospital. Reconecta para comprobar su estado.');
+        this.error.set(`El mundo todavía no confirmó la entrada a ${interior.nombre}. Reconecta para comprobar su estado.`);
       }
     }, 8000);
     try {
-      await puente.enviar('puerta.abrir', { zoneId: HOSPITAL_UNREAL.zonaId });
+      await puente.enviar('puerta.abrir', { zoneId: interior.zonaId });
     } catch {
       if (this.puente !== puente || this.revision !== revision || this.enInterior()) return;
       this.cancelarEspera();
       this.espacio.set('exterior');
-      this.error.set('No se confirmó la apertura del Hospital. Puedes volver a interactuar con la puerta.');
+      this.edificioActivo.set(null);
+      this.error.set(`No se confirmó la apertura de ${interior.nombre}. Puedes volver a interactuar con la puerta.`);
     }
   }
 
-  private async abrirConversacion(npc: NpcHospital): Promise<void> {
-    if (!this.puente || !this.enInterior() || this.modal()) return;
+  private async abrirConversacion(npc: NpcInteriorUnreal): Promise<void> {
+    const interior = this.edificioActivo();
+    if (!this.puente || !this.enInterior() || this.modal() || !interior || !interior.npcs.includes(npc)) return;
     const puente = this.puente, revision = this.revision;
     const vigente = () => this.puente === puente && this.revision === revision;
     this.npcActivo.set(npc);
@@ -182,7 +254,7 @@ export class HospitalUnreal {
       if (!vigente()) return;
       await puente.enviar('npc.reproducirAnimacion', { npcId: npc.espacialId, animacion: 'hablar' });
       if (!vigente()) return;
-      this.narrativaActual.iniciarOReanudar(HOSPITAL_UNREAL.edificioId,
+      this.narrativaActual.iniciarOReanudar(interior.edificioId,
         npc.espacialId === NPCS_HOSPITAL_UNREAL.paciente.espacialId ? this.guionesPaciente : GUIONES_POR_EDIFICIO);
       this.refrescar();
       this.conversacion.set('abierta');
@@ -194,15 +266,23 @@ export class HospitalUnreal {
   }
 
   private refrescar(): void {
-    const motor = this.narrativaActual.obtenerMotor(HOSPITAL_UNREAL.edificioId);
-    if (motor) this.vista.set({ estado: motor.estado, dialogo: motor.dialogoActual, decisiones: motor.decisionesDisponibles, terminado: motor.terminado });
+    const interior = this.edificioActivo();
+    const motor = interior && this.narrativaActual.obtenerMotor(interior.edificioId);
+    if (motor) {
+      this.vista.set({ estado: motor.estado, dialogo: motor.dialogoActual, decisiones: motor.decisionesDisponibles, terminado: motor.terminado });
+      const npcId = this.npcActivo().espacialId;
+      const estado: ProgresoInteriorUnreal['npcs'][number]['estado'] = motor.terminado ? 'completado' : 'en_curso';
+      this.recorrido.update(actual => actual.map(e => e.edificioId === interior!.edificioId ? {
+        ...e, npcs: e.npcs.map(n => n.espacialId === npcId ? { ...n, estado } : n),
+      } : e));
+    }
   }
 
   private get narrativaActual(): CoordinadorNarrativoInteriores {
     return this.npcActivo().espacialId === NPCS_HOSPITAL_UNREAL.paciente.espacialId ? this.narrativaPaciente : this.narrativa;
   }
   private guardar(): void {
-    this.narrativa.pausarYGuardar(HOSPITAL_UNREAL.edificioId);
+    for (const interior of INTERIORES_NARRATIVOS_UNREAL) this.narrativa.pausarYGuardar(interior.edificioId);
     this.narrativaPaciente.pausarYGuardar(HOSPITAL_UNREAL.edificioId, this.guionesPaciente);
   }
   private cancelarEspera(): void {

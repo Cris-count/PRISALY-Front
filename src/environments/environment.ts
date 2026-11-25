@@ -15,4 +15,6 @@ export const environment = {
   demostracionesHabilitadas: false,
   production: true,
   apiBaseUrl: '/api',
+  /** Producción no publica una sesión 3D fija: requiere asignación autenticada. */
+  simuladorUnrealLocal: false,
 };

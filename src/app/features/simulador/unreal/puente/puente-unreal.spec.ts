@@ -20,13 +20,40 @@ describe('PuenteUnreal con el protocolo candidato real', () => {
   afterEach(() => puente?.destruir());
 
   it('solo confirma una orden con un ack correlacionado', async () => {
+    let idOrden: string | null = null;
     canal.unreal.alRecibir((texto) => {
       const orden = JSON.parse(texto) as Mensaje;
+      idOrden = orden.id;
       canal.unreal.enviar(JSON.stringify(hecho('orden.ack', {}, { correlacion: orden.id })));
     });
     const ack = await puente.enviar('avatar.irA', { zoneId: 'hospital_entrada' });
-    expect(ack?.correlacion).toBe('a-000001');
+    expect(ack?.correlacion).toBe(idOrden);
     expect(puente.ordenesPendientes).toBe(0);
+  });
+
+  it('otro puente para la misma sesión no reutiliza ids ni acepta el ACK de la conexión anterior', async () => {
+    let primeraId = '';
+    canal.unreal.alRecibir(texto => {
+      primeraId = (JSON.parse(texto) as Mensaje).id;
+      canal.unreal.enviar(JSON.stringify(hecho('orden.ack', {}, { correlacion: primeraId })));
+    });
+    await puente.enviar('avatar.irA', { zoneId: 'hospital_entrada' });
+    puente.destruir();
+    const siguienteCanal = new CanalMemoria();
+    const siguiente = new PuenteUnreal(siguienteCanal.angular, esquemas, { sesion, timeoutAckMs: 1000 });
+    let segundaId = '';
+    siguienteCanal.unreal.alRecibir(texto => {
+      segundaId = (JSON.parse(texto) as Mensaje).id;
+      siguienteCanal.unreal.enviar(JSON.stringify(hecho('orden.ack', {}, { correlacion: primeraId })));
+    });
+    try {
+      const pendiente = siguiente.enviar('avatar.irA', { zoneId: 'fiscalia_entrada' });
+      await turno();
+      expect(segundaId).not.toBe(primeraId);
+      expect(siguiente.ordenesPendientes).toBe(1);
+      siguienteCanal.unreal.enviar(JSON.stringify(hecho('orden.ack', {}, { id: 'u-000002', correlacion: segundaId })));
+      expect((await pendiente)?.correlacion).toBe(segundaId);
+    } finally { siguiente.destruir(); }
   });
 
   it('rechaza un destino con formato de Phaser sin enviarlo a Unreal', async () => {

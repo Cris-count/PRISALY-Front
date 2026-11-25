@@ -43,6 +43,9 @@ export class PuenteUnreal {
   private pendientes = new Map<string, Pendiente>();
   private oyentes = new Set<(m: Mensaje) => void>();
   private n = 0;
+  // El contador local no basta al crear otro puente para la misma sesion.
+  // Mantener ids distintos entre conexiones evita correlacionar ACK antiguos.
+  private readonly prefijoConexion = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
   private _bloqueado = false;
   private destruido = false;
   private bloqueo: Promise<{ confirmado: boolean; codigo?: string }> | null = null;
@@ -78,7 +81,7 @@ export class PuenteUnreal {
       return Promise.reject(new ErrorOrden('EXPLORACION_BLOQUEADA', `no se envia ${tipo}`));
     }
     const m: Mensaje = {
-      v: VERSION_PROTOCOLO, tipo, id: `a-${String(++this.n).padStart(6, '0')}`,
+      v: VERSION_PROTOCOLO, tipo, id: `a-${this.prefijoConexion}${String(++this.n).padStart(6, '0')}`,
       correlacion: null, sesion: this.op.sesion, ts: this.reloj(), origen: 'angular', datos,
     };
     const r = validarObjeto(this.esquemas, m);
