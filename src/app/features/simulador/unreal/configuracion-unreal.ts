@@ -1,6 +1,10 @@
 import { InjectionToken } from '@angular/core';
 import { environment } from '../../../../environments/environment';
-import { HOSTS_LOCALES_SENALIZACION } from '../../../../environments/senalizacion-unreal';
+import {
+  HOSTS_LOCALES_SENALIZACION,
+  ORIGEN_VISOR_LOCAL,
+  URL_SENALIZACION_LOCAL,
+} from '../../../../environments/senalizacion-unreal';
 
 /** Asignación de una instancia visual; no constituye autorización académica. */
 export interface SesionVisualUnreal {
@@ -15,14 +19,13 @@ export interface SesionVisualUnreal {
  * (player 8898, streamer 8899, ID `PRISALY-LAB-03`) y Unreal con `-PrisalySesion=ses-lab-ps2-0001`.
  */
 export const SESION_VISUAL_LOCAL: SesionVisualUnreal = Object.freeze({
-  urlSenalizacion: 'ws://127.0.0.1:8898/',
+  urlSenalizacion: URL_SENALIZACION_LOCAL,
   streamerId: 'PRISALY-LAB-03',
   sesion: 'ses-lab-ps2-0001',
   casoId: 'caso-lab-demo',
 });
 
-/** Único Origin que admite la señalización local para el navegador. */
-export const ORIGEN_VISOR_LOCAL = 'http://127.0.0.1:4213';
+export { ORIGEN_VISOR_LOCAL };
 
 /** La sesión local solo se entrega en desarrollo y desde el Origin aceptado por la señalización. */
 export function resolverSesionVisual(habilitada: boolean, origen: string): SesionVisualUnreal | null {
