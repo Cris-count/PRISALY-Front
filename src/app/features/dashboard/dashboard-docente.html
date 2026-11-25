@@ -1,0 +1,101 @@
+<div class="pagina-docente">
+  <a class="regreso" routerLink="/dashboard">← Volver al dashboard</a>
+  <header class="cabecera-docente">
+    <div class="icono-docente" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path [attr.d]="seccion().icono" /></svg>
+    </div>
+    <p class="ceja">GESTIÓN DOCENTE / ENTORNO DEMOSTRATIVO</p>
+    <h1>{{ seccion().titulo }}</h1>
+    <p>{{ seccion().descripcion }}</p>
+    <p class="identidad">Sin sesión docente autenticada · Solo presentación</p>
+  </header>
+  <app-estado-panel
+    estado="pendiente"
+    mensaje="Interfaz visual en preparación. Las operaciones académicas no están disponibles y requieren integración institucional autorizada."
+  />
+
+  <div class="areas-docentes">
+    <section class="panel-docente" aria-labelledby="consulta-docente">
+      <p class="ceja">CONSULTA</p>
+      <h2 id="consulta-docente">{{ vista().consulta }}</h2>
+      <p>No se han consultado registros. Este espacio no contiene datos académicos reales.</p>
+      <app-estado-panel
+        estado="sin-datos"
+        mensaje="Sin registros consultados en esta demostración. La información estará disponible cuando se habilite su integración."
+      />
+
+      @if (seccion().ruta === 'casos-academicos') {
+        <div class="referencia-estados" aria-labelledby="titulo-estados-caso">
+          <h3 id="titulo-estados-caso">Referencia visual de estados</h3>
+          <p id="nota-estados-caso">
+            Ejemplos de presentación; no corresponden a casos existentes.
+          </p>
+          <ul aria-describedby="nota-estados-caso">
+            <li class="borrador">BORRADOR</li>
+            <li class="publicado">PUBLICADO</li>
+            <li class="archivado">ARCHIVADO</li>
+          </ul>
+        </div>
+      }
+
+      <div class="acciones-docentes" aria-describedby="limites-docentes">
+        @for (accion of vista().acciones; track accion) {
+          <button type="button" disabled aria-describedby="limites-docentes">
+            {{ accion }}<span>Pendiente de integración</span>
+          </button>
+        }
+      </div>
+      <p id="limites-docentes" class="nota">{{ vista().nota }}</p>
+    </section>
+
+    <section class="panel-docente" aria-labelledby="estructura-docente">
+      <p class="ceja">ESTRUCTURA PREVISTA</p>
+      <h2 id="estructura-docente">{{ vista().organizacion }}</h2>
+      <p>Esquema demostrativo sin datos académicos reales. No es un editor de contenido.</p>
+      <app-estructura-docente [bloques]="vista().bloques" />
+
+      @if (seccion().ruta === 'sesiones') {
+        <fieldset disabled aria-describedby="nota-programacion">
+          <legend>Campos previstos · no disponibles</legend>
+          <label for="caso-sesion">Caso publicado</label>
+          <select id="caso-sesion">
+            <option>Sin casos disponibles para consulta</option>
+          </select>
+          <label for="fecha-sesion">Fecha y hora previstas</label>
+          <input id="fecha-sesion" type="datetime-local" />
+          <p id="nota-programacion" class="nota">
+            Programación pendiente de integración. No se pueden programar casos BORRADOR ni crear
+            sesiones desde esta vista.
+          </p>
+        </fieldset>
+      }
+      @if (seccion().ruta === 'convocatorias') {
+        <fieldset disabled aria-describedby="nota-convocatoria">
+          <legend>Campos previstos · no disponibles</legend>
+          <label for="sesion-convocatoria">Sesión académica</label>
+          <select id="sesion-convocatoria">
+            <option>Consulta de sesiones pendiente</option>
+          </select>
+          <label for="destinatarios-convocatoria">Destinatarios</label>
+          <input
+            id="destinatarios-convocatoria"
+            type="text"
+            placeholder="Sin destinatarios consultados"
+          />
+          <label for="condiciones-convocatoria">Condiciones</label>
+          <textarea
+            id="condiciones-convocatoria"
+            rows="2"
+            placeholder="Pendientes de consulta institucional"
+          ></textarea>
+          <p id="nota-convocatoria" class="nota">
+            Esquema visual sin envío de formularios, mensajes ni correos.
+          </p>
+        </fieldset>
+      }
+    </section>
+  </div>
+  <p class="pie-docente">
+    Implementación pendiente · No se crean, guardan ni modifican registros en esta interfaz.
+  </p>
+</div>

@@ -1,0 +1,73 @@
+/* Escenario institucional único: decoración continua al cambiar de módulo. */
+.fondo-dashboard {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 15% 10%, #e5efff, transparent 50%),
+    radial-gradient(ellipse at 95% 90%, #ffead4, transparent 50%), #f6f8fc;
+}
+.ondas-fondo {
+  position: absolute;
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  transform-origin: center;
+  animation: oleaje-institucional 16s -4s ease-in-out infinite alternate;
+}
+.ondas-fondo > path {
+  transform-box: view-box;
+  transform-origin: center;
+}
+.ondas-fondo > path:nth-of-type(1) {
+  animation: onda-azul 12s -3s ease-in-out infinite alternate;
+}
+.ondas-fondo > path:nth-of-type(2) {
+  animation: onda-naranja 17s -8s ease-in-out infinite alternate;
+}
+.ondas-fondo > path:nth-of-type(3) {
+  animation: onda-celeste 10s -2s ease-in-out infinite alternate;
+}
+
+@keyframes oleaje-institucional {
+  from {
+    transform: translate3d(-2%, 1%, 0);
+  }
+  to {
+    transform: translate3d(2%, -1%, 0);
+  }
+}
+/* Capas con recorridos opuestos; el desfase evita un arranque aparentemente inmóvil. */
+@keyframes onda-azul {
+  from {
+    transform: translate3d(-2%, 1%, 0);
+  }
+  to {
+    transform: translate3d(3%, -2%, 0);
+  }
+}
+@keyframes onda-naranja {
+  from {
+    transform: translate3d(3%, -2%, 0);
+  }
+  to {
+    transform: translate3d(-3%, 2%, 0);
+  }
+}
+@keyframes onda-celeste {
+  from {
+    transform: translate3d(-3%, 2%, 0);
+  }
+  to {
+    transform: translate3d(3%, -2%, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ondas-fondo,
+  .ondas-fondo > path {
+    animation: none !important;
+    transform: none;
+  }
+}

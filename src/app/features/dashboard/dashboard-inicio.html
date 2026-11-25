@@ -1,0 +1,46 @@
+<div class="pagina">
+  <section class="bienvenida" aria-labelledby="bienvenida-dashboard">
+    <div class="bienvenida-texto">
+      <p class="ceja">APRENDER CON PERSPECTIVA</p>
+      <h1 id="bienvenida-dashboard">Bienvenido a PRISALY</h1>
+      <p class="descripcion">
+        Experiencias, personas y herramientas para aprender Psicología Social.
+      </p>
+      <p class="aviso-demo">Demostración visual · Integración académica pendiente</p>
+    </div>
+    <div class="bienvenida-accion">
+      <a class="accion" routerLink="/dashboard/casos-academicos"
+        >Explorar casos académicos <span aria-hidden="true">↗</span></a
+      >
+      <span>Comprender · Explorar · Construir</span>
+    </div>
+  </section>
+  <section aria-labelledby="secciones-dashboard">
+    <div class="seccion-cabecera">
+      <div>
+        <p class="ceja">TU PUNTO DE PARTIDA</p>
+        <h2 id="secciones-dashboard">Explora la plataforma</h2>
+      </div>
+      <span class="detalle">Vistas de presentación</span>
+    </div>
+    <div class="tarjetas">
+      @for (seccion of secciones; track seccion.ruta) {
+        <a
+          class="acceso"
+          [class.acceso--estudiante]="seccion.ruta === 'estudiante'"
+          [routerLink]="['/dashboard', seccion.ruta]"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="seccion.icono" /></svg>
+          <div class="acceso-contenido">
+            <h3>{{ seccion.titulo }}</h3>
+            <p>{{ seccion.descripcion }}</p>
+          </div>
+          <span class="disponibilidad">Explorar vista <span aria-hidden="true">→</span></span></a
+        >
+      }
+    </div>
+  </section>
+  <footer class="pie-pagina">
+    <span>PRISALY · Psicología Social</span><span>Interfaz de demostración · Sin datos reales</span>
+  </footer>
+</div>

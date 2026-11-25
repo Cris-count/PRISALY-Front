@@ -1,0 +1,39 @@
+<div class="pagina">
+  <a class="regreso" routerLink="/dashboard">← Volver al dashboard</a>
+  <section class="presentacion-seccion" aria-labelledby="titulo-seccion">
+    <p class="ceja">ESPACIO ACADÉMICO / DEMOSTRACIÓN</p>
+    <h1 id="titulo-seccion">{{ seccion().titulo }}</h1>
+    <p class="descripcion">{{ seccion().descripcion }}</p>
+  </section>
+  <div class="estado">
+    <span class="estado-marca">VISTA DEMOSTRATIVA</span>
+    <p>Esta sección presenta su alcance visual. Las operaciones todavía no están habilitadas.</p>
+  </div>
+  <section aria-labelledby="alcance-seccion">
+    <div class="seccion-cabecera">
+      <div>
+        <p class="ceja">UNA BASE PARA CRECER</p>
+        <h2 id="alcance-seccion">Funcionalidades previstas</h2>
+      </div>
+    </div>
+    <div class="alcances">
+      @for (funcionalidad of seccion().alcance; track funcionalidad) {
+        <article class="alcance">
+          <span class="indicador" aria-hidden="true"></span>
+          <h3>{{ funcionalidad }}</h3>
+          <p>Alcance previsto</p>
+          <span class="pendiente">Implementación pendiente</span>
+        </article>
+      }
+    </div>
+  </section>
+  <section class="sin-datos" aria-labelledby="sin-registros">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="seccion().icono" /></svg>
+    <h2 id="sin-registros">Un espacio en preparación</h2>
+    <p>
+      Esta demostración no consulta ni contiene registros. Puedes recorrer las secciones desde el
+      menú y conocer la estructura de PRISALY.
+    </p>
+    <a class="enlace" routerLink="/dashboard">Explorar otras secciones →</a>
+  </section>
+</div>

@@ -1,59 +1,34 @@
-# PRISALYFront
+# PRISALY — Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.3.
+Angular 22.2.3. La rama consolidada implementa la presentación del simulador y SIM-01: narrativa, preguntas de ejemplo, progreso, temporizador informativo, confirmación y cierre de demostración. No registra intentos ni calcula notas.
 
-## Development server
+## Instalar y comprobar
 
-To start a local development server, run:
+Node probado: 26.13.0; npm declarado: 11.17.0. Instalar desde el lockfile, sin actualizar dependencias:
 
-```bash
-ng serve
+```sh
+npm exec --yes --package=npm@11.17.0 -- npm ci --no-audit --no-fund
+npm run check:urls
+node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
+node node_modules/typescript/bin/tsc --noEmit -p tsconfig.spec.json
+npm test -- --watch=false --browsers=ChromeHeadless
+npm run build
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+El runner configurado es **Karma/Jasmine**, con Chrome Headless. Si Chrome no se encuentra automáticamente, definir CHROME_BIN con la ruta de su ejecutable. No hay una suite e2e configurada; las pruebas de componentes y RouterTestingHarness no sustituyen un recorrido contra Backend real.
 
-## Code scaffolding
+El build de producción se guarda en `dist/PRISALY-Front`. `npm start` abre el servidor de desarrollo; navegar a `/simulador`. La raíz y las rutas desconocidas redirigen al inicio del simulador. La demostración es pública y no atribuye identidad estudiantil.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Integración y límites
 
-```bash
-ng generate component component-name
-```
+La URL base reside en `src/environments/`. Los servicios deben construir rutas con API_CONFIG; la validación impide rutas absolutas, navegación por segmentos punto y repetición de la base. Ver [configuración de API](docs/configuracion-api.md).
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+ParticipacionGateway sigue con un proveedor que rechaza operaciones pendientes; no se simuló un Backend. El Backend consolidado ya registra GET de intento y PUT de respuesta protegidos, pero eso no completa el acceso estudiantil, contenido del caso, listado de sesiones elegibles ni los POST de inicio/finalización. No se conecta SIM-01 a un flujo parcial ni se usan credenciales de personal como identidad de estudiante.
 
-```bash
-ng generate --help
-```
+No hay login, guards de recursos privados, gestión de casos/sesiones ni vistas de resultados implementados en este Frontend. Sus contratos/políticas deben conciliarse antes de presentarlos como disponibles. El acceso se autoriza en Backend; un guard visual no lo sustituye.
 
-## Building
+## Verificación continua
 
-To build the project run:
+`.github/workflows/frontend-ci.yml` reproduce instalación, análisis TypeScript, validación de URL, pruebas Chrome Headless y build de producción para PR hacia develop. No despliega la aplicación ni usa secretos. No se publicó ni ejecutó remotamente durante el cierre local.
 
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+[SIM-01 y separación académica](docs/sim-01-narrativa.md) · [Informe nocturno](docs/CIERRE-NOCTURNO-FRONTEND-20261108.md)

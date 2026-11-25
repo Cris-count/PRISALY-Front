@@ -1,0 +1,65 @@
+.contraer-menu {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  padding: 0.5rem;
+}
+.contraer-menu svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+@media (min-width: 801px) {
+  .dashboard--compacto {
+    --ancho-menu: 5.5rem;
+  }
+  .dashboard--compacto .lateral {
+    padding-inline: 0.65rem;
+  }
+  .dashboard--compacto .marca img {
+    width: 3.25rem;
+    height: auto;
+  }
+  .dashboard--compacto .marca {
+    margin-bottom: 1.5rem;
+  }
+  .dashboard--compacto .marca span,
+  .dashboard--compacto .grupo,
+  .dashboard--compacto .resumen-demo,
+  .dashboard--compacto .nota-demo > p {
+    display: none;
+  }
+  /* El nombre permanece disponible para lectores; title ayuda con el puntero. */
+  .dashboard--compacto .nav-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .dashboard--compacto nav a,
+  .dashboard--compacto .volver {
+    justify-content: center;
+    gap: 0;
+    padding: 0.75rem;
+    min-height: 2.85rem;
+  }
+  .dashboard--compacto .nota-demo {
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+  .dashboard--compacto .cierre-personal {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+@media (max-width: 800px) {
+  .contraer-menu {
+    display: none;
+  }
+}

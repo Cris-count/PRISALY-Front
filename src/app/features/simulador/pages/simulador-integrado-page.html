@@ -1,0 +1,462 @@
+@if (idIntentoContenido() && !suspendido()) {
+  <section class="contenedor-academico" aria-label="Consulta de contenido académico">
+    @if (errorContenido()) {
+      <app-aviso tipo="error" titulo="No se pudo cargar el caso">
+        El contexto recibido no es compatible con esta experiencia.
+      </app-aviso>
+    } @else {
+      @if (participacion.estadoContenido() === 'cargando') {
+        <app-estado-carga mensaje="Consultando contenido académico…" />
+      }
+      @if (participacion.estadoContenido() === 'error') {
+        <app-aviso tipo="error" titulo="No se pudo consultar el contenido">
+          {{ mensajeError() ?? 'No se pudo interpretar el contenido académico.' }}
+        </app-aviso>
+      }
+      @if (participacion.contenido(); as contenido) {
+        <app-contenido-academico [contenido]="contenido" />
+      }
+    }
+    <button type="button" class="boton" (click)="salirParticipacion()">
+      Salir de la participación
+    </button>
+  </section>
+} @else if (contextoAcademico() && !suspendido()) {
+  <section class="contenedor-academico" aria-label="Participación académica">
+    @if (errorContenido()) {
+      <app-aviso tipo="error" titulo="No se pudo cargar el caso">
+        El contenido recibido no es compatible con esta experiencia.
+      </app-aviso>
+    } @else {
+      @switch (participacion.estado()) {
+        @case ('cargando') {
+          <app-estado-carga mensaje="Consultando participación…" />
+        }
+        @case ('guardando') {
+          <p role="status">Guardando respuesta… Espera la confirmación.</p>
+        }
+        @case ('guardada') {
+          <p role="status">
+            Respuesta confirmada. Si verificaste un guardado, selecciona de nuevo la decisión para continuar.
+          </p>
+        }
+        @case ('por-verificar') {
+          <p role="alert">El guardado no está confirmado. Verifica el intento antes de continuar.</p>
+        }
+        @case ('conflicto') {
+          <p role="alert">La respuesta entró en conflicto con el estado actual. Verifica el intento.</p>
+        }
+        @case ('finalizado') {
+          <p role="status">El intento está finalizado. No admite nuevas respuestas.</p>
+        }
+      }
+      @if (mensajeError(); as mensaje) {
+        <app-aviso tipo="error" titulo="No se pudo continuar">{{ mensaje }}</app-aviso>
+      }
+      @if (puedeVerificar()) {
+        <button type="button" class="boton" (click)="participacion.verificar()">
+          Verificar intento
+        </button>
+      }
+      @if (participacion.intento()) {
+        <p role="status">
+          {{ confirmadas() }} de {{ contextoAcademico()!.preguntas.length }} respuestas confirmadas.
+        </p>
+      }
+      @if (participacion.seleccionPendiente()) {
+        <p>Hay una selección pendiente de confirmar o resolver. Las respuestas guardadas se conservan.</p>
+      }
+      @if (enlace(); as enlaceActual) {
+        <app-panel-narrativo [enlace]="enlaceActual" />
+      }
+    }
+    <button type="button" class="boton" (click)="salirParticipacion()">
+      Salir de la participación
+    </button>
+  </section>
+} @else {
+  @switch (store.fase()) {
+    @case ('inicio') {
+      <div class="pantalla-inicio-integrada">
+        <header class="inicio-cabecera">
+          <span class="insignia-fase">SIMULADOR 2.0 · ACCESO WEB</span>
+          <h1>Simulador PRISALY</h1>
+          <p class="inicio-subtitulo">
+            Accede a la ciudad 3D de Unreal desde el navegador. La demostración anterior
+            en Phaser 2.5D sigue disponible como una opción independiente.
+          </p>
+        </header>
+
+        <div class="inicio-acciones">
+          <div class="tarjeta-inicio">
+            <h2>Simulador Unreal · Ciudad 3D</h2>
+            <p>Abre el acceso al nuevo simulador. La ciudad se habilitará cuando esté disponible su servidor de streaming.</p>
+            <a class="boton boton--primario acceso-unreal" href="simulador-unreal" data-testid="abrir-unreal">
+              Abrir simulador Unreal (3D)
+            </a>
+          </div>
+
+          <div class="tarjeta-inicio tarjeta-inicio--secundaria">
+            <h2>Demostración anterior · Phaser 2.5D</h2>
+            <p>
+              Esta es la versión anterior, no el simulador Unreal. Permite recorrer el mapa 2.5D,
+              visitar edificios y utilizar la libreta y el cuestionario de demostración.
+            </p>
+            <button
+              type="button"
+              class="boton boton--secundario"
+              data-testid="iniciar-demo-anterior"
+              (click)="iniciarDemostracion()"
+            >
+              Iniciar demostración anterior (Phaser 2.5D)
+            </button>
+          </div>
+
+          <div class="tarjeta-inicio tarjeta-inicio--secundaria">
+            <h2>Acceso Académico Institucional</h2>
+            <p>
+              Consulta sesiones autorizadas por el backend (M5). Requiere contratos vigentes en producción.
+            </p>
+            <button
+              type="button"
+              class="boton boton--secundario"
+              (click)="store.consultarSesiones()"
+            >
+              Consultar sesiones disponibles
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @case ('cargando') {
+      <div class="simulador__mensaje">
+        <app-estado-carga mensaje="Consultando sesiones disponibles…" />
+        <button type="button" class="boton" (click)="volverAlInicio()">
+          Volver al inicio
+        </button>
+      </div>
+    }
+
+    @case ('error') {
+      <div class="simulador__mensaje">
+        <app-aviso tipo="error" titulo="No se pudo continuar">
+          <p>{{ store.error() }}</p>
+        </app-aviso>
+        @if (store.reintentable()) {
+          <button type="button" class="boton boton--primario" (click)="store.consultarSesiones()">
+            Reintentar
+          </button>
+        }
+        <button type="button" class="boton" (click)="volverAlInicio()">
+          Volver al inicio
+        </button>
+      </div>
+    }
+
+    @case ('finalizado') {
+      <div class="simulador__mensaje">
+        <app-aviso tipo="exito" titulo="Demostración finalizada">
+          <p>
+            Respondiste {{ store.respondidas() }} de {{ store.totalPreguntas() }} preguntas de
+            ejemplo. Como eran datos simulados, no se registró ningún intento en el servidor.
+          </p>
+        </app-aviso>
+        <button type="button" class="boton boton--primario" (click)="volverAlInicio()">
+          Volver al inicio
+        </button>
+      </div>
+    }
+
+    @default {
+      @if (store.caso(); as caso) {
+        <main class="simulador-integrado" aria-label="Entorno Integrado de Simulación">
+          <!-- Barra superior / HUD -->
+          <header class="hud-barra">
+            <div class="hud-caso">
+              <h1 class="hud-titulo">{{ caso.titulo }}</h1>
+              @if (store.esDemostracion()) {
+                <span class="insignia-demo">Demostración anterior · Phaser 2.5D</span>
+              }
+              <span class="insignia-estado">
+                {{ faseExperiencia() === 'en-cuestionario' || faseExperiencia() === 'confirmando-finalizacion' ? 'Fase Cuestionario Demo' : 'Fase Exploración' }}
+              </span>
+            </div>
+
+            <div class="hud-metricas">
+              <app-temporizador [segundos]="store.segundosRestantes()" />
+              <app-indicador-progreso
+                [actual]="store.indice() + 1"
+                [total]="store.totalPreguntas()"
+                [respondidas]="store.respondidas()"
+              />
+            </div>
+
+            <div class="hud-acciones">
+              @if (store.esDemostracion()) {
+                <a href="simulador-unreal" class="boton acceso-unreal">Ir a Unreal (3D)</a>
+              }
+              <button
+                type="button"
+                class="boton-libreta"
+                (click)="abrirLibreta()"
+                aria-haspopup="dialog"
+                [attr.aria-expanded]="libretaAbierta()"
+              >
+                📓 Libreta ({{ libreta.estado().pistas.length + libreta.estado().notas.length }})
+              </button>
+              <button
+                type="button"
+                class="boton-volver-inicio"
+                (click)="volverAlInicio()"
+              >
+                Salir
+              </button>
+            </div>
+          </header>
+
+          <!-- Cuerpo principal: Escenario 2.5D + Panel Académico -->
+          <div class="simulador-integrado__cuerpo">
+            <!-- Sección Izquierda: Mundo 2.5D o Interior Activo -->
+            <section class="area-exploracion" aria-label="Exploración e Investigación">
+              <app-visor-ciudad-2d5
+                [paquete]="paqueteVisual"
+                (iniciarCuestionarioSolicitado)="solicitarInicioCuestionario()"
+              />
+
+              <!-- Vista de Interior (mostrada cuando el avatar entra a un edificio) -->
+              <!-- Vista de Interior con Continuidad Narrativa (Fase 9) -->
+              @if (adaptador.interiorActivo(); as edificio) {
+                <div class="interior-panel" aria-labelledby="titulo-interior">
+                  <header class="interior-cabecera">
+                    <div>
+                      <span class="interior-etiqueta">UBICACIÓN ACTUAL</span>
+                      <h2 id="titulo-interior">{{ edificio.nombre }}</h2>
+                    </div>
+                    <button
+                      type="button"
+                      class="boton-salir-interior"
+                      (click)="salirDeInterior()"
+                    >
+                      ← Volver a la ciudad
+                    </button>
+                  </header>
+
+                  <div class="interior-cuerpo">
+                    @if (motorInterior(); as motor) {
+                      <div class="interior-personajes">
+                        <span class="interior-subtitulo">Personajes en este espacio:</span>
+                        <ul class="lista-personajes-interior" aria-label="Personajes presentes">
+                          @for (p of motor.estado.personajes; track p.id) {
+                            <li class="chip-personaje">
+                              <strong>{{ p.nombre }}</strong>: {{ p.estado }}
+                              <span class="icono-expresion" aria-hidden="true">{{
+                                p.expresion === 'alegre' ? '☺' : p.expresion === 'atenta' ? '◉' : '○'
+                              }}</span>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+
+                      <div class="interior-dialogo-caja" aria-live="polite">
+                        @if (motor.dialogoActual; as linea) {
+                          <p class="dialogo-linea">
+                            <strong class="dialogo-hablante">{{ nombrePersonaje(linea.personajeId) }}:</strong>
+                            {{ linea.texto }}
+                          </p>
+                        }
+                        @if (motor.estado.transicion; as transicion) {
+                          <p class="dialogo-transicion">
+                            <em>{{ transicion.texto }}</em>
+                          </p>
+                        }
+                        @if (motor.terminado) {
+                          <p class="dialogo-concluido">
+                            ✓ <em>La interacción en este edificio ha finalizado. Puedes consultar tus notas o regresar a la ciudad.</em>
+                          </p>
+                        }
+                      </div>
+
+                      <div class="interior-controles">
+                        @if (motor.dialogoActual) {
+                          <button type="button" class="boton boton--primario" (click)="avanzarDialogoInterior()">
+                            Siguiente diálogo →
+                          </button>
+                        }
+                        @for (decision of motor.decisionesDisponibles; track decision.id) {
+                          <button
+                            type="button"
+                            class="boton boton--secundario"
+                            (click)="elegirOpcionInterior(decision.id)"
+                          >
+                            {{ decision.texto }}
+                          </button>
+                        }
+                        @if (motor.estado.transicion) {
+                          <button type="button" class="boton boton--primario" (click)="completarTransicionInterior()">
+                            Ingresar a la siguiente sala
+                          </button>
+                        }
+                        @if (motor.puedeVolver) {
+                          <button type="button" class="boton boton--fantasma" (click)="retrocederDialogoInterior()">
+                            Atrás en diálogo
+                          </button>
+                        }
+                        <button type="button" class="boton boton--fantasma" (click)="abrirLibreta()">
+                          📓 Libreta ({{ libreta.estado().pistas.length }} pistas)
+                        </button>
+                      </div>
+                    } @else {
+                      <p class="interior-descripcion">
+                        Has ingresado a <strong>{{ edificio.nombre }}</strong>. Espacio en preparación.
+                      </p>
+                    }
+
+                    <div class="interior-aviso-academico">
+                      <p>
+                        💡 <strong>Nota de demostración:</strong> La información y notas recopiladas aquí te orientan
+                        en tu análisis demostrativo, sin validez de examen oficial ni registro en Backend.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </section>
+
+            <!-- Sección Derecha: Guía de Exploración o Cuestionario Académico -->
+            <aside class="area-academica" aria-label="Coordinación Académica">
+              @if (faseExperiencia() === 'explorando' || faseExperiencia() === 'confirmando-inicio') {
+                <div class="panel-guia-investigacion" aria-labelledby="titulo-guia-investigacion">
+                  <span class="etiqueta-fase">FASE 1 · INVESTIGACIÓN Y RECOPILACIÓN DEMO</span>
+                  <h2 id="titulo-guia-investigacion">Exploración de la Ciudad</h2>
+                  <p class="guia-descripcion">
+                    Recorre la ciudad con clics, visita los edificios (Hospital, Fiscalía, Policía) para recoger
+                    antecedentes y usa la <strong>Libreta</strong> para registrar tus notas e hipótesis.
+                  </p>
+
+                  <div class="tarjeta-plaza-acceso">
+                    <h3>Acceso al Cuestionario de Demostración</h3>
+                    <p>
+                      Cuando consideres que has recopilado suficiente información para responder el caso,
+                      camina hasta la <strong>Plaza Central PRISALY</strong>.
+                    </p>
+                    @if (adaptador.enPlazaCentral()) {
+                      <div class="plaza-alerta-llegada">
+                        <p>📍 <strong>¡Has llegado a la Plaza Central!</strong></p>
+                        <p>Pulsa el botón <strong>«Iniciar cuestionario»</strong> en los controles para comenzar las preguntas de ejemplo.</p>
+                        <button
+                          type="button"
+                          class="boton boton--primario"
+                          (click)="solicitarInicioCuestionario($event.currentTarget)"
+                        >
+                          Iniciar cuestionario ahora
+                        </button>
+                      </div>
+                    } @else {
+                      <p class="plaza-indicacion-distante">
+                        📍 <em>Dirígete a la Plaza Central para activar el inicio del cuestionario.</em>
+                      </p>
+                    }
+                  </div>
+
+                  <div class="guia-recordatorio">
+                    <p>
+                      🔒 <em>Atención: Al confirmar el inicio del cuestionario de demostración, la exploración quedará concluida y ya no podrás regresar a la ciudad ni entrar a los edificios.</em>
+                    </p>
+                  </div>
+                </div>
+              } @else {
+                <h2 class="solo-lectores">Preguntas de Ejemplo (Demostración)</h2>
+
+                <div class="cuestionario-activo-aviso">
+                  <span class="etiqueta-fase etiqueta-fase--cuestionario">FASE 2 · CUESTIONARIO DE DEMOSTRACIÓN (EJEMPLO)</span>
+                  <p class="cuestionario-bloqueo-nota">
+                    🔒 <em>La fase de exploración ha finalizado. Responde las preguntas de ejemplo a continuación.</em>
+                  </p>
+                </div>
+
+                @if (store.preguntaActual(); as pregunta) {
+                  <app-panel-preguntas
+                    [pregunta]="pregunta"
+                    [numero]="store.indice() + 1"
+                    [seleccion]="store.seleccionActual()"
+                    [deshabilitado]="store.fase() === 'confirmando'"
+                    (seleccionar)="store.seleccionarOpcion($event)"
+                  />
+                }
+
+                @if (store.fase() === 'confirmando') {
+                  <app-confirmacion-finalizacion
+                    [respondidas]="store.respondidas()"
+                    [total]="store.totalPreguntas()"
+                    (confirmar)="confirmarFinalizacionCuestionario()"
+                    (cancelar)="cancelarFinalizacionCuestionario()"
+                  />
+                } @else {
+                  <app-barra-acciones
+                    [esPrimera]="store.esPrimera()"
+                    [esUltima]="store.esUltima()"
+                    (anterior)="store.anterior()"
+                    (continuar)="store.siguiente()"
+                    (finalizar)="solicitarFinalizacionCuestionario()"
+                  />
+                }
+              }
+            </aside>
+          </div>
+        </main>
+      }
+    }
+  }
+}
+
+<!-- Diálogo Modal: Confirmar Inicio de Cuestionario (Accesible showModal()) -->
+@if (faseExperiencia() === 'confirmando-inicio') {
+  <dialog
+    #dialogoConfirmacion
+    class="dialogo-inicio-cuestionario"
+    aria-labelledby="titulo-confirmar-inicio"
+    aria-describedby="descripcion-confirmar-inicio"
+    (cancel)="cancelarInicioCuestionario($event)"
+  >
+    <header class="dialogo-inicio-cuestionario__cabecera">
+      <span class="insignia-transicion">TRANSICIÓN AL CUESTIONARIO DEMO</span>
+      <h2 id="titulo-confirmar-inicio">¿Comenzar el cuestionario de demostración?</h2>
+    </header>
+    <div id="descripcion-confirmar-inicio" class="dialogo-inicio-cuestionario__cuerpo">
+      <p class="advertencia-bloqueo">
+        ⚠️ <strong>Atención:</strong> Al confirmar el inicio, se dará por concluida la fase de exploración y <strong>no podrás regresar a la ciudad ni ingresar a los edificios</strong> durante esta sesión demostrativa.
+      </p>
+      @if (advertenciaSinInvestigar()) {
+        <p class="advertencia-sin-pistas">
+          💡 <strong>Nota informativa:</strong> Aún no has investigado en los edificios ni recopilado pistas. Puedes iniciar el cuestionario directamente si lo deseas.
+        </p>
+      }
+      <p class="nota-demo">
+        <em>Modo demostración: las preguntas y resultados son de ejemplo local. No se transmiten ni persisten en el Backend oficial, y la experiencia se reinicia al recargar la página.</em>
+      </p>
+      <div class="dialogo-inicio-cuestionario__acciones">
+        <button
+          #btnCancelarModal
+          type="button"
+          class="boton boton--secundario"
+          (click)="cancelarInicioCuestionario()"
+        >
+          Cancelar y seguir explorando
+        </button>
+        <button
+          type="button"
+          class="boton boton--primario"
+          (click)="confirmarInicioCuestionario()"
+        >
+          Confirmar e iniciar cuestionario
+        </button>
+      </div>
+    </div>
+  </dialog>
+}
+
+<!-- Modal de Libreta en Memoria -->
+@if (libretaAbierta()) {
+  <app-libreta-panel (cerrar)="cerrarLibreta()" />
+}

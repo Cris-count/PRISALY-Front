@@ -1,0 +1,193 @@
+:host {
+  display: block;
+}
+.pagina-docente {
+  max-width: 76rem;
+  margin: 0 auto;
+}
+.regreso {
+  display: inline-block;
+  padding: 0.5rem 0;
+  color: var(--p-azul);
+  font-size: var(--t-sm);
+}
+.cabecera-docente {
+  margin: 1rem 0 1.25rem;
+}
+.ceja {
+  color: var(--p-azul);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+h1 {
+  font-size: var(--t-titulo);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+h2 {
+  margin: 0 0 0.8rem;
+  font-size: var(--t-seccion);
+  font-weight: 700;
+}
+h3 {
+  font-size: var(--t-card);
+}
+p {
+  color: var(--p-sec);
+  font-size: var(--t-base);
+  line-height: 1.6;
+}
+.cabecera-docente > p {
+  max-width: 42rem;
+}
+.identidad {
+  display: inline-block;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--p-borde);
+  border-radius: 0.5rem;
+  background: var(--p-fondo);
+}
+.areas-docentes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+  margin: 1.5rem 0;
+  align-items: start;
+}
+.panel-docente {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--p-borde);
+  border-radius: 0.9rem;
+  background: var(--p-fondo);
+}
+.referencia-estados {
+  margin: 1.5rem 0;
+}
+.referencia-estados ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+}
+.referencia-estados li {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid currentColor;
+  border-radius: 2rem;
+  font-size: var(--t-xs);
+}
+.borrador {
+  color: #87500a;
+  background: #fff3db;
+}
+.publicado {
+  color: #0755b8;
+  background: #edf4ff;
+}
+.archivado {
+  color: #344968;
+  background: #f2f5fa;
+}
+.acciones-docentes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin: 1.5rem 0 1rem;
+}
+button,
+input,
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.8rem;
+  padding: 0.7rem;
+  border: 1px solid #8a9bb3;
+  border-radius: 0.5rem;
+  background: #f2f5fa;
+  color: var(--p-sec);
+  font: inherit;
+  font-size: var(--t-sm);
+  opacity: 1;
+  cursor: not-allowed;
+  -webkit-text-fill-color: currentColor;
+}
+button {
+  text-align: left;
+}
+button span {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: var(--t-xs);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--p-sec);
+  opacity: 1;
+}
+fieldset {
+  min-width: 0;
+  margin: 1.5rem 0 0;
+  padding: 1rem;
+  border: 1px solid var(--p-borde);
+  border-radius: 0.6rem;
+}
+legend {
+  color: var(--p-sec);
+  font-size: var(--t-sm);
+}
+label {
+  display: block;
+  margin: 0.8rem 0 0.5rem;
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+.nota,
+.pie-docente {
+  font-size: var(--t-sm);
+}
+.pie-docente {
+  padding: 0.7rem;
+  border-radius: 0.5rem;
+  background: var(--p-fondo);
+}
+a:focus-visible {
+  outline: 3px solid var(--p-azul);
+  outline-offset: 3px;
+}
+@media (max-width: 1100px) {
+  .areas-docentes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .acciones-docentes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .panel-docente {
+    padding: 1.2rem;
+  }
+}
+
+.icono-docente {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: 0.8rem;
+  border: 1px solid var(--p-borde);
+  border-radius: 0.7rem;
+  background: var(--p-suave);
+  color: var(--p-azul);
+}
+.icono-docente svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

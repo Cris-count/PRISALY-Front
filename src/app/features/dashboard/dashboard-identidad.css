@@ -1,0 +1,25 @@
+:host {
+  /* Identidad compartida de Mariana: se hereda solo dentro del Dashboard. */
+  --p-texto: #172b4d;
+  --p-sec: #344968;
+  --p-azul: #0755b8;
+  --p-azul-electrico: #0755d9;
+  --p-celeste: #10d9f4;
+  --p-naranja: #ff861b;
+  --p-borde: #c7d5e8;
+  --p-fondo: #fff;
+  --p-suave: #edf4ff;
+  --p-acento: #87500a;
+  --p-accion: var(--p-naranja);
+  --p-accion-hover: #ff9b36;
+  --p-accion-texto: #201000;
+  --p-activo-fondo: #ffead4;
+  --p-activo-texto: #713600;
+}
+button:not(:disabled):hover {
+  border-color: var(--p-azul);
+  background: var(--p-suave);
+}
+button:disabled {
+  cursor: not-allowed;
+}

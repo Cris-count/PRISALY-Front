@@ -1,0 +1,135 @@
+<div class="administracion">
+  <a class="regreso" routerLink="/dashboard">← Volver al dashboard</a>
+  <header class="cabecera-admin">
+    <div>
+      <p class="ceja">COMUNIDAD ACADÉMICA / ADMINISTRACIÓN</p>
+      <h1 id="titulo-administracion">Gestión de usuarios y docentes</h1>
+      <p class="descripcion">
+        Un espacio para organizar la información docente, sus responsabilidades y la futura consulta
+        de roles y permisos institucionales.
+      </p>
+    </div>
+    <p class="sello-demo">ENTORNO DEMOSTRATIVO<span>Sin sesión administrativa autenticada</span></p>
+  </header>
+
+  <app-estado-panel
+    estado="pendiente"
+    mensaje="Interfaz de presentación. La gestión de usuarios, docentes, roles y permisos está pendiente de integración; no permite operaciones administrativas."
+  />
+
+  <div class="areas-admin">
+    <section class="panel-admin docentes" aria-labelledby="titulo-docentes">
+      <div class="cabecera-panel">
+        <span class="numero" aria-hidden="true">01</span>
+        <div>
+          <p class="ceja">INFORMACIÓN INSTITUCIONAL</p>
+          <h2 id="titulo-docentes">Gestión de docentes</h2>
+        </div>
+      </div>
+      <p>Preparación del listado, la búsqueda y los filtros para una futura consulta autorizada.</p>
+      <div class="filtros-admin" aria-describedby="nota-filtros">
+        <div>
+          <label for="buscar-docente">Buscar docente</label>
+          <input
+            id="buscar-docente"
+            type="search"
+            placeholder="Nombre o correo institucional"
+            disabled
+            aria-describedby="nota-filtros"
+          />
+        </div>
+        <div>
+          <label for="estado-docente">Filtrar por estado</label>
+          <select id="estado-docente" disabled aria-describedby="nota-filtros">
+            <option>Catálogo pendiente</option>
+          </select>
+        </div>
+      </div>
+      <p class="nota" id="nota-filtros">
+        Búsqueda y filtros de presentación · pendientes de integración.
+      </p>
+      <table>
+        <caption>
+          Listado futuro de docentes · sin registros consultados
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Docente</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Responsabilidades</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <app-estado-panel
+        estado="sin-datos"
+        mensaje="Esta demostración no consulta ni contiene registros docentes. La información estará disponible tras su integración institucional."
+      />
+      <div class="acciones-admin" aria-describedby="nota-acciones-docentes">
+        <button type="button" disabled aria-describedby="nota-acciones-docentes">
+          Registrar docente <span>Pendiente</span>
+        </button>
+        <button type="button" disabled aria-describedby="nota-acciones-docentes">
+          Editar información <span>Pendiente</span>
+        </button>
+      </div>
+      <p class="nota" id="nota-acciones-docentes">
+        Implementación pendiente. No se crean cuentas ni se modifica información.
+      </p>
+    </section>
+
+    <section class="panel-admin roles" aria-labelledby="titulo-roles">
+      <div class="cabecera-panel">
+        <span class="numero" aria-hidden="true">02</span>
+        <div>
+          <p class="ceja">ACCESO INSTITUCIONAL</p>
+          <h2 id="titulo-roles">Roles y permisos</h2>
+        </div>
+      </div>
+      <p>
+        La consulta requerirá una sesión autorizada. Esta vista no acredita identidad ni privilegios
+        administrativos.
+      </p>
+      <dl class="catalogos">
+        <div>
+          <dt>Roles</dt>
+          <dd>Catálogo pendiente de integración.</dd>
+        </div>
+        <div>
+          <dt>Permisos</dt>
+          <dd>Consulta pendiente de integración.</dd>
+        </div>
+      </dl>
+      <p class="nota">
+        No se han consultado roles ni permisos. No hay asignación ni revocación habilitadas.
+      </p>
+      <div class="acciones-admin" aria-describedby="nota-acciones-roles">
+        <button type="button" disabled aria-describedby="nota-acciones-roles">
+          Administrar roles <span>Pendiente</span>
+        </button>
+        <button type="button" disabled aria-describedby="nota-acciones-roles">
+          Consultar permisos <span>Pendiente</span>
+        </button>
+      </div>
+      <p class="nota" id="nota-acciones-roles">
+        Acciones previstas · requieren integración y autorización institucional.
+      </p>
+    </section>
+  </div>
+
+  <details class="panel-admin estados-demo">
+    <summary>Vista previa de estados <span>Ejemplos de diseño</span></summary>
+    <p>
+      Estos ejemplos muestran presentaciones futuras. No representan consultas, errores ni
+      decisiones de acceso ocurridos en esta demostración.
+    </p>
+    <div class="ejemplos-admin">
+      @for (ejemplo of ejemplos; track ejemplo.estado) {
+        <section [attr.aria-labelledby]="'ejemplo-' + ejemplo.estado">
+          <h3 [id]="'ejemplo-' + ejemplo.estado">Ejemplo · {{ ejemplo.titulo }}</h3>
+          <app-estado-panel [estado]="ejemplo.estado" [mensaje]="ejemplo.mensaje" />
+        </section>
+      }
+    </div>
+  </details>
+</div>
