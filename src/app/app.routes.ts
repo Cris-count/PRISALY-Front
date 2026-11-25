@@ -25,11 +25,8 @@ export const routes: Routes = [
   },
   {
     path: 'simulador-integrado',
-    title: 'Acceso al simulador · PRISALY',
-    loadComponent: () =>
-      import('./features/simulador/pages/simulador-integrado-page').then(
-        (m) => m.SimuladorIntegradoPage
-      ),
+    pathMatch: 'full',
+    redirectTo: 'simulador-unreal',
   },
   {
     path: 'simulador-unreal',

@@ -26,16 +26,15 @@ describe('Rutas públicas de presentación', () => {
   for (const ruta of ['/', '/login', '/dashboard', '/simulador', '/simulador-unreal', '/simulador-tecnico-2d5', '/simulador-integrado', '/ruta-inexistente']) {
     it(`resuelve ${ruta} hacia el inicio público sin atribuir identidad ni iniciar intentos`, async () => {
       const harness = await RouterTestingHarness.create(ruta);
-      const esUnreal = ruta === '/simulador' || ruta === '/simulador-unreal';
+      const esUnreal = ruta === '/simulador' || ruta === '/simulador-unreal' || ruta === '/simulador-integrado';
       const esTecnico = ruta === '/simulador-tecnico-2d5';
-      const esIntegrado = ruta === '/simulador-integrado';
       const esDashboard = ruta === '/dashboard';
       expect(TestBed.inject(Router).url).toBe(
-        esUnreal ? '/simulador-unreal' : esTecnico ? '/simulador-tecnico-2d5' : esIntegrado ? '/simulador-integrado' : esDashboard ? '/dashboard' : '/login',
+        esUnreal ? '/simulador-unreal' : esTecnico ? '/simulador-tecnico-2d5' : esDashboard ? '/dashboard' : '/login',
       );
       expect(
         harness.routeNativeElement?.querySelector(
-          esUnreal ? '#titulo-disponibilidad' : esTecnico ? '#simulador-titulo' : esIntegrado ? '.pantalla-inicio-integrada' : esDashboard ? '#bienvenida-dashboard' : 'form',
+          esUnreal ? '#titulo-disponibilidad' : esTecnico ? '#simulador-titulo' : esDashboard ? '#bienvenida-dashboard' : 'form',
         ),
       ).not.toBeNull();
       for (const operacion of Object.values(gateway)) {
