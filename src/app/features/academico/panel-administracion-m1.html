@@ -134,8 +134,8 @@
     <form class="fila" [formGroup]="formDocente" (ngSubmit)="crearDocente()">
       <h3>Alta de docente</h3>
       <p class="etiqueta-real">
-        El alta no genera contraseña utilizable (D-05): la entrega segura de la credencial está
-        pendiente.
+        El alta no genera ni devuelve contraseña. Si el servidor tiene habilitada la activación
+        D-05, emite además una invitación por correo; esta interfaz no puede confirmar su entrega.
       </p>
       <div class="campos">
         <label
@@ -157,6 +157,36 @@
         <p>
           Último docente registrado: {{ d.nombre }} · <span class="mono">{{ d.idUsuario }}</span>
         </p>
+      }
+    </form>
+
+    <form class="fila" [formGroup]="formActivacion" (ngSubmit)="emitirActivacion()">
+      <h3>Invitación de activación docente (D-05)</h3>
+      @if (!activacionHabilitada) {
+        <p class="mensaje" data-prueba="activacion-admin-no-habilitada">
+          No habilitada en este entorno. Requiere la autorización de Dirección Central, el
+          interruptor PRISALY_M1_ACTIVACION_DOCENTE_ENABLED y la migración V020 en el servidor.
+        </p>
+      } @else {
+        <p class="etiqueta-real">
+          Reemite o revoca la invitación de un docente. Una respuesta 202 indica que el servidor
+          aceptó la emisión, no que el correo se haya entregado.
+        </p>
+        <label
+          >Identificador del docente (UUID)
+          <input formControlName="idUsuario" autocomplete="off" spellcheck="false" />
+        </label>
+        @if (
+          formActivacion.controls.idUsuario.touched && formActivacion.controls.idUsuario.invalid
+        ) {
+          <span class="error-campo">Introduce un UUID válido.</span>
+        }
+        <div class="acciones">
+          <button type="submit" [disabled]="ocupado()">Emitir invitación</button>
+          <button type="button" (click)="revocarActivacion()" [disabled]="ocupado()">
+            Revocar invitación
+          </button>
+        </div>
       }
     </form>
   }

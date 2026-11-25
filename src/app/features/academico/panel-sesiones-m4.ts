@@ -18,6 +18,7 @@ import {
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { aFalloAcademico, mensajeFallo, UUID_RE } from './academico-http';
 import { CasosSesionStore } from './casos-sesion.store';
+import { PanelParticipacionesDc92 } from './panel-participaciones-dc92';
 import {
   PARAM_CASO,
   PARAM_SESION,
@@ -109,7 +110,7 @@ export const ETIQUETA_ESTADO: Readonly<Record<EstadoSesion, string>> = {
  */
 @Component({
   selector: 'app-panel-sesiones-m4',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PanelParticipacionesDc92],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './panel-sesiones-m4.html',
   styleUrl: './panel-academico.css',

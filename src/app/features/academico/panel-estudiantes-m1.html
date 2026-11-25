@@ -1,0 +1,100 @@
+<section class="panel" aria-labelledby="adm-estudiantes-titulo">
+  <h2 id="adm-estudiantes-titulo">Administración de estudiantes</h2>
+  <p class="etiqueta-real">
+    Alta administrativa y búsqueda por correo exacto (P-78). El alta no crea credencial ni activa el
+    acceso estudiantil: ese acceso depende solo de DD-02.
+  </p>
+
+  @if (!habilitada) {
+    <p class="mensaje" data-prueba="estudiantes-no-habilitado">
+      Funcionalidad no habilitada en este entorno. Requiere la autorización de Dirección Central y
+      el interruptor PRISALY_M1_ALTA_ESTUDIANTES_ENABLED en el servidor. No se realizan consultas.
+    </p>
+  } @else if (!sesionValida()) {
+    <p class="mensaje">Inicia sesión de personal para administrar estudiantes.</p>
+  } @else {
+    @if (aviso(); as a) {
+      <p
+        class="mensaje"
+        [class.error]="a.tipo === 'error'"
+        [class.exito]="a.tipo === 'exito'"
+        role="status"
+        aria-live="polite"
+      >
+        {{ a.texto }}
+      </p>
+    }
+
+    <form class="fila" [formGroup]="formAlta" (ngSubmit)="crearEstudiante()">
+      <h3>Alta de estudiante</h3>
+      <div class="campos">
+        <label
+          >Nombre
+          <input formControlName="nombre" maxlength="150" autocomplete="off" />
+        </label>
+        <label
+          >Correo
+          <input formControlName="correo" type="email" maxlength="255" autocomplete="off" />
+        </label>
+      </div>
+      @if (formAlta.touched && formAlta.invalid) {
+        <span class="error-campo">Nombre y correo válido son obligatorios.</span>
+      }
+      <div class="acciones">
+        <button type="submit" [disabled]="ocupado()">Registrar estudiante</button>
+      </div>
+      @if (estudianteCreado(); as e) {
+        <p data-prueba="estudiante-creado">
+          Último estudiante registrado: {{ e.nombre }} · {{ e.correo }} · estudiante
+          <span class="mono">{{ e.idEstudiante }}</span>
+        </p>
+      }
+    </form>
+
+    <form class="fila" [formGroup]="formBusqueda" (ngSubmit)="buscar()">
+      <h3>Buscar estudiante por correo exacto</h3>
+      <label
+        >Correo
+        <input formControlName="correo" type="email" maxlength="255" autocomplete="off" />
+      </label>
+      @if (formBusqueda.controls.correo.touched && formBusqueda.controls.correo.invalid) {
+        <span class="error-campo">Introduce un correo válido.</span>
+      }
+      <div class="acciones">
+        <button type="submit" [disabled]="ocupado()">Buscar</button>
+      </div>
+    </form>
+
+    @if (resultados(); as lista) {
+      <div class="fila" data-prueba="resultados-estudiantes">
+        @if (lista.length === 0) {
+          <p>No hay ningún estudiante registrado con el correo {{ correoBuscado() }}.</p>
+        } @else {
+          <table class="tabla" aria-label="Estudiante encontrado">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Estado</th>
+                <th>Identificador de estudiante</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of lista; track e.idEstudiante) {
+                <tr>
+                  <td>{{ e.nombre }}</td>
+                  <td>{{ e.correo }}</td>
+                  <td>{{ e.estado }}</td>
+                  <td class="mono">{{ e.idEstudiante }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p class="etiqueta-real">
+            El identificador de estudiante es el que se usa para convocar en una sesión (M4).
+          </p>
+        }
+      </div>
+    }
+  }
+</section>

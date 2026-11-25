@@ -12,7 +12,10 @@ import { M1_PERSONAL_LOCAL } from '../autenticacion/m1-personal-http';
 import { CredencialPersonalMemoria } from '../autenticacion/m1-personal-memoria';
 import { VigilanciaAccesoPersonal } from '../autenticacion/vigilancia-acceso-personal';
 
-/** Marca explícita de las solicitudes académicas de personal (M1 administración, M3, M4). */
+/**
+ * Marca explícita de las solicitudes académicas de personal (M1 administración, M3, M4 y, desde
+ * FE-61, las rutas docentes y de evaluación de DC-99).
+ */
 export const SOLICITUD_ACADEMICA = new HttpContextToken<boolean>(() => false);
 
 export function contextoAcademico(): HttpContext {
@@ -22,8 +25,14 @@ export function contextoAcademico(): HttpContext {
 const UUID = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
 
 /**
- * Lista cerrada de rutas publicadas por el Backend (`develop` 773818c) que consume el Frontend.
- * Plantillas exactas por método; no se usan prefijos libres. No incluye M5 ni el acceso estudiantil.
+ * Lista cerrada de rutas de personal (Bearer) publicadas por el Backend, contrastada con los
+ * controladores de `develop` 32922bb (DC-99, PR #98). Plantillas exactas por método; no se usan
+ * prefijos libres. La consulta (`?correo=`) no forma parte de la plantilla.
+ *
+ * Las rutas marcadas «DC-99» son candidatas y están APAGADAS por defecto en el Backend (sin su
+ * interruptor responden 404); figurar aquí solo permite transportar la credencial, no las activa.
+ *
+ * Nunca incluye rutas públicas ni las estudiantiles por cookie: ver `RUTAS_SIN_BEARER`.
  */
 const RUTAS_AUTORIZADAS: readonly { metodo: string; ruta: RegExp }[] = [
   { metodo: 'POST', ruta: /^v1\/admin\/docentes$/ },
@@ -50,7 +59,49 @@ const RUTAS_AUTORIZADAS: readonly { metodo: string; ruta: RegExp }[] = [
   { metodo: 'PATCH', ruta: new RegExp(`^m4/sesiones/${UUID}/estado$`) },
   { metodo: 'POST', ruta: new RegExp(`^m4/sesiones/${UUID}/convocatorias$`) },
   { metodo: 'GET', ruta: new RegExp(`^m4/sesiones/${UUID}/convocatorias$`) },
+  // DC-99 P-78 (PRISALY_M1_ALTA_ESTUDIANTES_ENABLED): alta y búsqueda por correo exacto.
+  { metodo: 'POST', ruta: /^v1\/admin\/estudiantes$/ },
+  { metodo: 'GET', ruta: /^v1\/admin\/estudiantes$/ },
+  // DC-99 D-05 (PRISALY_M1_ACTIVACION_DOCENTE_ENABLED + V020): (re)emisión y revocación.
+  { metodo: 'POST', ruta: new RegExp(`^v1/admin/docentes/${UUID}/activacion$`) },
+  { metodo: 'DELETE', ruta: new RegExp(`^v1/admin/docentes/${UUID}/activacion$`) },
+  // DC-99 DD-09 y RF-16/DD-11 (consulta de participaciones y reporte CSV de una sesión propia).
+  { metodo: 'GET', ruta: new RegExp(`^v1/docente/sesiones/${UUID}/participaciones$`) },
+  { metodo: 'GET', ruta: new RegExp(`^v1/docente/sesiones/${UUID}/reporte-participacion$`) },
+  // DC-99 DD-13 (ausencias) y RF-21 (retiro) de una convocatoria.
+  { metodo: 'POST', ruta: new RegExp(`^v1/docente/convocatorias/${UUID}/ausencia$`) },
+  { metodo: 'GET', ruta: new RegExp(`^v1/docente/convocatorias/${UUID}/ausencia$`) },
+  { metodo: 'POST', ruta: new RegExp(`^v1/docente/convocatorias/${UUID}/retiro$`) },
+  { metodo: 'GET', ruta: new RegExp(`^v1/docente/convocatorias/${UUID}/retiro$`) },
+  // DC-99 DD-04 (repetición excepcional e intento válido) y DD-12/RF-26 (retroalimentación).
+  { metodo: 'POST', ruta: new RegExp(`^v1/docente/participaciones/${UUID}/repeticion$`) },
+  { metodo: 'GET', ruta: new RegExp(`^v1/docente/participaciones/${UUID}/repeticion$`) },
+  { metodo: 'POST', ruta: new RegExp(`^v1/docente/participaciones/${UUID}/intento-valido$`) },
+  { metodo: 'POST', ruta: new RegExp(`^v1/docente/participaciones/${UUID}/retroalimentacion$`) },
+  { metodo: 'PUT', ruta: new RegExp(`^v1/docente/participaciones/${UUID}/retroalimentacion$`) },
+  { metodo: 'GET', ruta: new RegExp(`^v1/docente/participaciones/${UUID}/retroalimentacion$`) },
+  // M6 evaluación docente (prisaly.m6.evaluacion.enabled) y DC-99 N2 liberación (V019).
+  { metodo: 'POST', ruta: new RegExp(`^v1/evaluacion/intentos/${UUID}$`) },
+  { metodo: 'GET', ruta: new RegExp(`^v1/evaluacion/intentos/${UUID}$`) },
+  { metodo: 'POST', ruta: new RegExp(`^v1/evaluacion/intentos/${UUID}/liberacion$`) },
 ];
+
+/**
+ * Rutas que NUNCA llevan Bearer aunque una solicitud llegue marcada como académica: las públicas
+ * (autenticación de personal, activación D-05 por token) y las estudiantiles, que usan la cookie de
+ * sesión DD-02 B (`/v1/estudiantes/**`, incluida la calificación N2, y `/v1/acceso-estudiante/**`).
+ * Se comprueba antes que la lista autorizada como defensa adicional.
+ */
+const RUTAS_SIN_BEARER: readonly RegExp[] = [
+  /^v1\/personal\/autenticar$/,
+  /^v1\/personal\/activar$/,
+  /^v1\/acceso-estudiante(\/|$)/,
+  /^v1\/estudiantes(\/|$)/,
+];
+
+export function esRutaSinBearer(relativa: string): boolean {
+  return RUTAS_SIN_BEARER.some((r) => r.test(relativa));
+}
 
 /** Devuelve la ruta relativa a la base configurada, o `null` si la URL apunta a otro origen o base. */
 export function rutaRelativaApi(baseUrl: string, url: string): string | null {
@@ -61,6 +112,7 @@ export function rutaRelativaApi(baseUrl: string, url: string): string | null {
 }
 
 export function esRutaAcademicaAutorizada(metodo: string, relativa: string): boolean {
+  if (esRutaSinBearer(relativa)) return false;
   return RUTAS_AUTORIZADAS.some((r) => r.metodo === metodo && r.ruta.test(relativa));
 }
 
