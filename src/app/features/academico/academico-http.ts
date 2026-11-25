@@ -42,6 +42,7 @@ const RUTAS_AUTORIZADAS: readonly { metodo: string; ruta: RegExp }[] = [
   { metodo: 'PUT', ruta: new RegExp(`^v1/admin/usuarios/${UUID}/permisos/\\d+$`) },
   { metodo: 'DELETE', ruta: new RegExp(`^v1/admin/usuarios/${UUID}/permisos/\\d+$`) },
   { metodo: 'POST', ruta: /^v1\/casos$/ },
+  { metodo: 'GET', ruta: /^v1\/casos$/ },
   { metodo: 'GET', ruta: new RegExp(`^v1/casos/${UUID}$`) },
   { metodo: 'PATCH', ruta: new RegExp(`^v1/casos/${UUID}$`) },
   { metodo: 'GET', ruta: new RegExp(`^v1/casos/${UUID}/contenido$`) },
@@ -199,7 +200,19 @@ export function respuestaInvalida(): FalloAcademico {
 export function mensajeFallo(fallo: FalloAcademico): string {
   switch (fallo.estado) {
     case 400:
-      return 'Los datos no cumplen las validaciones del servidor. Revisa el formulario.';
+      return 'Los datos no cumplen las validaciones del servidor. Revisa el formulario. No se guardó ningún cambio.';
+    case 401:
+      return 'Tu sesión no es válida o venció. Vuelve a ingresar para continuar. No se guardó ningún cambio.';
+    case 403:
+      return 'No tienes acceso a este recurso. No se guardó ningún cambio.';
+    case 404:
+      return 'El recurso solicitado no existe o ya no está disponible. No se guardó ningún cambio.';
+    case 405:
+      return 'Esta operación no está publicada en el servidor. No se guardó ningún cambio.';
+    case 500:
+      return 'El servidor no pudo completar la operación. No se guardó ningún cambio.';
+    case 501:
+      return 'Esta operación sigue pendiente de autorización. No se guardó ningún cambio.';
     case 412:
       return 'Otra persona o pestaña modificó el caso. Vuelve a consultarlo antes de guardar.';
     case 422:

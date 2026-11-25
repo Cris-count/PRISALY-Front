@@ -28,16 +28,23 @@ describe('qa-navegacion: habilitación local controlada', () => {
       expect(MAPEO_RUTAS_PERSONAL_OFICIAL[r].habilitada).withContext(r).toBeFalse();
   });
 
-  it('producción, desarrollo, QA ordinario y demo no habilitan ninguna ruta', () => {
+  it('producción, QA ordinario y demo no habilitan ninguna ruta', () => {
     for (const [nombre, entorno] of [
       ['produccion', entornoProduccion],
-      ['desarrollo', entornoDesarrollo],
       ['qa', entornoQa],
       ['demo', entornoDemo],
     ] as const)
       expect(habilitadas(mapeoConHabilitacionQa(MAPEO_RUTAS_PERSONAL_OFICIAL, entorno)))
         .withContext(nombre)
         .toEqual([]);
+  });
+
+  it('el ng serve local habilita las mismas rutas autorizadas, contra el backend de esta máquina', () => {
+    expect(entornoDesarrollo.production).toBeFalse();
+    expect(entornoDesarrollo.personalQaHabilitado).toBeTrue();
+    expect(entornoDesarrollo.demostracionesHabilitadas).toBeFalse();
+    expect(habilitadas(mapeoConHabilitacionQa(MAPEO_RUTAS_PERSONAL_OFICIAL, entornoDesarrollo)))
+      .toEqual([...SEIS].sort());
   });
 
   it('qa-navegacion habilita exactamente las rutas autorizadas (docentes y administrativas)', () => {

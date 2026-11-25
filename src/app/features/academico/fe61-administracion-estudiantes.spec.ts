@@ -33,6 +33,7 @@ describe('FE-61 capacidades DC-99', () => {
       activacionDocente: false,
       consultaParticipaciones: false,
       reporteParticipacion: false,
+      participacionHttp: false,
     });
     expect(
       leerCapacidadesDc99({
@@ -40,13 +41,16 @@ describe('FE-61 capacidades DC-99', () => {
         activacionDocente: 1,
         consultaParticipaciones: 'yes',
         reporteParticipacion: {},
+        participacionHttp: 'true',
       }),
     ).toEqual({
       altaEstudiantes: false,
       activacionDocente: false,
       consultaParticipaciones: false,
       reporteParticipacion: false,
+      participacionHttp: false,
     });
+    expect(leerCapacidadesDc99({ participacionHttp: true }).participacionHttp).toBeTrue();
   });
 
   it('ningún entorno compilado las habilita hoy', () => {
@@ -56,6 +60,7 @@ describe('FE-61 capacidades DC-99', () => {
       activacionDocente: false,
       consultaParticipaciones: false,
       reporteParticipacion: false,
+      participacionHttp: false,
     });
   });
 });

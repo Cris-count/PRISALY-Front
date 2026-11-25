@@ -7,7 +7,14 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "check:urls": "node scripts/verificar-urls-api.mjs"
+    "check:urls": "node scripts/verificar-urls-api.mjs",
+    "memory:visualize": "node ../.opencode/memory/visual/server.mjs",
+    "memory:visualize:open": "node ../.opencode/memory/visual/server.mjs --open",
+    "memory:export:json": "node ../.opencode/memory/visual/tools/export-json.mjs",
+    "memory:export:svg": "node ../.opencode/memory/visual/tools/export-svg.mjs",
+    "memory:export:graphml": "node ../.opencode/memory/visual/tools/export-graphml.mjs",
+    "memory:preview": "node ../.opencode/memory/visual/tools/preview-json.mjs",
+    "memory:visual-preview": "node ../.opencode/memory/visual/tools/preview-json.mjs"
   },
   "private": true,
   "packageManager": "npm@11.17.0",

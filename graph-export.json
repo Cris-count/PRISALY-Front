@@ -1,0 +1,215 @@
+{
+  "generated_at": "2026-11-24T18:42:49.709Z",
+  "health": {
+    "ok": true,
+    "schema_version": 2,
+    "integrity": "ok",
+    "foreign_key_errors": 0,
+    "counts": {
+      "nodes": 18,
+      "edges": 14,
+      "evidence": 10,
+      "proposals": 0,
+      "tasks": 0,
+      "tests": 0
+    },
+    "storage": "local per-user SQLite",
+    "database_path": "C:\\Users\\crisa\\AppData\\Local\\PRISALY\\opencode-memory\\memory.sqlite",
+    "backups_directory": "C:\\Users\\crisa\\AppData\\Local\\PRISALY\\opencode-memory\\backups"
+  },
+  "filters": {
+    "current_heads": []
+  },
+  "nodes": [
+    {
+      "id": "seed-project-prisaly",
+      "tp": "PROJECT",
+      "name": "PRISALY",
+      "summary": "Dos repositorios Git independientes; memoria solo de ingeniería.",
+      "st": "CONFIRMADO",
+      "status": "CONFIRMADO",
+      "confidence": 1,
+      "version": 1,
+      "updated_at": "2026-11-24 18:18:55",
+      "evidence": [
+        {
+          "id": "seed-ev-workspace",
+          "repository": "workspace",
+          "branch": null,
+          "commit_sha": null,
+          "file_path": "AGENTS.md",
+          "locator": "3-7",
+          "evidence_type": "DOCUMENT",
+          "validation_level": "CODE_INSPECTED",
+          "status": "CONFIRMADO",
+          "environment": "workspace",
+          "summary": "PRISALY root is a workspace containing independent Front and Backend Git repositories.",
+          "captured_at": "2026-11-24T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "seed-repo-front",
+      "tp": "REPOSITORY",
+      "name": "PRISALY-Front",
+      "summary": "Angular frontend.",
+      "st": "CONFIRMADO",
+      "status": "CONFIRMADO",
+      "confidence": 1,
+      "version": 1,
+      "updated_at": "2026-11-24 18:18:55",
+      "evidence": [
+        {
+          "id": "seed-ev-front-head",
+          "repository": "PRISALY-Front",
+          "branch": "fix/integracion",
+          "commit_sha": "00a2fa25ff11a4972d42f4f5738687ddfc2d1772",
+          "file_path": "git rev-parse HEAD",
+          "locator": "coordinator capture",
+          "evidence_type": "COMMAND",
+          "validation_level": "SOURCE_CONTROL",
+          "status": "CONFIRMADO",
+          "environment": "local",
+          "summary": "HEAD Front observado por git rev-parse.",
+          "captured_at": "2026-11-24T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "seed-repo-backend",
+      "tp": "REPOSITORY",
+      "name": "PRISALY-Backend",
+      "summary": "Spring Boot modular M1–M7.",
+      "st": "CONFIRMADO",
+      "status": "CONFIRMADO",
+      "confidence": 1,
+      "version": 1,
+      "updated_at": "2026-11-24 18:18:55",
+      "evidence": [
+        {
+          "id": "seed-ev-backend-head",
+          "repository": "PRISALY-Backend",
+          "branch": "fix/integracion",
+          "commit_sha": "5d61972d2f5e54758ab67e1dad4e6a2e74d1c2a6",
+          "file_path": "git rev-parse HEAD",
+          "locator": "coordinator capture",
+          "evidence_type": "COMMAND",
+          "validation_level": "SOURCE_CONTROL",
+          "status": "CONFIRMADO",
+          "environment": "local",
+          "summary": "HEAD Backend observado por git rev-parse.",
+          "captured_at": "2026-11-24T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "seed-blocker-student-access",
+      "tp": "BLOCKER",
+      "name": "Acceso estudiante apagado",
+      "summary": "Estado de configuración, no defecto por sí mismo.",
+      "st": "CONFIRMADO",
+      "status": "CONFIRMADO",
+      "confidence": 1,
+      "version": 1,
+      "updated_at": "2026-11-24 18:18:55",
+      "evidence": [
+        {
+          "id": "seed-ev-flags",
+          "repository": "PRISALY-Backend",
+          "branch": "fix/integracion",
+          "commit_sha": "5d61972d2f5e54758ab67e1dad4e6a2e74d1c2a6",
+          "file_path": "app/src/main/resources/application.yml",
+          "locator": "33-35,73-90",
+          "evidence_type": "CODE",
+          "validation_level": "CODE_INSPECTED",
+          "status": "CONFIRMADO",
+          "environment": "static",
+          "summary": "Flags de acceso estudiante, inicio/finalización y fases M5 están false.",
+          "captured_at": "2026-11-24T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "seed-blocker-m5-start",
+      "tp": "BLOCKER",
+      "name": "Inicio/finalización M5 no publicados",
+      "summary": "Estado de configuración intencional según application.yml.",
+      "st": "CONFIRMADO",
+      "status": "CONFIRMADO",
+      "confidence": 1,
+      "version": 1,
+      "updated_at": "2026-11-24 18:18:55",
+      "evidence": [
+        {
+          "id": "seed-ev-flags",
+          "repository": "PRISALY-Backend",
+          "branch": "fix/integracion",
+          "commit_sha": "5d61972d2f5e54758ab67e1dad4e6a2e74d1c2a6",
+          "file_path": "app/src/main/resources/application.yml",
+          "locator": "33-35,73-90",
+          "evidence_type": "CODE",
+          "validation_level": "CODE_INSPECTED",
+          "status": "CONFIRMADO",
+          "environment": "static",
+          "summary": "Flags de acceso estudiante, inicio/finalización y fases M5 están false.",
+          "captured_at": "2026-11-24T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "seed-blocker-m5-phases",
+      "tp": "BLOCKER",
+      "name": "Fases M5 no ensambladas",
+      "summary": "Estado de configuración intencional; no activar en aislamiento.",
+      "st": "CONFIRMADO",
+      "status": "CONFIRMADO",
+      "confidence": 1,
+      "version": 1,
+      "updated_at": "2026-11-24 18:18:55",
+      "evidence": [
+        {
+          "id": "seed-ev-flags",
+          "repository": "PRISALY-Backend",
+          "branch": "fix/integracion",
+          "commit_sha": "5d61972d2f5e54758ab67e1dad4e6a2e74d1c2a6",
+          "file_path": "app/src/main/resources/application.yml",
+          "locator": "33-35,73-90",
+          "evidence_type": "CODE",
+          "validation_level": "CODE_INSPECTED",
+          "status": "CONFIRMADO",
+          "environment": "static",
+          "summary": "Flags de acceso estudiante, inicio/finalización y fases M5 están false.",
+          "captured_at": "2026-11-24T00:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "seed-edge-project-front",
+      "source_id": "seed-project-prisaly",
+      "target_id": "seed-repo-front",
+      "relation_type": "DEPENDS_ON",
+      "status": "CONFIRMADO",
+      "attributes_json": "{}",
+      "created_at": "2026-11-24 18:18:55",
+      "sourceInView": true,
+      "targetInView": true,
+      "missingNode": false,
+      "rel": "DEPENDS_ON"
+    },
+    {
+      "id": "seed-edge-project-backend",
+      "source_id": "seed-project-prisaly",
+      "target_id": "seed-repo-backend",
+      "relation_type": "DEPENDS_ON",
+      "status": "CONFIRMADO",
+      "attributes_json": "{}",
+      "created_at": "2026-11-24 18:18:55",
+      "sourceInView": true,
+      "targetInView": true,
+      "missingNode": false,
+      "rel": "DEPENDS_ON"
+    }
+  ]
+}

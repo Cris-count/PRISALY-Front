@@ -10,6 +10,7 @@ import {
   IntentoM5,
   ParticipacionHttpGateway,
   provideParticipacionHttp,
+  registrarParticipacionHttpSiHabilitada,
 } from './participacion-http.gateway';
 
 const INTENTO = '6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b';
@@ -165,5 +166,23 @@ describe('ParticipacionHttpGateway', () => {
       expect(await error(invocar())).toBeInstanceOf(ContratoPendienteError);
     }
     http.expectNone(() => true);
+  });
+});
+
+describe('registro del gateway HTTP', () => {
+  it('no registra nada mientras la capacidad está apagada', () => {
+    expect(registrarParticipacionHttpSiHabilitada(false)).toEqual([]);
+  });
+
+  it('registra el gateway HTTP solo con true explícito', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideApiConfig(BASE),
+        ...registrarParticipacionHttpSiHabilitada(true),
+      ],
+    });
+    expect(TestBed.inject(ParticipacionGateway)).toBeInstanceOf(ParticipacionHttpGateway);
   });
 });

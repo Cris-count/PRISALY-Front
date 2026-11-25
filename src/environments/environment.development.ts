@@ -8,11 +8,20 @@
  * No incluir credenciales ni secretos.
  */
 export const environment = {
-  personalQaHabilitado: false,
+  /** Local: el login de `ng serve` habla con el backend de este equipo. Producción y demo siguen apagados. */
+  personalQaHabilitado: true,
   /** H-58-01: desarrollo no es un entorno de demostración autorizado (usar `--configuration demo`). */
   demostracionesHabilitadas: false,
   production: false,
   apiBaseUrl: 'http://localhost:8080/api',
+  rutasPersonalHabilitadasQa: [
+    'usuarios-docentes',
+    'configuracion',
+    'casos-academicos',
+    'rubricas',
+    'sesiones',
+    'convocatorias',
+  ],
   /** Ciudad 3D contra la señalización local de PS2-LAB-03; solo en http://127.0.0.1:4213. */
   simuladorUnrealLocal: true,
 };

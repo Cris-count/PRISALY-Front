@@ -125,6 +125,15 @@ export function provideParticipacionHttp(): Provider {
   return { provide: ParticipacionGateway, useClass: ParticipacionHttpGateway };
 }
 
+/**
+ * Solo sustituye el gateway pendiente cuando la capacidad compilada es `true`.
+ * Con `false` —el valor de todos los entornos— no añade proveedores y sigue
+ * `ParticipacionPendienteGateway`. No enciende DD-02 ni los POST de M5.
+ */
+export function registrarParticipacionHttpSiHabilitada(habilitada: boolean): Provider[] {
+  return habilitada === true ? [provideParticipacionHttp()] : [];
+}
+
 function aFallo(error: unknown): FalloParticipacionError {
   if (error instanceof FalloParticipacionError) return error;
   const estado =

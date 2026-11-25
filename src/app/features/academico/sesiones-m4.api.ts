@@ -202,7 +202,12 @@ export class SesionesM4Api {
       this.http.get<unknown>(this.url(`m4/sesiones/${sesionId}/convocatorias`), {
         context: contextoAcademico(),
       }),
-      lista(leerConvocatoria),
+      (v) => {
+        const filas = lista(leerConvocatoria)(v);
+        if (filas.some((c) => c.sesionId.toLowerCase() !== sesionId.toLowerCase()))
+          throw respuestaInvalida();
+        return filas;
+      },
     );
   }
 

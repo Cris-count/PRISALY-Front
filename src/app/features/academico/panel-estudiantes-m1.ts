@@ -70,7 +70,12 @@ export class PanelEstudiantesM1 {
   protected readonly formAlta = new FormGroup({
     nombre: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(150)],
+      validators: [
+        Validators.required,
+        Validators.maxLength(150),
+        (control) =>
+          typeof control.value === 'string' && control.value.trim() === '' ? { texto: true } : null,
+      ],
     }),
     correo: new FormControl('', {
       nonNullable: true,

@@ -10,6 +10,12 @@ import {
 
 import { routes } from './app.routes';
 import { personalAcademicoInterceptor } from './features/academico/academico-http';
+import { leerCapacidadesDc99 } from './features/academico/capacidades-dc99';
+import { registrarParticipacionHttpSiHabilitada } from './features/simulador/services/participacion-http.gateway';
+
+const participacionHttpHabilitada = leerCapacidadesDc99(
+  (environment as { capacidadesBackend?: unknown }).capacidadesBackend,
+).participacionHttp;
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,5 +30,6 @@ export const appConfig: ApplicationConfig = {
       ),
     ),
     ...(environment.personalQaHabilitado ? [provideM1PersonalLocal()] : []),
+    ...registrarParticipacionHttpSiHabilitada(participacionHttpHabilitada),
   ],
 };
