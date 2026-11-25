@@ -7,7 +7,8 @@ import { API_CONFIG, construirUrlApi } from '../../core/config/api.config';
 
 /**
  * DC-FE-60. Cliente del contrato DD-02 alternativa B (`EstudianteCuentaController`, Backend
- * `origin/develop` 5d61972): `POST /v1/acceso-estudiante/solicitar` `{correo}` → 202
+ * `origin/develop` 5d61972; sin cambios de contrato en DC-99 32922bb, revisado en FE-61). Rutas
+ * públicas/por cookie: el interceptor académico nunca les añade Bearer. `POST /v1/acceso-estudiante/solicitar` `{correo}` → 202
  * `{challengeId, mensaje}`; `POST /v1/acceso-estudiante/validar` `{challengeId, codigo}` (8 dígitos)
  * → 204 con cookie de sesión estudiantil. Mientras DD-02 no esté activado el servidor responde 501
  * `ESTUDIANTE_ACCESS_PENDING_CONTRACT`. No hay identidad simulada: sin respuesta del servidor no

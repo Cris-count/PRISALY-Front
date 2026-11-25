@@ -3,10 +3,11 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { EstadoPanel, TipoEstadoPanel } from './estado-panel';
 import { PanelAdministracionM1 } from '../academico/panel-administracion-m1';
+import { PanelEstudiantesM1 } from '../academico/panel-estudiantes-m1';
 
 @Component({
   selector: 'app-dashboard-administracion',
-  imports: [RouterLink, EstadoPanel, PanelAdministracionM1],
+  imports: [RouterLink, EstadoPanel, PanelAdministracionM1, PanelEstudiantesM1],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-administracion.html',
   styleUrls: [

@@ -10,6 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
+import { CAPACIDADES_DC99 } from './capacidades-dc99';
 import { aFalloAcademico, esUuid, FalloAcademico, mensajeFallo, UUID_RE } from './academico-http';
 import {
   AdministracionM1Api,
@@ -17,6 +18,22 @@ import {
   RolResumen,
   UsuarioDocente,
 } from './administracion-m1.api';
+
+/** FE-61 · D-05: códigos de `ActivacionDocenteExceptionHandler` en las operaciones del administrador. */
+export function mensajeFalloActivacionAdmin(fallo: FalloAcademico): string | null {
+  switch (fallo.codigo) {
+    case 'USER_NOT_FOUND':
+      return 'No existe un usuario con ese identificador.';
+    case 'ACTIVATION_NOT_ALLOWED':
+      return 'Ese usuario no admite una invitación de activación.';
+    case 'ACTIVATION_CONFLICT':
+      return 'La invitación cambió al mismo tiempo en otra solicitud. Vuelve a intentarlo.';
+    case 'ACTIVATION_DELIVERY_FAILED':
+      return 'El servidor no pudo entregar la invitación al servicio de correo.';
+    default:
+      return null;
+  }
+}
 
 type Aviso = { tipo: 'exito' | 'error' | 'info'; texto: string } | null;
 
@@ -43,6 +60,8 @@ export class PanelAdministracionM1 {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly sesionValida = computed(() => this.sesion.estado().tipo === 'valida');
+  /** FE-61 · D-05: (re)emisión y revocación solo con la capacidad explícita del entorno. */
+  protected readonly activacionHabilitada = inject(CAPACIDADES_DC99).activacionDocente;
   protected readonly miUsuario = computed(() => {
     const e = this.sesion.estado();
     return e.tipo === 'valida' ? e.identidad.userId : null;
@@ -76,6 +95,13 @@ export class PanelAdministracionM1 {
     correo: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email, Validators.maxLength(255)],
+    }),
+  });
+
+  protected readonly formActivacion = new FormGroup({
+    idUsuario: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(UUID_RE)],
     }),
   });
 
@@ -157,13 +183,59 @@ export class PanelAdministracionM1 {
           this.docenteCreado.set(docente);
           this.formDocente.reset();
           this.formUsuario.controls.idUsuario.setValue(docente.idUsuario);
+          this.formActivacion.controls.idUsuario.setValue(docente.idUsuario);
           this.terminar({
             tipo: 'exito',
-            texto: `Docente registrado (${docente.estado}). Sin credencial utilizable: la entrega segura de la contraseña está pendiente (D-05).`,
+            texto: this.activacionHabilitada
+              ? `Docente registrado (${docente.estado}). El alta no devuelve contraseña; si D-05 está activa en el servidor, se emitió una invitación de activación (entrega del correo no verificada desde esta interfaz).`
+              : `Docente registrado (${docente.estado}). El alta no devuelve contraseña; la activación D-05 no está habilitada en este entorno.`,
           });
         },
         error: (e: unknown) => this.fallar(e),
       });
+  }
+
+  /** D-05 `POST /v1/admin/docentes/{id}/activacion` (202: emisión aceptada, entrega no verificada). */
+  protected emitirActivacion(): void {
+    this.operarActivacion('emitir');
+  }
+
+  /** D-05 `DELETE /v1/admin/docentes/{id}/activacion` (204). */
+  protected revocarActivacion(): void {
+    this.operarActivacion('revocar');
+  }
+
+  private operarActivacion(accion: 'emitir' | 'revocar'): void {
+    this.formActivacion.markAllAsTouched();
+    if (!this.activacionHabilitada || this.formActivacion.invalid || this.ocupado()) return;
+    const id = this.formActivacion.controls.idUsuario.value.trim();
+    this.iniciar();
+    const operacion =
+      accion === 'emitir'
+        ? this.api.emitirActivacionDocente(id)
+        : this.api.revocarActivacionDocente(id);
+    operacion.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () =>
+        this.terminar({
+          tipo: 'exito',
+          texto:
+            accion === 'emitir'
+              ? 'El servidor aceptó la emisión de la invitación (202). La entrega del correo no se verifica desde esta interfaz.'
+              : 'Invitación revocada por el servidor.',
+        }),
+      error: (e: unknown) => {
+        const fallo = aFalloAcademico(e);
+        // Sin PRISALY_M1_ACTIVACION_DOCENTE_ENABLED la ruta no existe: 404 sin código de dominio.
+        if (fallo.estado === 404 && fallo.codigo === null) {
+          this.terminar({
+            tipo: 'error',
+            texto: 'El servidor no tiene habilitada la activación docente (D-05). (HTTP 404)',
+          });
+          return;
+        }
+        this.fallar(fallo);
+      },
+    });
   }
 
   private cargarEfectivos(id: string, avisoFinal: Aviso = null): void {
@@ -207,7 +279,7 @@ export class PanelAdministracionM1 {
             ? 'El permiso ya estaba asignado.'
             : fallo.codigo === 'PERMISSION_NOT_ALLOWED_FOR_STUDENT'
               ? 'Ese permiso no puede asignarse a un estudiante.'
-              : mensajeFallo(fallo);
+              : (mensajeFalloActivacionAdmin(fallo) ?? mensajeFallo(fallo));
     this.terminar({
       tipo: 'error',
       texto: `${detalle}${fallo.estado > 0 ? ` (HTTP ${fallo.estado})` : ''}`,

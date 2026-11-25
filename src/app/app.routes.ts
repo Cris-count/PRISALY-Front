@@ -27,6 +27,15 @@ export const routes: Routes = [
       import('./features/autenticacion/acceso-estudiante-real').then((m) => m.AccesoEstudianteReal),
   },
   {
+    // FE-61 · D-05 (Backend DC-99): pantalla pública de activación docente por token de invitación.
+    // Sin guard de sesión (el docente aún no tiene contraseña). La propia pantalla queda deshabilitada
+    // y no envía nada mientras `capacidadesBackend.activacionDocente` no sea `true` en el entorno.
+    path: 'activacion-docente',
+    title: 'Activar cuenta docente · PRISALY',
+    loadComponent: () =>
+      import('./features/autenticacion/activacion-docente').then((m) => m.ActivacionDocente),
+  },
+  {
     // DC-FULLSTACK-DEMO-ESTUDIANTE-04: solo en el entorno demo; fuera de él el guard redirige.
     path: 'acceso-estudiante',
     title: 'Entrar como estudiante · PRISALY',

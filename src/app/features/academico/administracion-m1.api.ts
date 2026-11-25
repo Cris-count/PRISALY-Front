@@ -4,7 +4,10 @@ import { catchError, map, Observable, throwError } from 'rxjs';
 import { API_CONFIG, construirUrlApi } from '../../core/config/api.config';
 import { aFalloAcademico, contextoAcademico, esUuid, respuestaInvalida } from './academico-http';
 
-/** `AdministracionController.DocenteAltaRequest`: solo nombre y correo (sin contraseña, D-05). */
+/**
+ * `AdministracionController.DocenteAltaRequest`: solo nombre y correo. El alta nunca devuelve ni
+ * genera una contraseña; con D-05 activa el Backend emite además una invitación de activación.
+ */
 export interface DocenteAltaRequest {
   readonly nombre: string;
   readonly correo: string;
@@ -34,6 +37,24 @@ export interface AsignacionPermisoUsuario {
   readonly habilitado: boolean;
 }
 
+/**
+ * P-78 `AdministracionEstudiantesController.EstudianteAltaRequest` (Backend DC-99): solo nombre
+ * (máx. 150) y correo (máx. 255, formato correo). No incluye contraseña: no se crea credencial.
+ */
+export interface EstudianteAltaRequest {
+  readonly nombre: string;
+  readonly correo: string;
+}
+
+/** P-78 `EstudianteRegistrado`: respuesta de `POST` (201) y elementos de `GET ?correo=`. */
+export interface EstudianteRegistrado {
+  readonly idUsuario: string;
+  readonly idEstudiante: string;
+  readonly nombre: string;
+  readonly correo: string;
+  readonly estado: string;
+}
+
 const texto = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
 const entero = (v: unknown): v is number => Number.isInteger(v);
 
@@ -60,6 +81,26 @@ function leerDocente(v: unknown): UsuarioDocente {
   if (!d || !esUuid(d.idUsuario) || !texto(d.nombre) || !texto(d.correo) || !texto(d.estado))
     throw respuestaInvalida();
   return { idUsuario: d.idUsuario, nombre: d.nombre, correo: d.correo, estado: d.estado };
+}
+
+function leerEstudiante(v: unknown): EstudianteRegistrado {
+  const e = v as Partial<Record<keyof EstudianteRegistrado, unknown>> | null;
+  if (
+    !e ||
+    !esUuid(e.idUsuario) ||
+    !esUuid(e.idEstudiante) ||
+    !texto(e.nombre) ||
+    !texto(e.correo) ||
+    !texto(e.estado)
+  )
+    throw respuestaInvalida();
+  return {
+    idUsuario: e.idUsuario,
+    idEstudiante: e.idEstudiante,
+    nombre: e.nombre,
+    correo: e.correo,
+    estado: e.estado,
+  };
 }
 
 /**
@@ -130,6 +171,77 @@ export class AdministracionM1Api {
       .post<unknown>(this.url('v1/admin/docentes'), cuerpo, { context: contextoAcademico() })
       .pipe(
         map(leerDocente),
+        catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
+      );
+  }
+
+  /**
+   * P-78 `POST /v1/admin/estudiantes` → 201. Crea el usuario (rol ESTUDIANTE, sin credencial) y su
+   * registro de estudiante. NO activa el acceso estudiantil DD-02 ni envía correo. Errores del
+   * Backend: 400 `VALIDATION_ERROR`, 401, 403 `ADMIN_REQUIRED`, 409 `DUPLICATE_EMAIL`, 503
+   * `STUDENT_ROLE_NOT_CONFIGURED`/`ROLE_NOT_FOUND`; 404 sin código si el interruptor está apagado.
+   */
+  altaEstudiante(datos: EstudianteAltaRequest): Observable<EstudianteRegistrado> {
+    const cuerpo: EstudianteAltaRequest = {
+      nombre: datos.nombre.trim(),
+      correo: datos.correo.trim(),
+    };
+    return this.http
+      .post<unknown>(this.url('v1/admin/estudiantes'), cuerpo, { context: contextoAcademico() })
+      .pipe(
+        map(leerEstudiante),
+        catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
+      );
+  }
+
+  /**
+   * P-78 `GET /v1/admin/estudiantes?correo=` → 200 `{items}`. Coincidencia EXACTA por correo (sin
+   * distinguir mayúsculas). No existe listado general, paginación ni otros filtros.
+   */
+  buscarEstudiantePorCorreo(correo: string): Observable<EstudianteRegistrado[]> {
+    const valor = (correo ?? '').trim();
+    if (!valor) return throwError(() => respuestaInvalida());
+    return this.http
+      .get<unknown>(this.url('v1/admin/estudiantes'), {
+        context: contextoAcademico(),
+        params: { correo: valor },
+      })
+      .pipe(
+        map((v) => items(v).map(leerEstudiante)),
+        catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
+      );
+  }
+
+  /**
+   * D-05 `POST /v1/admin/docentes/{id}/activacion` → 202 sin cuerpo: el Backend encola la
+   * (re)emisión de la invitación. El 202 NO prueba que el correo se haya entregado. El token nunca
+   * se devuelve. Errores: 404 `USER_NOT_FOUND` (o 404 sin código con el interruptor apagado), 409
+   * `ACTIVATION_NOT_ALLOWED`/`ACTIVATION_CONFLICT`, 503 `ACTIVATION_DELIVERY_FAILED`.
+   */
+  emitirActivacionDocente(idUsuario: string): Observable<void> {
+    return this.sinCuerpo('POST', idUsuario, 202);
+  }
+
+  /** D-05 `DELETE /v1/admin/docentes/{id}/activacion` → 204: revoca la invitación vigente. */
+  revocarActivacionDocente(idUsuario: string): Observable<void> {
+    return this.sinCuerpo('DELETE', idUsuario, 204);
+  }
+
+  private sinCuerpo(
+    metodo: 'POST' | 'DELETE',
+    idUsuario: string,
+    esperado: number,
+  ): Observable<void> {
+    if (!esUuid(idUsuario)) return throwError(() => respuestaInvalida());
+    return this.http
+      .request(metodo, this.url(`v1/admin/docentes/${idUsuario}/activacion`), {
+        context: contextoAcademico(),
+        observe: 'response',
+      })
+      .pipe(
+        map((r) => {
+          if (r.status !== esperado) throw respuestaInvalida();
+        }),
         catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
       );
   }
