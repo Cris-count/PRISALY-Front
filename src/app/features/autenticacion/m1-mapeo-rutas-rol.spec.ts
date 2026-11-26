@@ -189,7 +189,7 @@ describe('FE-58 guard con requisito de rol (sesión y mapeo simulados)', () => {
       providers: [
         provideRouter([]),
         provideM1PersonalLocal(),
-        ...(mapeo ? [{ provide: MAPEO_RUTAS_PERSONAL, useValue: mapeo }] : []),
+        { provide: MAPEO_RUTAS_PERSONAL, useValue: mapeo ?? MAPEO_RUTAS_PERSONAL_OFICIAL },
         {
           provide: SesionPersonalM1,
           useValue: {
@@ -279,6 +279,7 @@ describe('FE-58 aviso de rol insuficiente', () => {
     TestBed.configureTestingModule({
       imports: [AvisoAccesoPersonal],
       providers: [
+        { provide: MAPEO_RUTAS_PERSONAL, useValue: MAPEO_RUTAS_PERSONAL_OFICIAL },
         { provide: ActivatedRoute, useValue: { queryParamMap: q } },
         {
           provide: SesionPersonalM1,

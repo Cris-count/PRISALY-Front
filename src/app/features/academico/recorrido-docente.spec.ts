@@ -5,6 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Route, Router, Routes } from '@angular/router';
 import { firstValueFrom, toArray } from 'rxjs';
 import { provideApiConfig } from '../../core/config/api.config';
+import { MAPEO_RUTAS_PERSONAL, MAPEO_RUTAS_PERSONAL_OFICIAL } from '../autenticacion/m1-mapeo-rutas';
 import { requiereMapeoPersonalQa } from '../autenticacion/m1-personal-rutas-qa';
 import { personalM1Interceptor, provideM1PersonalLocal } from '../autenticacion/m1-personal-http';
 import { EstadoSesionPersonal } from '../autenticacion/m1-personal.models';
@@ -696,6 +697,7 @@ describe('FE-55 el recorrido no eleva privilegios (configuración de rutas y gua
         provideHttpClient(withInterceptors([personalM1Interceptor])),
         provideHttpClientTesting(),
         provideM1PersonalLocal(),
+        { provide: MAPEO_RUTAS_PERSONAL, useValue: MAPEO_RUTAS_PERSONAL_OFICIAL },
       ],
     });
     http = TestBed.inject(HttpTestingController);

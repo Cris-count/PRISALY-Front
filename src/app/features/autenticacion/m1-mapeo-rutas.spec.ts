@@ -95,7 +95,7 @@ describe('FE-54 guard de personal con mapeo (sesión y mapeo simulados)', () => 
         provideRouter([]),
         ...(qa ? [provideM1PersonalLocal()] : []),
         ...(demostracion ? [provideEntornoDemostracionAutorizado()] : []),
-        ...(mapeo ? [{ provide: MAPEO_RUTAS_PERSONAL, useValue: mapeo }] : []),
+        { provide: MAPEO_RUTAS_PERSONAL, useValue: mapeo ?? MAPEO_RUTAS_PERSONAL_OFICIAL },
         {
           provide: SesionPersonalM1,
           useValue: {
@@ -189,6 +189,7 @@ describe('FE-54 aviso de acceso de personal', () => {
       providers: [
         { provide: ActivatedRoute, useValue: { queryParamMap: q } },
         { provide: SesionPersonalM1, useValue: { estado: signal(sesion) } },
+        { provide: MAPEO_RUTAS_PERSONAL, useValue: MAPEO_RUTAS_PERSONAL_OFICIAL },
       ],
     });
     const f = TestBed.createComponent(AvisoAccesoPersonal);
