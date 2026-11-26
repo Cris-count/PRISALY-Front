@@ -35,6 +35,21 @@ export function mensajeFalloEstudiantes(e: unknown): string {
 }
 
 /**
+ * DC-121 · DD-02 B no tiene activación separada ni contraseña: el estudiante con cuenta activa y registro de
+ * estudiante pide un código de un solo uso con su correo (`POST /v1/acceso-estudiante/solicitar`) y lo valida.
+ * «Activo» es el estado de la cuenta; el acceso se describe aparte.
+ */
+export function accesoEstudianteHabilitado(estado: string): boolean {
+  return estado === 'Activo';
+}
+
+export function textoAccesoEstudiante(estado: string): string {
+  return accesoEstudianteHabilitado(estado)
+    ? 'Acceso habilitado (DD-02): el estudiante entra en «Ingresar como estudiante» con este correo y recibe allí un código de un solo uso. No hay contraseña.'
+    : `Acceso no disponible: la cuenta está en estado «${estado}».`;
+}
+
+/**
  * FE-61 · P-78 (Backend DC-99, `AdministracionEstudiantesController`, candidato QA): alta
  * administrativa de estudiantes y búsqueda por correo EXACTO. No existe listado general,
  * paginación ni filtros en el Backend, y esta interfaz no los simula.
@@ -66,6 +81,7 @@ export class PanelEstudiantesM1 {
   protected readonly correoBuscado = signal<string | null>(null);
   protected readonly ocupado = signal(false);
   protected readonly aviso = signal<Aviso>(null);
+  protected readonly habilitado = accesoEstudianteHabilitado;
 
   protected readonly formAlta = new FormGroup({
     nombre: new FormControl('', {
@@ -109,7 +125,7 @@ export class PanelEstudiantesM1 {
           this.formAlta.reset();
           this.terminar({
             tipo: 'exito',
-            texto: `Estudiante registrado (${estudiante.estado}). No se creó credencial ni se activó el acceso estudiantil (DD-02).`,
+            texto: `Estudiante registrado. ${textoAccesoEstudiante(estudiante.estado)}`,
           });
         },
         error: (e: unknown) => this.terminar({ tipo: 'error', texto: mensajeFalloEstudiantes(e) }),

@@ -187,7 +187,7 @@ export class PanelAdministracionM1 {
           this.terminar({
             tipo: 'exito',
             texto: this.activacionHabilitada
-              ? `Docente registrado (${docente.estado}). El alta no devuelve contraseña; si D-05 está activa en el servidor, se emitió una invitación de activación (entrega del correo no verificada desde esta interfaz).`
+              ? `Docente registrado (cuenta ${docente.estado}). Acceso pendiente de habilitación: se envió una invitación de activación a ${docente.correo}. El docente abre el enlace del correo, define su contraseña en «Activar cuenta docente» y después inicia sesión. Para que vea las secciones docentes, asígnale permisos en «Roles y permisos» (su identificador ya está cargado). Si la invitación no le llega, usa «Emitir invitación».`
               : `Docente registrado (${docente.estado}). El alta no devuelve contraseña; la activación D-05 no está habilitada en este entorno.`,
           });
         },

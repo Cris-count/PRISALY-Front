@@ -1,6 +1,6 @@
 import { EnvironmentInjector, inject, runInInjectionContext } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
-import { from, isObservable, map, Observable, of, switchMap } from 'rxjs';
+import { asapScheduler, from, isObservable, map, Observable, observeOn, of, switchMap } from 'rxjs';
 import { DEMOSTRACIONES_HABILITADAS, salidaSinDemostracion } from './entorno-demostracion';
 import { M1_PERSONAL_LOCAL } from './m1-personal-http';
 import { requiereSesionPersonalM1 } from './m1-personal-guards';
@@ -37,6 +37,9 @@ export const requiereMapeoPersonalQa: CanActivateFn = (ruta, estado) => {
     // DC-114: sesión restaurada tras recarga; una vez confirmada por `/me`, se aplica el mapeo completo.
     const injector = inject(EnvironmentInjector);
     return sesionOk.pipe(
+      // DC-121: la revalidación libera la sesión al terminar; sin esperar, la comprobación de `/me` del mapeo
+      // la encontraba ocupada («no vigente») y la recarga de una sección acababa en `/login`.
+      observeOn(asapScheduler),
       switchMap((r) => {
         if (r !== true) return of(r);
         const otra = runInInjectionContext(injector, () => requiereMapeoPersonalQa(ruta, estado));
