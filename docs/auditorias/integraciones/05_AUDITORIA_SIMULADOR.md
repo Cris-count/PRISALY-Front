@@ -1,3 +1,5 @@
+> **OBSOLETO (DC-SIM-LIMPIEZA-01, 26/11/2026):** documento histórico del simulador 2D/2.5D, ya retirado. El único simulador oficial es MUNDO-24 (ver `docs/SIMULADOR-2D5-RETIRADO.md`).
+
 # 05 — Auditoría del simulador (Phaser, 2.5D, SIM-01, Unreal)
 
 Auditoría forense PRISALY-AUDIT-INTEGRACIONES-001 · Solo lectura.

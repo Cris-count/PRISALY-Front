@@ -1,7 +1,8 @@
 import { CasoVista } from '../models/simulador.models';
 
 /**
- * DATOS SIMULADOS — solo para revisar la presentación del simulador.
+ * FIXTURE DE PRUEBAS — datos simulados para las pruebas unitarias de la narrativa y del enlace académico.
+ * (Hasta DC-SIM-LIMPIEZA-01 alimentaba el simulador 2D/2.5D, ya retirado; no se usa en producción.)
  *
  * No son contenido académico de PRISALY, no provienen de M3 ni de M5 y no
  * se guardan en ningún lugar. No incluyen respuestas correctas ni puntajes.

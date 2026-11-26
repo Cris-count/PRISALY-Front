@@ -27,7 +27,6 @@
     "@angular/router": "^22.2.0",
     "@epicgames-ps/lib-pixelstreamingfrontend-ue5.8": "0.1.4",
     "animejs": "^4.5.0",
-    "phaser": "^3.90.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

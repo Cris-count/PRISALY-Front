@@ -491,7 +491,8 @@ describe('FE-58 H-58-02 revalidación periódica de /me (tiempo simulado)', () =
 // FE-58 H-58-01-12: la caracterización «sin guard» se sustituye por la matriz ratificada por
 // Dirección Central (DC-FE-58-H58-01-IMPLEMENTACION-11). Detalle en fe58-simulador.spec.ts.
 describe('FE-58 H-58-01 rutas del simulador (matriz ratificada)', () => {
-  it('16 y 17: las rutas del simulador exigen el entorno demo; /simulador redirige al destino protegido', () => {
+  it('16 y 17: un único destino protegido (MUNDO-24); las demás rutas del simulador solo redirigen a él', () => {
+    // DC-SIM-LIMPIEZA-01: el simulador 2D/2.5D se retiró; sus direcciones redirigen al visor oficial.
     const simulador = rutasApp.filter((r) => r.path?.startsWith('simulador'));
     expect(simulador.map((r) => r.path)).toEqual([
       'simulador',
@@ -499,13 +500,12 @@ describe('FE-58 H-58-01 rutas del simulador (matriz ratificada)', () => {
       'simulador-integrado',
       'simulador-unreal',
     ]);
-    const [redireccion, ...destinos] = simulador;
-    expect(redireccion.redirectTo).toBe('simulador-unreal');
-    for (const r of destinos)
-      expect(r.canActivate)
-        .withContext(r.path ?? '')
-        .toEqual([
-          r.path === 'simulador-unreal' ? requiereAccesoSimulador : requiereEntornoDemostracion,
-        ]);
+    const destinos = simulador.filter((r) => !r.redirectTo);
+    expect(destinos.map((r) => r.path)).toEqual(['simulador-unreal']);
+    expect(destinos[0].canActivate).toEqual([requiereAccesoSimulador]);
+    for (const r of simulador.filter((x) => x.redirectTo)) {
+      expect(r.redirectTo).withContext(r.path ?? '').toBe('simulador-unreal');
+      expect(r.loadComponent).withContext(r.path ?? '').toBeUndefined();
+    }
   });
 });

@@ -1,7 +1,7 @@
 /**
  * Puente de integración experimental, importado del prototipo aislado F1.
  *
- * - No depende de Angular ni de Phaser; no implementa ControlMundo ni sustituye FabricaMundo.
+ * - No depende de Angular.
  * - La pausa reversible y la posición del contrato actual no tienen equivalencia completa
  *   en el protocolo candidato. Resolver esa diferencia requiere una decisión explícita.
  *

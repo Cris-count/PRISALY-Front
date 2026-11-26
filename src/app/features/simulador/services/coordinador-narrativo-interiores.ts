@@ -59,7 +59,7 @@ export interface SnapshotNarrativoEdificio {
  * - Mantiene instancias y snapshots aislados por edificio.
  * - Restaura el punto exacto de conversación al salir y regresar.
  * - Despacha pistas a LibretaStore de forma idempotente mediante AdaptadorPistasNarrativas.
- * - Sin dependencias de Phaser, Canvas o llamadas HTTP a Backend.
+ * - Sin dependencias de Canvas ni llamadas HTTP a Backend.
  */
 @Injectable()
 export class CoordinadorNarrativoInteriores {

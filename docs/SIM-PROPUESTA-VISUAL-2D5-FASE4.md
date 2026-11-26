@@ -1,3 +1,5 @@
+> **OBSOLETO (DC-SIM-LIMPIEZA-01, 26/11/2026):** documento histórico del simulador 2D/2.5D, ya retirado. El único simulador oficial es MUNDO-24 (ver `docs/SIMULADOR-2D5-RETIRADO.md`).
+
 # Propuesta visual provisional para coordinación Nicolás–Cristian
 
 > Registro histórico de 4B. Para el estado vigente, la referencia congelada y la integración preparada, consultar [SIM-FASE4C-INTEGRACION-VISUAL.md](SIM-FASE4C-INTEGRACION-VISUAL.md). El hospital activo de calibración es geométrico; el PNG mencionado abajo se conserva como recurso anterior. El paquete real de Cristian todavía no está disponible.

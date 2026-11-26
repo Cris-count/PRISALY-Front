@@ -1,3 +1,5 @@
+> **OBSOLETO (DC-SIM-LIMPIEZA-01, 26/11/2026):** documento histórico del simulador 2D/2.5D, ya retirado. El único simulador oficial es MUNDO-24 (ver `docs/SIMULADOR-2D5-RETIRADO.md`).
+
 # Entrega compartida del simulador — 16/11/2026
 
 Rama de trabajo: `feature/simulador-integracion-nicolas`, basada en develop `2ce06e07c75d36b092f93dd03363bb3f1b7842d9`. Este documento prepara la publicación autorizada de los cambios locales. El SHA definitivo de la entrega se obtiene del commit que contiene este archivo.

@@ -1,6 +1,6 @@
-import { MUNDO_PRUEBA } from '../mundo-tecnico/mundo-tecnico.fixture';
+import { GUIONES_POR_EDIFICIO } from '../demo/guiones-edificios-demo';
 import { SesionVisualUnreal, validarSesionVisual } from './configuracion-unreal';
-import { CORRESPONDENCIA_MUNDO_UNREAL, edificioPorZonaUnreal, zonaUnrealPorNodo } from './correspondencia-mundo';
+import { CORRESPONDENCIA_MUNDO_UNREAL, PLAZA_UNREAL, edificioPorZonaUnreal } from './correspondencia-mundo';
 import { CanalPixelStreaming, TransportePixelStreaming } from './transporte-pixel-streaming';
 
 describe('TransportePixelStreaming', () => {
@@ -71,14 +71,13 @@ describe('TransportePixelStreaming', () => {
 describe('Alineación de identificadores y asignación visual', () => {
   const sesion: SesionVisualUnreal = { urlSenalizacion: 'wss://stream.prisaly.example', streamerId: 'instancia-1', sesion: 'sesion-prueba-0001', casoId: 'caso-demo-01' };
 
-  it('corresponde a los tres edificios y sus nodos reales sin cambiar sus identificadores', () => {
+  it('corresponde a los tres edificios narrativos y a sus zonas de MUNDO-24 sin cambiar sus identificadores', () => {
     for (const entrada of CORRESPONDENCIA_MUNDO_UNREAL) {
-      expect(MUNDO_PRUEBA.edificios.find((edificio) => edificio.id === entrada.edificioId)?.entrada).toBe(entrada.nodoId);
-      expect(zonaUnrealPorNodo(entrada.nodoId)).toBe(entrada.zonaId);
+      expect(GUIONES_POR_EDIFICIO[entrada.edificioId]).toBeDefined(); // cada edificio tiene su guion narrativo
       expect(edificioPorZonaUnreal(entrada.zonaId)).toBe(entrada);
     }
-    expect(zonaUnrealPorNodo('plaza-central')).toBe('plaza_central');
-    expect(zonaUnrealPorNodo('inexistente')).toBeNull();
+    expect(PLAZA_UNREAL.zonaId).toBe('plaza_central');
+    expect(edificioPorZonaUnreal('inexistente')).toBeNull();
     expect(edificioPorZonaUnreal('hospital-prueba')).toBeNull();
   });
 

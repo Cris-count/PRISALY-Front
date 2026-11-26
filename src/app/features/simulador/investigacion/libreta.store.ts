@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { EstadoLibreta, EventoPistaObtenida } from './investigacion.models';
 
-/** Una instancia por simulador; sin HTTP, Phaser o almacenamiento del navegador. */
+/** Una instancia por simulador; sin HTTP ni almacenamiento del navegador. */
 @Injectable()
 export class LibretaStore {
   private readonly datos = signal<EstadoLibreta>(this.nuevaSesion());

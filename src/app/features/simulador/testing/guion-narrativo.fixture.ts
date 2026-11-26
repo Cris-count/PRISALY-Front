@@ -1,4 +1,4 @@
-import { CASO_DEMOSTRACION } from './caso-demostracion';
+import { CASO_DEMOSTRACION } from './caso-academico.fixture';
 import { EscenarioVista } from '../models/simulador.models';
 import { GuionNarrativo } from '../narrativa/narrativa.models';
 

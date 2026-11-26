@@ -5,11 +5,10 @@ import { M1_PERSONAL_LOCAL } from './features/autenticacion/m1-personal-http';
 import { requiereEntornoDemostracion } from './features/autenticacion/entorno-demostracion';
 
 /**
- * H-58-01 (DC-FE-58-H58-01-IMPLEMENTACION-11): las rutas del simulador son demostración técnica
- * (categoría A) y solo se activan en el entorno `demo`. El guard actúa en el Router, también ante
- * URL directa, recarga o historial; si deniega, el componente no se monta (ni Phaser ni Unreal).
- * `/simulador-integrado` es A/B: aquí solo existe su modalidad demostrativa; la académica sigue
- * deshabilitada (sin enlace de entradas desde la URL y con `ParticipacionPendienteGateway`).
+ * El único simulador es MUNDO-24 (Unreal Engine 5.8 por Pixel Streaming 2), en `/simulador-unreal`. Su guard
+ * (`requiereAccesoSimulador`) actúa en el Router, también ante URL directa, recarga o historial; si deniega, el
+ * visor no se monta. El simulador 2D/2.5D (Phaser) se retiró en DC-SIM-LIMPIEZA-01; su código está en el
+ * historial de Git (etiqueta `historico/simulador-2d5-20261126`).
  */
 export const routes: Routes = [
   {
@@ -63,28 +62,13 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
   },
-  {
-    // Redirección conservada; el destino exige el entorno demo, así que fuera de él no se monta.
-    path: 'simulador',
-    pathMatch: 'full',
+  // DC-SIM-LIMPIEZA-01: MUNDO-24 es el único simulador. Las direcciones antiguas (incluidas las del
+  // simulador 2D/2.5D retirado) llevan al visor oficial, cuyo guard decide el acceso.
+  ...['simulador', 'simulador-tecnico-2d5', 'simulador-integrado'].map((path) => ({
+    path,
+    pathMatch: 'full' as const,
     redirectTo: 'simulador-unreal',
-  },
-  {
-    path: 'simulador-tecnico-2d5',
-    title: 'Simulador técnico anterior · PRISALY',
-    canActivate: [requiereEntornoDemostracion],
-    loadComponent: () =>
-      import('./features/simulador/pages/simulador-temporal').then((m) => m.SimuladorTemporal),
-  },
-  {
-    path: 'simulador-integrado',
-    title: 'Acceso al simulador · PRISALY',
-    canActivate: [requiereEntornoDemostracion],
-    loadComponent: () =>
-      import('./features/simulador/pages/simulador-integrado-page').then(
-        (m) => m.SimuladorIntegradoPage,
-      ),
-  },
+  })),
   {
     path: 'simulador-unreal',
     title: 'Ciudad 3D · PRISALY',

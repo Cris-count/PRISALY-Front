@@ -1,3 +1,5 @@
+> **OBSOLETO (DC-SIM-LIMPIEZA-01, 26/11/2026):** documento histórico del simulador 2D/2.5D, ya retirado. El único simulador oficial es MUNDO-24 (ver `docs/SIMULADOR-2D5-RETIRADO.md`).
+
 # PRISALY y Simulador 2.0 — alineación para navegador
 
 Fecha: 17 de noviembre de 2026, Colombia.

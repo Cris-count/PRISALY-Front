@@ -56,7 +56,7 @@ describe('PuenteUnreal con el protocolo candidato real', () => {
     } finally { siguiente.destruir(); }
   });
 
-  it('rechaza un destino con formato de Phaser sin enviarlo a Unreal', async () => {
+  it('rechaza un destino que no es una zona de MUNDO-24 sin enviarlo a Unreal', async () => {
     await expectAsync(puente.enviar('avatar.irA', { zoneId: 'hospital-prueba' })).toBeRejected();
     expect(canal.enviados).toBe(0);
   });
