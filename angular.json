@@ -93,6 +93,16 @@
                   "with": "src/environments/environment.qa-navegacion.ts"
                 }
               ]
+            },
+            "dc106-qa": {
+              "optimization": true,
+              "sourceMap": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.dc106-qa.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -114,6 +124,10 @@
             },
             "qa-navegacion": {
               "buildTarget": "PRISALY-Front:build:qa-navegacion"
+            },
+            "dc106-qa": {
+              "buildTarget": "PRISALY-Front:build:dc106-qa",
+              "proxyConfig": "proxy.dc106-qa.json"
             }
           },
           "defaultConfiguration": "development"

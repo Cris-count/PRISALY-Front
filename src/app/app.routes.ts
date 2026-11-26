@@ -11,6 +11,11 @@ import { requiereEntornoDemostracion } from './features/autenticacion/entorno-de
  * deshabilitada (sin enlace de entradas desde la URL y con `ParticipacionPendienteGateway`).
  */
 export const routes: Routes = [
+  {
+    path: 'acceso',
+    title: 'Acceso por roles · PRISALY',
+    loadComponent: () => import('./features/autenticacion/acceso-roles').then((m) => m.AccesoRoles),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
     path: 'login',
@@ -67,14 +72,17 @@ export const routes: Routes = [
     canActivate: [requiereEntornoDemostracion],
     loadComponent: () =>
       import('./features/simulador/pages/simulador-integrado-page').then(
-        (m) => m.SimuladorIntegradoPage
+        (m) => m.SimuladorIntegradoPage,
       ),
   },
   {
     path: 'simulador-unreal',
     title: 'Ciudad 3D · PRISALY',
     canActivate: [requiereEntornoDemostracion],
-    loadComponent: () => import('./features/simulador/unreal/simulador-unreal-page').then((m) => m.SimuladorUnrealPage),
+    loadComponent: () =>
+      import('./features/simulador/unreal/simulador-unreal-page').then(
+        (m) => m.SimuladorUnrealPage,
+      ),
   },
   { path: '**', redirectTo: 'login' },
 ];
