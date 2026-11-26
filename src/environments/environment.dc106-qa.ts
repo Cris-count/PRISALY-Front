@@ -19,7 +19,7 @@ export const environment = {
     altaEstudiantes: true,
     activacionDocente: true,
     consultaParticipaciones: true,
-    reporteParticipacion: false,
+    reporteParticipacion: true,
     participacionHttp: false,
   },
 };

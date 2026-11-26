@@ -17,6 +17,7 @@ import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { CAPACIDADES_DC99 } from './capacidades-dc99';
 import { CasosM3Api } from './casos-m3.api';
 import { EvaluacionM6Api, mensajeEvaluacion } from './evaluacion-m6.api';
+import { AccionesDc92Api, mensajeAccionDc92 } from './acciones-dc92.api';
 import {
   ETIQUETA_EVALUACION,
   ETIQUETA_PARTICIPACION,
@@ -80,6 +81,12 @@ export class PanelParticipacionesDc92 {
   private readonly capacidades = inject(CAPACIDADES_DC99);
   private readonly evaluacion = inject(EvaluacionM6Api);
   private readonly casos = inject(CasosM3Api);
+  private readonly acciones = inject(AccionesDc92Api);
+
+  /** DC-118: fila en gestión (retroalimentación RF-26, ausencia RF-24, retiro RF-21, repetición RF-25). */
+  protected readonly gestionando = signal<string | null>(null);
+  protected readonly textoGestion = signal('');
+  protected readonly ocupadoGestion = signal(false);
 
   /** DC-DEMO-112: acción M6 en curso (por intento), nota calculada visible para el docente y aviso. */
   protected readonly accionEnCurso = signal<string | null>(null);
@@ -209,6 +216,62 @@ export class PanelParticipacionesDc92 {
           this.avisoEvaluacion.set({ tipo: 'error', texto: mensajeEvaluacion(e) });
         },
       });
+  }
+
+  protected gestionar(f: FilaParticipacion): void {
+    if (this.gestionando() === f.idConvocatoria) {
+      this.gestionando.set(null);
+      return;
+    }
+    this.gestionando.set(f.idConvocatoria);
+    this.textoGestion.set('');
+    if (f.idParticipacion) {
+      this.acciones
+        .consultarRetroalimentacion(f.idParticipacion)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({ next: (t) => this.textoGestion.set(t ?? ''), error: () => undefined });
+    }
+  }
+
+  protected escribir(evento: Event): void {
+    this.textoGestion.set((evento.target as HTMLTextAreaElement).value);
+  }
+
+  protected ejecutar(
+    tipo: 'retroalimentacion' | 'justificada' | 'no-justificada' | 'retiro' | 'repeticion',
+    f: FilaParticipacion,
+  ): void {
+    if (this.ocupadoGestion()) return;
+    const texto = this.textoGestion().trim();
+    const exito: Record<typeof tipo, string> = {
+      retroalimentacion: 'Retroalimentación guardada. El estudiante la verá junto con su nota publicada.',
+      justificada: 'Ausencia clasificada como justificada.',
+      'no-justificada': 'Ausencia clasificada como no justificada.',
+      retiro: 'Estudiante retirado de la convocatoria. Se registraron los avisos.',
+      repeticion: 'Repetición excepcional autorizada. El estudiante puede iniciar su segundo intento.',
+    };
+    const operacion =
+      tipo === 'retroalimentacion'
+        ? this.acciones.guardarRetroalimentacion(f.idParticipacion!, texto)
+        : tipo === 'justificada' || tipo === 'no-justificada'
+          ? this.acciones.clasificarAusencia(f.idConvocatoria, tipo === 'justificada', texto)
+          : tipo === 'retiro'
+            ? this.acciones.retirar(f.idConvocatoria, texto, f.estadoParticipacion === 'PARTICIPACION_INICIADA')
+            : this.acciones.autorizarRepeticion(f.idParticipacion!, texto);
+    this.ocupadoGestion.set(true);
+    this.avisoEvaluacion.set(null);
+    operacion.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.ocupadoGestion.set(false);
+        this.avisoEvaluacion.set({ tipo: 'exito', texto: exito[tipo] });
+        if (tipo !== 'retroalimentacion') this.gestionando.set(null);
+        this.consultarDeNuevo();
+      },
+      error: (e: unknown) => {
+        this.ocupadoGestion.set(false);
+        this.avisoEvaluacion.set({ tipo: 'error', texto: mensajeAccionDc92(e) });
+      },
+    });
   }
 
   private consultarDeNuevo(): void {

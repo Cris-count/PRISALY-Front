@@ -86,6 +86,7 @@
               <th>Evaluación</th>
               <th>Nota publicada</th>
               <th>Acciones</th>
+              <th>Gestión</th>
             </tr>
           </thead>
           <tbody>
@@ -157,7 +158,51 @@
                     —
                   }
                 </td>
+                <td>
+                  <button type="button" class="secundario" (click)="gestionar(f)" data-prueba="gestionar-participacion">
+                    {{ gestionando() === f.idConvocatoria ? 'Cerrar' : 'Gestionar' }}
+                  </button>
+                </td>
               </tr>
+              @if (gestionando() === f.idConvocatoria) {
+                <tr class="gestion" data-prueba="gestion-dc92">
+                  <td colspan="10">
+                    <label [for]="'gestion-' + f.idConvocatoria">Retroalimentación general o motivo de la acción</label>
+                    <textarea
+                      [id]="'gestion-' + f.idConvocatoria"
+                      rows="3"
+                      maxlength="2000"
+                      [value]="textoGestion()"
+                      (input)="escribir($event)"
+                    ></textarea>
+                    <div class="acciones">
+                      @if (f.idParticipacion) {
+                        <button type="button" (click)="ejecutar('retroalimentacion', f)" [disabled]="ocupadoGestion() || !textoGestion().trim()" data-prueba="guardar-retro">
+                          Guardar retroalimentación (RF-26)
+                        </button>
+                      }
+                      @if (f.estadoParticipacion === 'AUSENTE_PENDIENTE_REVISION') {
+                        <button type="button" (click)="ejecutar('justificada', f)" [disabled]="ocupadoGestion()" data-prueba="ausencia-justificada">
+                          Ausencia justificada (RF-24)
+                        </button>
+                        <button type="button" (click)="ejecutar('no-justificada', f)" [disabled]="ocupadoGestion()" data-prueba="ausencia-no-justificada">
+                          Ausencia no justificada (RF-24)
+                        </button>
+                      }
+                      @if (f.estadoParticipacion === 'PARTICIPACION_FINALIZADA' && f.idParticipacion) {
+                        <button type="button" (click)="ejecutar('repeticion', f)" [disabled]="ocupadoGestion() || !textoGestion().trim()" data-prueba="autorizar-repeticion">
+                          Autorizar repetición excepcional (RF-25)
+                        </button>
+                      }
+                      @if (!f.fechaRetiro && f.estadoParticipacion !== 'RETIRADO') {
+                        <button type="button" class="peligro" (click)="ejecutar('retiro', f)" [disabled]="ocupadoGestion()" data-prueba="retirar-estudiante">
+                          Retirar de la convocatoria (RF-21)
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>
