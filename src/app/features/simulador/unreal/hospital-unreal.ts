@@ -3,6 +3,7 @@ import { GUIONES_POR_EDIFICIO } from '../demo/guiones-edificios-demo';
 import { GUION_PACIENTE_HOSPITAL_DEMO } from '../demo/guion-paciente-hospital-demo';
 import { LibretaStore } from '../investigacion/libreta.store';
 import { MotorNarrativo } from '../narrativa/motor-narrativo';
+import type { GuionNarrativo } from '../narrativa/narrativa.models';
 import { CoordinadorNarrativoInteriores } from '../services/coordinador-narrativo-interiores';
 import { SesionVisualUnreal } from './configuracion-unreal';
 import { Mensaje } from './protocolo/validador-mensaje';
@@ -63,8 +64,18 @@ export class HospitalUnreal {
   readonly ocupado = computed(() => this.espacio() === 'entrando' || this.modal() || this.libretaAbierta() || this.recuperando());
   readonly puedeDialogar = computed(() => this.enInterior() && this.edificioActivo() !== null && this.conversacion() === 'abierta' && !this.libretaAbierta());
   readonly puedeAbrirLibreta = computed(() => this.contextoDisponible() && !this.recuperando() && this.espacio() !== 'entrando' && ['cerrada', 'abierta'].includes(this.conversacion()));
-  readonly conversacionesTerminadas = computed(() => this.recorrido().flatMap(e => e.npcs).filter(n => n.estado === 'completado').length);
-  readonly totalConversaciones = computed(() => this.recorrido().flatMap(e => e.npcs).length);
+  /** CB-05A: en la vista previa, nombre de cada NPC del caso por id espacial; null fuera de ella. */
+  private readonly nombresCaso = signal<ReadonlyMap<string, string> | null>(null);
+  /** Recorrido que se muestra: en la vista previa, solo los edificios y personajes del caso, con sus nombres. */
+  readonly recorridoVisible = computed(() => {
+    const nombres = this.nombresCaso();
+    if (!nombres) return this.recorrido();
+    return this.recorrido()
+      .map(e => ({ ...e, npcs: e.npcs.filter(n => nombres.has(n.espacialId)).map(n => ({ ...n, nombre: nombres.get(n.espacialId)! })) }))
+      .filter(e => e.npcs.length > 0);
+  });
+  readonly conversacionesTerminadas = computed(() => this.recorridoVisible().flatMap(e => e.npcs).filter(n => n.estado === 'completado').length);
+  readonly totalConversaciones = computed(() => this.recorridoVisible().flatMap(e => e.npcs).length);
   private puente: PuenteUnreal | null = null;
   private contexto: string | null = null;
   private sesion: string | null = null;
@@ -117,7 +128,8 @@ export class HospitalUnreal {
     try {
       await puente.enviar('estado.restaurar', {
         zonaActual: zona,
-        interactuables: recorrido.flatMap(e => e.npcs.map(n => ({
+        // En la vista previa solo se restauran los NPC del caso: los demás están excluidos en Unreal.
+        interactuables: recorrido.flatMap(e => e.npcs.filter(n => !this.guionesCaso || this.guionesCaso.has(n.espacialId)).map(n => ({
           interactuableId: n.espacialId, estado: n.estado === 'completado' ? 'completado' : 'disponible',
         }))),
         edificiosVisitados: recorrido.filter(e => e.visitado).map(e => e.zonaId),
@@ -245,7 +257,12 @@ export class HospitalUnreal {
     if (!this.puente || !this.enInterior() || this.modal() || !interior || !interior.npcs.includes(npc)) return;
     const puente = this.puente, revision = this.revision;
     const vigente = () => this.puente === puente && this.revision === revision;
-    this.npcActivo.set(npc);
+    const delCaso = this.guionesCaso?.get(npc.espacialId);
+    if (this.guionesCaso && !delCaso) {
+      this.error.set('Este personaje no participa en el caso.');
+      return;
+    }
+    this.npcActivo.set(delCaso ? { ...npc, nombre: delCaso.personajes[0]?.nombre ?? npc.nombre } : npc);
     this.vista.set(null); // No mostrar el diálogo del otro NPC mientras se confirma el enfoque.
     this.conversacion.set('abriendo');
     this.error.set(null);
@@ -254,8 +271,7 @@ export class HospitalUnreal {
       if (!vigente()) return;
       await puente.enviar('npc.reproducirAnimacion', { npcId: npc.espacialId, animacion: 'hablar' });
       if (!vigente()) return;
-      this.narrativaActual.iniciarOReanudar(interior.edificioId,
-        npc.espacialId === NPCS_HOSPITAL_UNREAL.paciente.espacialId ? this.guionesPaciente : GUIONES_POR_EDIFICIO);
+      this.narrativaActual.iniciarOReanudar(interior.edificioId, this.guionesPara(npc.espacialId, interior.edificioId));
       this.refrescar();
       this.conversacion.set('abierta');
     } catch {
@@ -282,8 +298,29 @@ export class HospitalUnreal {
     return this.npcActivo().espacialId === NPCS_HOSPITAL_UNREAL.paciente.espacialId ? this.narrativaPaciente : this.narrativa;
   }
   private guardar(): void {
-    for (const interior of INTERIORES_NARRATIVOS_UNREAL) this.narrativa.pausarYGuardar(interior.edificioId);
-    this.narrativaPaciente.pausarYGuardar(HOSPITAL_UNREAL.edificioId, this.guionesPaciente);
+    for (const interior of INTERIORES_NARRATIVOS_UNREAL)
+      this.narrativa.pausarYGuardar(interior.edificioId, this.guionesPara(interior.npcs[0].espacialId, interior.edificioId));
+    this.narrativaPaciente.pausarYGuardar(HOSPITAL_UNREAL.edificioId,
+      this.guionesPara(NPCS_HOSPITAL_UNREAL.paciente.espacialId, HOSPITAL_UNREAL.edificioId));
+  }
+
+  /**
+   * CB-05A: guiones del caso persistido en M3, por NPC espacial. En la vista previa docente sustituyen a los guiones
+   * de demostración; un NPC sin guion en el caso no conversa. `null` vuelve al comportamiento anterior.
+   */
+  usarGuionesDelCaso(guiones: ReadonlyMap<string, GuionNarrativo> | null): void {
+    this.guionesCaso = guiones;
+    this.nombresCaso.set(guiones
+      ? new Map([...guiones].map(([npcId, g]) => [npcId, g.personajes[0]?.nombre ?? npcId] as const))
+      : null);
+  }
+  private guionesCaso: ReadonlyMap<string, GuionNarrativo> | null = null;
+  private guionesPara(npcId: string, edificioId: string): Readonly<Record<string, GuionNarrativo>> {
+    if (this.guionesCaso) {
+      const guion = this.guionesCaso.get(npcId);
+      return guion ? { [edificioId]: guion } : {};
+    }
+    return npcId === NPCS_HOSPITAL_UNREAL.paciente.espacialId ? this.guionesPaciente : GUIONES_POR_EDIFICIO;
   }
   private cancelarEspera(): void {
     if (this.esperaEntrada) clearTimeout(this.esperaEntrada);

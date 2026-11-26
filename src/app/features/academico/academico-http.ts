@@ -53,6 +53,9 @@ const RUTAS_AUTORIZADAS: readonly { metodo: string; ruta: RegExp }[] = [
   { metodo: 'POST', ruta: new RegExp(`^v1/casos/${UUID}/publicar$`) },
   { metodo: 'GET', ruta: new RegExp(`^v1/casos/${UUID}/rubrica$`) },
   { metodo: 'PUT', ruta: new RegExp(`^v1/casos/${UUID}/rubrica$`) },
+  // CB-02/CB-05A (prisaly.m3.narrativa.publicacion.enabled, apagado por defecto): borrador de la narrativa.
+  { metodo: 'GET', ruta: new RegExp(`^v1/casos/${UUID}/narrativa$`) },
+  { metodo: 'PUT', ruta: new RegExp(`^v1/casos/${UUID}/narrativa$`) },
   { metodo: 'POST', ruta: /^m4\/sesiones$/ },
   { metodo: 'GET', ruta: /^m4\/sesiones$/ },
   { metodo: 'GET', ruta: new RegExp(`^m4/sesiones/${UUID}$`) },

@@ -202,4 +202,24 @@ describe('PuenteUnreal con el protocolo v1.1 (caso.configurar y contexto, CB-04)
     await turno();
     expect(recibidos).toEqual([`zona.entro:${contexto}`]);
   });
+
+  it('CB-05A: un puente nuevo acepta mundo.listo y el ACK de su orden aunque Unreal siga en un contexto anterior', async () => {
+    const anterior = 'cv-ffffffffffffffffffffffffffffffff';
+    const recibidos: string[] = [];
+    puente.suscribir((m) => recibidos.push(m.tipo));
+    canal.unreal.alRecibir((texto) => {
+      const orden = JSON.parse(texto) as Mensaje;
+      canal.unreal.enviar(JSON.stringify(deUnreal('orden.ack', {}, { correlacion: orden.id, contexto: anterior })));
+    });
+    canal.unreal.enviar(JSON.stringify(deUnreal('mundo.listo', { versionContenido: 'prototipo-0.1.2' }, { contexto: anterior })));
+    canal.unreal.enviar(JSON.stringify(deUnreal('zona.entro', { zoneId: 'hospital_entrada' }, { contexto: anterior })));
+    await turno();
+    const ack = await puente.enviar('sesion.iniciar', { casoId: 'caso-demo-01', preferencias: { reducirMovimiento: false, invertirCamara: false } });
+    expect(ack?.tipo).toBe('orden.ack');
+    expect(recibidos).toEqual(['mundo.listo']); // los hechos del contexto anterior siguen descartándose
+    // Un ACK ajeno (sin orden pendiente) con otro contexto tampoco se acepta.
+    canal.unreal.enviar(JSON.stringify(deUnreal('orden.ack', {}, { correlacion: 'a-0000000000000000999999', contexto: anterior })));
+    await turno();
+    expect(puente.registro.entradas.at(-1)?.resultado).toBe('IGNORADO:CONTEXTO_AJENO');
+  });
 });
