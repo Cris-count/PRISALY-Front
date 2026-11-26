@@ -16,7 +16,7 @@ export const environment = {
   capacidadesBackend: {
     altaEstudiantes: true,
     activacionDocente: true,
-    consultaParticipaciones: false,
+    consultaParticipaciones: true,
     reporteParticipacion: false,
     participacionHttp: false,
   },

@@ -12,9 +12,11 @@ import {
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subscription } from 'rxjs';
+import { Subscription, switchMap } from 'rxjs';
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { CAPACIDADES_DC99 } from './capacidades-dc99';
+import { CasosM3Api } from './casos-m3.api';
+import { EvaluacionM6Api, mensajeEvaluacion } from './evaluacion-m6.api';
 import {
   ETIQUETA_EVALUACION,
   ETIQUETA_PARTICIPACION,
@@ -68,12 +70,21 @@ type Aviso = { tipo: 'exito' | 'error'; texto: string } | null;
 export class PanelParticipacionesDc92 {
   /** Identificador de la sesión del detalle (respuesta de M4). */
   readonly idSesion = input.required<string>();
+  /** DC-DEMO-112: caso de la sesión (respuesta de M4), para resolver la rúbrica con la que evaluar. */
+  readonly idCaso = input<string | null>(null);
 
   private readonly api = inject(ParticipacionesDc92Api);
   private readonly sesion = inject(SesionPersonalM1);
   private readonly guardar = inject(GUARDAR_ARCHIVO);
   private readonly destroyRef = inject(DestroyRef);
   private readonly capacidades = inject(CAPACIDADES_DC99);
+  private readonly evaluacion = inject(EvaluacionM6Api);
+  private readonly casos = inject(CasosM3Api);
+
+  /** DC-DEMO-112: acción M6 en curso (por intento), nota calculada visible para el docente y aviso. */
+  protected readonly accionEnCurso = signal<string | null>(null);
+  protected readonly notas = signal<Readonly<Record<string, number>>>({});
+  protected readonly avisoEvaluacion = signal<Aviso>(null);
 
   protected readonly consultaHabilitada = this.capacidades.consultaParticipaciones;
   protected readonly reporteHabilitado = this.capacidades.reporteParticipacion;
@@ -147,6 +158,64 @@ export class PanelParticipacionesDc92 {
       });
   }
 
+  /** M6: calcula la nota con la rúbrica del caso (inmutable una vez registrada). */
+  protected evaluar(idIntento: string): void {
+    const idCaso = this.idCaso();
+    if (!idCaso || this.accionEnCurso()) return;
+    this.accionEnCurso.set(idIntento);
+    this.avisoEvaluacion.set(null);
+    this.casos
+      .rubrica(idCaso)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((r) => this.evaluacion.evaluar(idIntento, r.datos.idRubrica)),
+      )
+      .subscribe({
+        next: (c) => {
+          this.notas.update((n) => ({ ...n, [idIntento]: c.valor }));
+          this.accionEnCurso.set(null);
+          this.avisoEvaluacion.set({
+            tipo: 'exito',
+            texto: `Intento evaluado: ${c.valor.toFixed(1)} (escala ${c.escala}). Aún no es visible para el estudiante.`,
+          });
+          this.consultarDeNuevo();
+        },
+        error: (e: unknown) => {
+          this.accionEnCurso.set(null);
+          this.avisoEvaluacion.set({ tipo: 'error', texto: mensajeEvaluacion(e) });
+        },
+      });
+  }
+
+  /** N2: publica la calificación al estudiante (idempotente). */
+  protected liberar(idIntento: string): void {
+    if (this.accionEnCurso()) return;
+    this.accionEnCurso.set(idIntento);
+    this.avisoEvaluacion.set(null);
+    this.evaluacion
+      .liberar(idIntento)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (c) => {
+          this.accionEnCurso.set(null);
+          this.avisoEvaluacion.set({
+            tipo: 'exito',
+            texto: `Calificación ${c.valor.toFixed(1)} publicada. El estudiante ya puede consultarla.`,
+          });
+          this.consultarDeNuevo();
+        },
+        error: (e: unknown) => {
+          this.accionEnCurso.set(null);
+          this.avisoEvaluacion.set({ tipo: 'error', texto: mensajeEvaluacion(e) });
+        },
+      });
+  }
+
+  private consultarDeNuevo(): void {
+    this.cargando.set(false);
+    this.consultar();
+  }
+
   protected fecha(instante: string | null): string {
     if (!instante) return '—';
     const f = new Date(instante);
@@ -161,5 +230,7 @@ export class PanelParticipacionesDc92 {
     this.descargando.set(false);
     this.aviso.set(null);
     this.avisoReporte.set(null);
+    this.avisoEvaluacion.set(null);
+    this.notas.set({});
   }
 }

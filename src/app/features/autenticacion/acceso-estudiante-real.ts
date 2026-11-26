@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, Injectable, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { catchError, map, Observable, of } from 'rxjs';
 import { API_CONFIG, construirUrlApi } from '../../core/config/api.config';
 
@@ -134,6 +134,7 @@ const MENSAJES: Readonly<Record<string, string>> = {
           <p role="status" class="ok" data-prueba="cuenta-activada">
             Código validado por el servidor. Tu sesión estudiantil está abierta.
           </p>
+          <a routerLink="/estudiante/portal" class="ir-portal" data-prueba="ir-portal">Ir a mis convocatorias</a>
         }
         @if (error()) {
           <p role="alert" class="error" data-prueba="error-acceso">{{ error() }}</p>
@@ -210,6 +211,7 @@ const MENSAJES: Readonly<Record<string, string>> = {
 })
 export class AccesoEstudianteReal {
   private readonly api = inject(AccesoEstudianteApi);
+  private readonly router = inject(Router);
   protected readonly paso = signal<'correo' | 'codigo' | 'activa'>('correo');
   protected readonly enviando = signal(false);
   protected readonly error = signal('');
@@ -237,6 +239,8 @@ export class AccesoEstudianteReal {
       this.paso.set('codigo');
     } else if (r.tipo === 'sesion-abierta') {
       this.paso.set('activa');
+      // DC-DEMO-112: con la sesión estudiantil abierta por el servidor, se continúa en el portal.
+      void this.router.navigate(['/estudiante/portal']);
     } else {
       this.error.set(MENSAJES[r.tipo]);
     }

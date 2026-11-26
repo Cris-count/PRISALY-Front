@@ -32,6 +32,15 @@ export const routes: Routes = [
       import('./features/autenticacion/acceso-estudiante-real').then((m) => m.AccesoEstudianteReal),
   },
   {
+    // DC-DEMO-112: portal del estudiante (convocatorias, intento M5 y resultado N2) tras validar el código.
+    // Mismo alcance que `estudiante/acceso`: solo builds QA de integración; el Backend decide identidad y titularidad.
+    path: 'estudiante/portal',
+    title: 'Portal del estudiante · PRISALY',
+    canActivate: [() => inject(M1_PERSONAL_LOCAL) || inject(Router).createUrlTree(['/login'])],
+    loadComponent: () =>
+      import('./features/estudiante/portal-estudiante').then((m) => m.PortalEstudiante),
+  },
+  {
     // FE-61 · D-05 (Backend DC-99): pantalla pública de activación docente por token de invitación.
     // Sin guard de sesión (el docente aún no tiene contraseña). La propia pantalla queda deshabilitada
     // y no envía nada mientras `capacidadesBackend.activacionDocente` no sea `true` en el entorno.

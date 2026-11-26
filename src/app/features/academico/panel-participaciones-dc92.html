@@ -55,6 +55,19 @@
       </p>
     }
 
+    @if (avisoEvaluacion(); as a) {
+      <p
+        class="mensaje"
+        [class.error]="a.tipo === 'error'"
+        [class.exito]="a.tipo === 'exito'"
+        role="status"
+        aria-live="polite"
+        data-prueba="evaluacion-aviso"
+      >
+        {{ a.texto }}
+      </p>
+    }
+
     @if (filas(); as lista) {
       @if (lista.length === 0) {
         <p data-prueba="participaciones-vacio">
@@ -72,6 +85,7 @@
               <th>Intento considerado</th>
               <th>Evaluación</th>
               <th>Nota publicada</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -107,6 +121,38 @@
                   @if (f.calificacionPublicada !== null) {
                     {{ f.calificacionPublicada }}
                     <br />{{ fecha(f.fechaPublicacion) }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td data-prueba="acciones-m6">
+                  @if (f.idIntentoConsiderado; as idIntento) {
+                    @if (f.estadoEvaluacion === 'SIN_EVALUAR' && f.estadoParticipacion === 'PARTICIPACION_FINALIZADA') {
+                      <button
+                        type="button"
+                        (click)="evaluar(idIntento)"
+                        [disabled]="accionEnCurso() !== null || !idCaso()"
+                        data-prueba="evaluar-intento"
+                      >
+                        {{ accionEnCurso() === idIntento ? 'Evaluando…' : 'Evaluar' }}
+                      </button>
+                    } @else if (f.estadoEvaluacion === 'EVALUADA_NO_PUBLICADA') {
+                      @if (notas()[idIntento] !== undefined) {
+                        <strong>{{ notas()[idIntento].toFixed(1) }}</strong><br />
+                      }
+                      <button
+                        type="button"
+                        (click)="liberar(idIntento)"
+                        [disabled]="accionEnCurso() !== null"
+                        data-prueba="liberar-nota"
+                      >
+                        {{ accionEnCurso() === idIntento ? 'Publicando…' : 'Publicar nota' }}
+                      </button>
+                    } @else if (f.estadoEvaluacion === 'PUBLICADA') {
+                      <span class="exito">✓ Publicada</span>
+                    } @else {
+                      —
+                    }
                   } @else {
                     —
                   }
