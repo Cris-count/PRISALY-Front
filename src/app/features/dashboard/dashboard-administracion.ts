@@ -1,13 +1,12 @@
 import { crearModoDocenteOperativo } from './navegacion-rol';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { EstadoPanel, TipoEstadoPanel } from './estado-panel';
 import { PanelAdministracionM1 } from '../academico/panel-administracion-m1';
 import { PanelEstudiantesM1 } from '../academico/panel-estudiantes-m1';
 
 @Component({
   selector: 'app-dashboard-administracion',
-  imports: [RouterLink, EstadoPanel, PanelAdministracionM1, PanelEstudiantesM1],
+  imports: [RouterLink, PanelAdministracionM1, PanelEstudiantesM1],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-administracion.html',
   styleUrls: [
@@ -18,33 +17,7 @@ import { PanelEstudiantesM1 } from '../academico/panel-estudiantes-m1';
   ],
 })
 export class DashboardAdministracion {
+  protected readonly pestana = signal<'docentes' | 'estudiantes' | 'permisos'>('docentes');
   /** DC-FE-UX-ROLES-24: solo el panel real con sesión verificada en `qa-navegacion`. */
   protected readonly operativo = crearModoDocenteOperativo();
-  // Ejemplos de presentación: no representan respuestas de servicios ni permisos efectivos.
-  protected readonly ejemplos: readonly {
-    estado: TipoEstadoPanel;
-    titulo: string;
-    mensaje: string;
-  }[] = [
-    {
-      estado: 'cargando',
-      titulo: 'Carga',
-      mensaje: 'Ejemplo visual de carga. No hay una consulta en curso.',
-    },
-    {
-      estado: 'sin-datos',
-      titulo: 'Vacío',
-      mensaje: 'Ejemplo visual de una consulta sin resultados. No se han consultado registros.',
-    },
-    {
-      estado: 'error-servidor',
-      titulo: 'Error',
-      mensaje: 'Ejemplo visual de error. No se ha producido ningún fallo de servicio.',
-    },
-    {
-      estado: 'no-autorizado',
-      titulo: 'Acceso restringido',
-      mensaje: 'Ejemplo visual de acceso restringido. No se ha evaluado ninguna autorización.',
-    },
-  ];
 }

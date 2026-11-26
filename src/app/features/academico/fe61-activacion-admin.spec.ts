@@ -87,21 +87,23 @@ describe('FE-61 D-05 PanelAdministracionM1', () => {
     return f;
   }
   const raiz = (f: ComponentFixture<unknown>) => f.nativeElement as HTMLElement;
-  const formActivacion = (f: ComponentFixture<unknown>) =>
-    [...raiz(f).querySelectorAll('form')].find((x) => x.textContent?.includes('(D-05)'))!;
-  function emitir(f: ComponentFixture<unknown>, id: string) {
-    const input = formActivacion(f).querySelector('input') as HTMLInputElement;
-    input.value = id;
-    input.dispatchEvent(new Event('input'));
-    formActivacion(f).dispatchEvent(new Event('submit'));
+  function seleccionar(f: ComponentFixture<PanelAdministracionM1>) {
+    (f.componentInstance as any).seleccionarUsuario({idUsuario:D, idEstudiante:null, nombre:'Docente QA',correo:'docente@example.invalid',rol:'DOCENTE',estado:'Activo',credencialPersonalConfigurada:false,estadoInvitacion:'NO_EMITIDA'});
+    http.expectOne(`${B}/v1/admin/usuarios/${D}/permisos`).flush([]);
     f.detectChanges();
+  }
+  function emitir(f: ComponentFixture<PanelAdministracionM1>, _id: string) {
+    if (!(f.componentInstance as any).seleccionado()) seleccionar(f);
+    const boton = [...raiz(f).querySelectorAll('button')].find(b=>b.textContent?.trim()==='Emitir invitación')!;
+    boton.click();f.detectChanges();
   }
   afterEach(() => http.verify());
 
   it('deshabilitada por el entorno: explica el requisito y no ofrece acciones', () => {
     const f = montar(false);
+    seleccionar(f);
     expect(raiz(f).querySelector('[data-prueba="activacion-admin-no-habilitada"]')).not.toBeNull();
-    expect(formActivacion(f).querySelector('button')).toBeNull();
+    expect([...raiz(f).querySelectorAll('button')].some(b=>b.textContent?.trim()==='Emitir invitación')).toBeFalse();
     expect(raiz(f).textContent).not.toContain('pendiente (D-05)');
   });
 

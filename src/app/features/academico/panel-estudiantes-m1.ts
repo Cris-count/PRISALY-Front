@@ -5,6 +5,7 @@ import {
   DestroyRef,
   inject,
   signal,
+  input,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -69,6 +70,7 @@ export function textoAccesoEstudiante(estado: string): string {
   styleUrl: './panel-academico.css',
 })
 export class PanelEstudiantesM1 {
+  readonly soloAlta = input(false);
   private readonly api = inject(AdministracionM1Api);
   private readonly sesion = inject(SesionPersonalM1);
   private readonly destroyRef = inject(DestroyRef);

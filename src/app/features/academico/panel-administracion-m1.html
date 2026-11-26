@@ -1,193 +1,183 @@
-<section class="panel" aria-labelledby="adm-m1-titulo">
-  <h2 id="adm-m1-titulo">Administración de permisos</h2>
-  <p class="etiqueta-real">
-    Datos reales del servidor. La autorización la decide el Backend (rol ADMINISTRADOR).
-  </p>
-
+<section class="panel" aria-label="Gestión de usuarios">
   @if (!sesionValida()) {
-    <p class="mensaje">Inicia sesión de personal para consultar la administración.</p>
+    <p role="status">Inicia sesión con una cuenta administradora para gestionar usuarios.</p>
   } @else {
-    @if (aviso(); as a) {
-      <p
-        class="mensaje"
-        [class.error]="a.tipo === 'error'"
-        [class.exito]="a.tipo === 'exito'"
-        role="status"
-        aria-live="polite"
-      >
-        {{ a.texto }}
-      </p>
-    }
-
-    <div class="fila">
-      <h3>Catálogo</h3>
-      <div class="acciones">
-        <button type="button" (click)="consultarCatalogo()" [disabled]="ocupado()">
-          Consultar roles y permisos
-        </button>
-      </div>
-      @if (roles(); as lista) {
-        <p>
-          Roles:
-          @for (r of lista; track r.idRol; let ultimo = $last) {
-            <span class="mono">{{ r.nombre }}</span>
-            @if (!ultimo) {
-              <span>, </span>
-            }
-          } @empty {
-            <span>sin roles</span>
-          }
-        </p>
-      }
-      @if (permisos(); as lista) {
-        @if (lista.length === 0) {
-          <p>El catálogo no contiene permisos.</p>
-        } @else {
-          <table class="tabla" aria-label="Permisos del catálogo">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Nombre</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (p of lista; track p.idPermiso) {
-                <tr>
-                  <td class="mono">{{ p.codigo }}</td>
-                  <td>{{ p.nombre }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-      }
-    </div>
-
-    <form class="fila" [formGroup]="formUsuario" (ngSubmit)="consultarUsuario()">
-      <h3>Permisos efectivos de un usuario</h3>
+    <h2>
+      {{
+        vista() === 'estudiantes'
+          ? 'Estudiantes registrados'
+          : vista() === 'permisos'
+            ? 'Roles y permisos'
+            : 'Docentes registrados'
+      }}
+    </h2>
+    <form class="fila" (submit)="$event.preventDefault(); buscarUsuarios()">
       <label
-        >Identificador del usuario (UUID)
-        <input formControlName="idUsuario" autocomplete="off" spellcheck="false" />
-      </label>
-      @if (formUsuario.controls.idUsuario.touched && formUsuario.controls.idUsuario.invalid) {
-        <span class="error-campo">Introduce un UUID válido.</span>
-      }
-      <div class="acciones">
-        <button type="submit" [disabled]="ocupado()">Consultar permisos</button>
-      </div>
+        >Buscar por nombre o correo
+        <input [formControl]="busqueda" type="search" maxlength="120" placeholder="Nombre o correo"
+      /></label>
+      <button type="submit" [disabled]="ocupado() || busqueda.invalid">
+        {{ ocupado() ? 'Consultando…' : 'Buscar usuarios' }}
+      </button>
     </form>
-
-    @if (efectivos(); as lista) {
-      <div class="fila">
-        <p>
-          Usuario <span class="mono">{{ usuarioConsultado() }}</span
-          >: {{ lista.length }} permiso(s) habilitado(s).
-        </p>
-        @if (esPropio()) {
-          <p class="mensaje">
-            Es tu propio usuario: la política vigente no permite asignarte PUBLICAR_CASO ni
-            ARCHIVAR_CASO (separación de funciones).
-          </p>
-        }
-        @if (permisos(); as catalogo) {
-          <table class="tabla" aria-label="Asignación de permisos">
+    @if (usuarios(); as lista) {
+      @if (lista.length === 0) {
+        <p role="status">No se encontraron usuarios con esa búsqueda.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
             <thead>
               <tr>
-                <th>Permiso</th>
-                <th>Estado</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Cuenta</th>
+                <th>Acceso</th>
                 <th>Acción</th>
               </tr>
             </thead>
             <tbody>
-              @for (p of catalogo; track p.idPermiso) {
+              @for (u of lista; track u.idUsuario) {
                 <tr>
-                  <td class="mono">{{ p.codigo }}</td>
-                  <td>{{ tienePermiso(p.idPermiso) ? 'Habilitado' : 'No asignado' }}</td>
+                  <td>{{ u.nombre }}</td>
+                  <td>{{ u.correo }}</td>
+                  <td>{{ u.estado }}</td>
                   <td>
-                    @if (tienePermiso(p.idPermiso)) {
-                      <button type="button" (click)="revocar(p)" [disabled]="ocupado()">
-                        Revocar
-                      </button>
-                    } @else if (autoasignacionProhibida(p)) {
-                      <span>No permitido (separación de funciones)</span>
+                    @if (u.rol === 'ESTUDIANTE') {
+                      Código por correo; sujeto a disponibilidad del acceso
                     } @else {
-                      <button type="button" (click)="asignar(p)" [disabled]="ocupado()">
-                        Asignar
-                      </button>
+                      {{
+                        u.credencialPersonalConfigurada
+                          ? 'Contraseña establecida'
+                          : 'Pendiente de activación'
+                      }}<br /><small>{{ invitacionLegible(u.estadoInvitacion) }}</small>
                     }
+                  </td>
+                  <td>
+                    <button type="button" (click)="seleccionarUsuario(u)" [disabled]="ocupado()">
+                      Seleccionar
+                    </button>
                   </td>
                 </tr>
               }
             </tbody>
           </table>
-        } @else {
-          <p>Consulta primero el catálogo para asignar o revocar permisos.</p>
-          <ul>
-            @for (p of lista; track p.idPermiso) {
-              <li class="mono">{{ p.codigo }}</li>
-            }
-          </ul>
-        }
-      </div>
-    }
-
-    <form class="fila" [formGroup]="formDocente" (ngSubmit)="crearDocente()">
-      <h3>Alta de docente</h3>
-      <p class="etiqueta-real">
-        El alta no genera ni devuelve contraseña. Si el servidor tiene habilitada la activación
-        D-05, emite además una invitación por correo; esta interfaz no puede confirmar su entrega.
-      </p>
-      <div class="campos">
-        <label
-          >Nombre
-          <input formControlName="nombre" maxlength="150" autocomplete="off" />
-        </label>
-        <label
-          >Correo
-          <input formControlName="correo" type="email" maxlength="255" autocomplete="off" />
-        </label>
-      </div>
-      @if (formDocente.touched && formDocente.invalid) {
-        <span class="error-campo">Nombre y correo válido son obligatorios.</span>
-      }
-      <div class="acciones">
-        <button type="submit" [disabled]="ocupado()">Registrar docente</button>
-      </div>
-      @if (docenteCreado(); as d) {
-        <p>
-          Último docente registrado: {{ d.nombre }} · <span class="mono">{{ d.idUsuario }}</span>
-        </p>
-      }
-    </form>
-
-    <form class="fila" [formGroup]="formActivacion" (ngSubmit)="emitirActivacion()">
-      <h3>Invitación de activación docente (D-05)</h3>
-      @if (!activacionHabilitada) {
-        <p class="mensaje" data-prueba="activacion-admin-no-habilitada">
-          No habilitada en este entorno. Requiere la autorización de Dirección Central, el
-          interruptor PRISALY_M1_ACTIVACION_DOCENTE_ENABLED y la migración V020 en el servidor.
-        </p>
-      } @else {
-        <p class="etiqueta-real">
-          Reemite o revoca la invitación de un docente. Una respuesta 202 indica que el servidor
-          aceptó la emisión, no que el correo se haya entregado.
-        </p>
-        <label
-          >Identificador del docente (UUID)
-          <input formControlName="idUsuario" autocomplete="off" spellcheck="false" />
-        </label>
-        @if (
-          formActivacion.controls.idUsuario.touched && formActivacion.controls.idUsuario.invalid
-        ) {
-          <span class="error-campo">Introduce un UUID válido.</span>
-        }
-        <div class="acciones">
-          <button type="submit" [disabled]="ocupado()">Emitir invitación</button>
-          <button type="button" (click)="revocarActivacion()" [disabled]="ocupado()">
-            Revocar invitación
-          </button>
         </div>
       }
-    </form>
+      <div class="fila">
+        <button type="button" (click)="moverPagina(-1)" [disabled]="pagina() === 0 || ocupado()">
+          Anterior</button
+        ><span>Página {{ pagina() + 1 }} · {{ lista.length }} resultados</span
+        ><button type="button" (click)="moverPagina(1)" [disabled]="!hayMas() || ocupado()">
+          Siguiente
+        </button>
+      </div>
+    } @else {
+      <p class="nota">Busca para recuperar los usuarios guardados en el sistema.</p>
+    }
+    @if (seleccionado(); as u) {
+      <section class="panel" aria-label="Usuario seleccionado">
+        <h3>{{ u.nombre }}</h3>
+        <p>
+          {{ u.correo }} · {{ u.rol === 'DOCENTE' ? 'Docente' : 'Estudiante' }} · {{ u.estado }}
+        </p>
+        @if (u.rol === 'DOCENTE') {
+          <p>
+            {{ invitacionLegible(u.estadoInvitacion) }}. Una cuenta activa no implica tener permisos
+            académicos.
+          </p>
+          @if (activacionHabilitada) {
+            <div class="fila">
+              <button
+                type="button"
+                (click)="emitirActivacion()"
+                [disabled]="ocupado() || u.credencialPersonalConfigurada"
+              >
+                Emitir invitación</button
+              ><button
+                type="button"
+                (click)="revocarActivacion()"
+                [disabled]="ocupado() || u.estadoInvitacion !== 'VIGENTE'"
+              >
+                Revocar invitación</button
+              ><button type="button" (click)="buscarUsuarios(false)" [disabled]="ocupado()">
+                Actualizar estado
+              </button>
+            </div>
+          }
+          @if (!activacionHabilitada) {
+            <p data-prueba="activacion-admin-no-habilitada">La activación docente no está habilitada en este entorno.</p>
+          }
+          <button type="button" (click)="consultarCatalogo()" [disabled]="ocupado()">
+            Cargar catálogo de permisos
+          </button>
+          @if (efectivos(); as actuales) {
+            <p>{{ actuales.length }} permiso(s) efectivo(s).</p>
+          }
+          @if (permisos(); as catalogo) {
+            <table>
+              <thead>
+                <tr>
+                  <th>Permiso</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of catalogo; track p.idPermiso) {
+                  <tr>
+                    <td>{{ p.nombre }}</td>
+                    <td>{{ tienePermiso(p.idPermiso) ? 'Asignado' : 'Sin asignar' }}</td>
+                    <td>
+                      @if (tienePermiso(p.idPermiso)) {
+                        <button type="button" (click)="revocar(p)" [disabled]="ocupado()">
+                          Revocar
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          (click)="asignar(p)"
+                          [disabled]="ocupado() || autoasignacionProhibida(p)"
+                        >
+                          Asignar
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        } @else {
+          <p>
+            Los estudiantes acceden mediante código de correo; no se les asignan permisos de
+            personal.
+          </p>
+        }
+      </section>
+    }
+    @if (vista() === 'docentes') {
+      <form [formGroup]="formDocente" (ngSubmit)="crearDocente()" class="panel">
+        <h3>Registrar docente</h3>
+        <label>Nombre <input formControlName="nombre" maxlength="150" autocomplete="name" /></label>
+        <label
+          >Correo <input type="email" formControlName="correo" maxlength="255" autocomplete="email"
+        /></label>
+        @if (formDocente.touched && formDocente.invalid) {
+          <p class="error" role="alert">Revisa el nombre y escribe un correo válido.</p>
+        }
+        <button type="submit" [disabled]="ocupado() || formDocente.invalid">
+          Registrar docente
+        </button>
+        @if (docenteCreado(); as d) {
+          <p data-prueba="docente-creado">
+            {{ d.nombre }} · {{ d.correo }} · {{ d.estado }}. Búscalo en el listado para gestionar
+            su acceso.
+          </p>
+        }
+      </form>
+    }
+    @if (aviso(); as a) {
+      <p role="status" [class.error]="a.tipo === 'error'">{{ a.texto }}</p>
+    }
   }
 </section>

@@ -5,6 +5,7 @@ import {
   DestroyRef,
   inject,
   signal,
+  input,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -17,6 +18,7 @@ import {
   PermisoResumen,
   RolResumen,
   UsuarioDocente,
+  UsuarioAdministrativo,
 } from './administracion-m1.api';
 
 /** FE-61 · D-05: códigos de `ActivacionDocenteExceptionHandler` en las operaciones del administrador. */
@@ -55,6 +57,66 @@ export const PERMISOS_SEPARACION_FUNCIONES: readonly string[] = ['PUBLICAR_CASO'
   styleUrl: './panel-academico.css',
 })
 export class PanelAdministracionM1 {
+  readonly vista = input<'docentes' | 'estudiantes' | 'permisos'>('docentes');
+  protected readonly busqueda = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.maxLength(120)],
+  });
+  protected readonly usuarios = signal<readonly UsuarioAdministrativo[] | null>(null);
+  protected readonly seleccionado = signal<UsuarioAdministrativo | null>(null);
+  protected readonly hayMas = signal(false);
+  protected readonly pagina = signal(0);
+  protected buscarUsuarios(reiniciar = true): void {
+    if (!this.sesionValida() || this.busqueda.invalid || this.ocupado()) return;
+    if (reiniciar) this.pagina.set(0);
+    this.iniciar();
+    this.api
+      .buscarUsuarios(
+        this.busqueda.value,
+        this.vista() === 'estudiantes' ? 'ESTUDIANTE' : 'DOCENTE',
+        this.pagina() * 25,
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          this.usuarios.set(result.items);
+          this.hayMas.set(result.hayMas);
+          const actual = this.seleccionado();
+          if (actual)
+            this.seleccionado.set(
+              result.items.find((u) => u.idUsuario === actual.idUsuario) ?? null,
+            );
+          this.terminar(null);
+        },
+        error: (e) => this.fallar(e),
+      });
+  }
+  protected moverPagina(delta: number): void {
+    this.pagina.update((p) => Math.max(0, p + delta));
+    this.buscarUsuarios(false);
+  }
+  protected seleccionarUsuario(u: UsuarioAdministrativo): void {
+    this.seleccionado.set(u);
+    this.formUsuario.controls.idUsuario.setValue(u.idUsuario);
+    this.formActivacion.controls.idUsuario.setValue(u.idUsuario);
+    if (u.rol === 'DOCENTE') this.cargarEfectivos(u.idUsuario);
+  }
+  protected invitacionLegible(estado: string): string {
+    return (
+      (
+        {
+          VIGENTE: 'Invitación vigente',
+          CONSUMIDA: 'Invitación utilizada',
+          REVOCADA: 'Invitación revocada',
+          VENCIDA: 'Invitación vencida',
+          NO_EMITIDA: 'Sin invitación',
+          NO_DISPONIBLE: 'Estado no confirmado',
+          NO_APLICA: 'No corresponde',
+        } as Record<string, string>
+      )[estado] ?? 'Estado no confirmado'
+    );
+  }
+
   private readonly api = inject(AdministracionM1Api);
   private readonly sesion = inject(SesionPersonalM1);
   private readonly destroyRef = inject(DestroyRef);
@@ -187,7 +249,7 @@ export class PanelAdministracionM1 {
           this.terminar({
             tipo: 'exito',
             texto: this.activacionHabilitada
-              ? `Docente registrado (cuenta ${docente.estado}). Acceso pendiente de habilitación: se envió una invitación de activación a ${docente.correo}. El docente abre el enlace del correo, define su contraseña en «Activar cuenta docente» y después inicia sesión. Para que vea las secciones docentes, asígnale permisos en «Roles y permisos» (su identificador ya está cargado). Si la invitación no le llega, usa «Emitir invitación».`
+              ? `Docente registrado (cuenta ${docente.estado}). Acceso pendiente de habilitación: la invitación debe confirmarse en el correo de ${docente.correo}. El docente abre el enlace del correo, define su contraseña en «Activar cuenta docente» y después inicia sesión. Para que vea las secciones docentes, asígnale permisos en «Roles y permisos» (su identificador ya está cargado). Si la invitación no le llega, usa «Emitir invitación».`
               : `Docente registrado (${docente.estado}). El alta no devuelve contraseña; la activación D-05 no está habilitada en este entorno.`,
           });
         },

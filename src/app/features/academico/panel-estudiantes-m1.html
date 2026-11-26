@@ -1,9 +1,8 @@
 <section class="panel" aria-labelledby="adm-estudiantes-titulo">
   <h2 id="adm-estudiantes-titulo">Administración de estudiantes</h2>
   <p class="etiqueta-real">
-    Alta administrativa y búsqueda por correo exacto (P-78). Un estudiante registrado con cuenta
-    activa ya puede ingresar: pide un código de un solo uso con su correo (DD-02). No se crean
-    contraseñas.
+    Alta administrativa y búsqueda por correo exacto . Un estudiante registrado con cuenta activa ya
+    puede ingresar: pide un código de un solo uso con su correo . No se crean contraseñas.
   </p>
 
   @if (!habilitada) {
@@ -53,7 +52,7 @@
       }
     </form>
 
-    <form class="fila" [formGroup]="formBusqueda" (ngSubmit)="buscar()">
+    <form [hidden]="soloAlta()" class="fila" [formGroup]="formBusqueda" (ngSubmit)="buscar()">
       <h3>Buscar estudiante por correo exacto</h3>
       <label
         >Correo
@@ -78,7 +77,7 @@
                 <th>Nombre</th>
                 <th>Correo</th>
                 <th>Cuenta</th>
-                <th>Acceso (DD-02)</th>
+                <th>Acceso</th>
                 <th>Identificador de estudiante</th>
               </tr>
             </thead>
@@ -88,7 +87,9 @@
                   <td>{{ e.nombre }}</td>
                   <td>{{ e.correo }}</td>
                   <td>{{ e.estado }}</td>
-                  <td>{{ habilitado(e.estado) ? 'Habilitado · código por correo' : 'No disponible' }}</td>
+                  <td>
+                    {{ habilitado(e.estado) ? 'Habilitado · código por correo' : 'No disponible' }}
+                  </td>
                   <td class="mono">{{ e.idEstudiante }}</td>
                 </tr>
               }
