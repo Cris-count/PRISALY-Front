@@ -93,6 +93,17 @@
                   "with": "src/environments/environment.qa-navegacion.ts"
                 }
               ]
+            },
+            "laboratorio": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.laboratorio.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -114,6 +125,9 @@
             },
             "qa-navegacion": {
               "buildTarget": "PRISALY-Front:build:qa-navegacion"
+            },
+            "laboratorio": {
+              "buildTarget": "PRISALY-Front:build:laboratorio"
             }
           },
           "defaultConfiguration": "development"
