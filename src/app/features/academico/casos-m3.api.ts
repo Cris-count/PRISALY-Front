@@ -102,6 +102,13 @@ export interface ElementoCreado {
   readonly id: string;
 }
 
+/** Lista {items} de `GET /v1/casos` (DC-67). Sin contrato (flag OFF) el error HTTP se propaga. */
+function itemsListados(v: unknown): CasoDocente[] {
+  const items = (v as { items?: unknown } | null)?.items;
+  if (!Array.isArray(items)) throw respuestaInvalida();
+  return items.map(leerCaso);
+}
+
 /** Proyección de `CasoContenidoResponse` que usa la interfaz (lectura). */
 export interface CasoContenido extends CasoDocente {
   readonly historia: string | null;
@@ -323,6 +330,13 @@ export class CasosM3Api {
         }),
         catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
       );
+  }
+
+  /** Listado M3 (DC-67): casos del docente propietario; solo contraparte declarada, sin inventar. */
+  listado(): Observable<CasoDocente[]> {
+    return this.http
+      .get<unknown>(this.url('v1/casos'), { context: contextoAcademico() })
+      .pipe(map(itemsListados), catchError((e: unknown) => throwError(() => aFalloAcademico(e))));
   }
 
   consultar(idCaso: string): Observable<Versionado<CasoDocente>> {

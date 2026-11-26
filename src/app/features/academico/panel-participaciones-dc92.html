@@ -94,6 +94,10 @@
                   @if (f.idIntentoConsiderado) {
                     <span class="mono">{{ f.idIntentoConsiderado }}</span>
                     <br />{{ fecha(f.inicioIntento) }} – {{ fecha(f.finIntento) }}
+                  } @else if (f.estadoEvaluacion === 'SELECCION_PENDIENTE') {
+                    <span data-prueba="seleccion-dd04">
+                      Pendiente. La recuperación usa el intento que seleccione el docente.
+                    </span>
                   } @else {
                     —
                   }

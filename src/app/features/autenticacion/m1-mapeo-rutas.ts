@@ -118,7 +118,7 @@ export const MAPEO_RUTAS_PERSONAL = new InjectionToken<Readonly<Record<string, M
   'MAPEO_RUTAS_PERSONAL',
   {
     providedIn: 'root',
-    // Solo `qa-navegacion` (QA no productivo con lista explícita) habilita rutas autorizadas.
+    // `qa-navegacion` y el `ng serve` local habilitan rutas si el entorno trae la lista explícita.
     factory: () => mapeoConHabilitacionQa(MAPEO_RUTAS_PERSONAL_OFICIAL, environment),
   },
 );

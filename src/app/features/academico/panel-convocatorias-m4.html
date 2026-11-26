@@ -49,6 +49,10 @@
     @if (seleccionada(); as s) {
       <div class="fila">
         <h3>Convocatorias de «{{ s.titulo }}»</h3>
+        <p class="etiqueta-real">
+          Caso <span class="mono" data-prueba="caso-de-sesion">{{ s.casoId }}</span>. Las
+          convocatorias pertenecen a esta sesión.
+        </p>
         @if (convocatorias(); as lista) {
           @if (lista.length === 0) {
             <p>La sesión no tiene estudiantes convocados.</p>

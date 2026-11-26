@@ -13,6 +13,9 @@ import { environment } from '../../../environments/environment';
  * - `reporteParticipacion` ↔ `prisaly.m7.reportes.participacion.enabled` (nombre real en
  *   `ReporteParticipacionController.PROPIEDAD`; el OpenAPI candidato dice `prisaly.reportes…`) y la
  *   misma vista DC-92 (RF-16/DD-11, `GET /v1/docente/sesiones/{id}/reporte-participacion`, CSV).
+ * - `participacionHttp` ↔ opt-in del `ParticipacionHttpGateway` (GET/PUT de intento ya escritos).
+ *   No enciende DD-02 ni los POST de inicio y fin. Sigue en false: el simulador conserva
+ *   `ParticipacionPendienteGateway` y no presenta un intento como guardado.
  *
  * El valor se fija al compilar desde `environment.capacidadesBackend`. Ningún archivo de entorno lo
  * declara hoy, así que todas quedan deshabilitadas: activarlas exige la autorización de Dirección
@@ -24,6 +27,8 @@ export interface CapacidadesBackendDc99 {
   readonly activacionDocente: boolean;
   readonly consultaParticipaciones: boolean;
   readonly reporteParticipacion: boolean;
+  /** GET/PUT de intento. No publica el inicio ni el fin, y no sustituye a DD-02. */
+  readonly participacionHttp: boolean;
 }
 
 export function leerCapacidadesDc99(valor: unknown): CapacidadesBackendDc99 {
@@ -33,6 +38,7 @@ export function leerCapacidadesDc99(valor: unknown): CapacidadesBackendDc99 {
     activacionDocente: c.activacionDocente === true,
     consultaParticipaciones: c.consultaParticipaciones === true,
     reporteParticipacion: c.reporteParticipacion === true,
+    participacionHttp: c.participacionHttp === true,
   };
 }
 

@@ -203,15 +203,16 @@ export class ParticipacionCoordinador {
         next: (intento) => {
           recibido = true;
           if (generacion !== this.generacion) return;
-          if (intento.idIntento !== id) {
+          if (intento.idIntento.toLowerCase() !== id.toLowerCase()) {
             this.fallo.set(new Error('El intento recibido no corresponde al solicitado.'));
             this.fase.set(reconciliar ? 'por-verificar' : 'error');
             return;
           }
-          this.actual.set(structuredClone(intento));
+          const restaurado = { ...intento, respuestas: respuestasSinDuplicar(intento.respuestas) };
+          this.actual.set(structuredClone(restaurado));
           const pendiente = this.pendiente();
           const confirmada: RespuestaGuardadaM5 | undefined = pendiente
-            ? intento.respuestas.find((r) => r.idPregunta === pendiente.idPregunta)
+            ? restaurado.respuestas.find((r) => r.idPregunta === pendiente.idPregunta)
             : undefined;
           const coincide =
             pendiente && confirmada?.idOpcionSeleccionada === pendiente.idOpcionSeleccionada;
@@ -232,4 +233,18 @@ export class ParticipacionCoordinador {
         },
       });
   }
+}
+
+/** Una pregunta conserva la revisión más alta. El orden del servidor se mantiene. */
+function respuestasSinDuplicar(
+  respuestas: readonly RespuestaGuardadaM5[],
+): RespuestaGuardadaM5[] {
+  const porPregunta = new Map<string, RespuestaGuardadaM5>();
+  for (const respuesta of respuestas) {
+    const previa = porPregunta.get(respuesta.idPregunta);
+    if (!previa || respuesta.revision >= previa.revision) {
+      porPregunta.set(respuesta.idPregunta, respuesta);
+    }
+  }
+  return respuestas.filter((respuesta) => porPregunta.get(respuesta.idPregunta) === respuesta);
 }

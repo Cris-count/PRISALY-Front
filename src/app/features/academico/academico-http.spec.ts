@@ -116,6 +116,12 @@ describe('Académico: transporte de credencial acotado', () => {
     expect(f.codigo).toBe('STALE_CASE');
     expect(mensajeFallo(f)).toContain('modificó el caso');
     expect(mensajeFallo(f)).not.toContain('interno');
+    expect(mensajeFallo(aFalloAcademico(new HttpErrorResponse({ status: 405 })))).toContain(
+      'no está publicada',
+    );
+    expect(mensajeFallo(aFalloAcademico(new HttpErrorResponse({ status: 501 })))).toContain(
+      'pendiente de autorización',
+    );
     expect(
       aFalloAcademico(new HttpErrorResponse({ status: 400, error: { code: 'bad code!' } })).codigo,
     ).toBeNull();
