@@ -28,7 +28,7 @@ describe('DC-FE-UX-ROLES-24 navegación por rol', () => {
     expect(r).toEqual(['usuarios-docentes', 'configuracion']);
     // DC-FE-60: etiqueta del panel administrador.
     expect(seccionesPorRol(valida('ADMINISTRADOR', []), qaNav).map((x) => x.titulo)).toEqual([
-      'Gestión de docentes',
+      'Gestión de usuarios',
       'Configuración',
     ]);
     // En producción / QA ordinario sigue sin rutas.

@@ -235,3 +235,38 @@ a:focus-visible {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.ciudad-inicio,
+.emblema-institucional {
+  display: none;
+}
+.bienvenida {
+  min-height: 0;
+  padding: 2rem;
+  background: #fff;
+  border: 1px solid #dbe2ec;
+  border-radius: 1rem;
+}
+.tarjetas {
+  gap: 1rem;
+}
+.acceso {
+  background: #fff;
+  box-shadow: none;
+}
+.decoracion-acceso {
+  display: none;
+}
+.sin-permisos {
+  background: #fff7e8;
+  border: 1px solid #dca761;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+.rol-confirmado {
+  font-weight: 600;
+  color: #0755d9;
+}
+.pie-pagina {
+  margin-top: 2rem;
+}

@@ -118,3 +118,61 @@ p {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Cierre: superficies de trabajo compartidas, identidad original conservada. */
+:root {
+  --color-primario: #0755d9;
+  --color-foco: #b45309;
+  --color-fondo: #f4f6fa;
+  --color-superficie: #fff;
+}
+app-dashboard-layout .dashboard .fondo-dashboard {
+  display: none;
+}
+app-dashboard-layout .dashboard {
+  background: #f4f6fa;
+}
+app-dashboard-layout main {
+  min-width: 0;
+}
+app-dashboard-layout .panel,
+app-dashboard-layout .modulo-panel {
+  background: #fff;
+  border-color: #dbe2ec;
+  box-shadow: 0 2px 8px #17314f08;
+}
+app-dashboard-layout table {
+  background: #fff;
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+app-dashboard-layout th,
+app-dashboard-layout td {
+  padding: 0.8rem;
+  border-bottom: 1px solid #dbe2ec;
+  vertical-align: top;
+}
+app-dashboard-layout th {
+  background: #f1f5fa;
+  color: #233b5b;
+}
+app-dashboard-layout input,
+app-dashboard-layout select,
+app-dashboard-layout textarea {
+  background: #fff;
+  color: #17314f;
+  border-color: #bbc7d8;
+}
+app-dashboard-layout button {
+  min-height: 2.65rem;
+  border-radius: 0.5rem;
+  font: inherit;
+}
+app-dashboard-layout .tabla-scroll {
+  overflow-x: auto;
+}
+:focus-visible {
+  outline: 3px solid #b45309;
+  outline-offset: 3px;
+}

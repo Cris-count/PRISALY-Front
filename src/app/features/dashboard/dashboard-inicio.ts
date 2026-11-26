@@ -14,6 +14,15 @@ import { NAVEGACION_PRESENTACION, seccionesPorRol } from './navegacion-rol';
   styleUrls: ['./dashboard-inicio.css', './dashboard-inicio-escena.css'],
 })
 export class DashboardInicio {
+  protected readonly identidad = computed(() => {
+    const e = this.sesion?.estado();
+    return e?.tipo === 'valida' ? e.identidad : null;
+  });
+  protected readonly sinPermisos = computed(() => {
+    const u = this.identidad();
+    return !!u && u.rol !== 'ADMINISTRADOR' && this.secciones().length === 0;
+  });
+
   private readonly sesion = inject(M1_PERSONAL_LOCAL) ? inject(SesionPersonalM1) : null;
   private readonly mapeo = inject(MAPEO_RUTAS_PERSONAL);
   /** DC-FE-UX-ROLES-24: mismas secciones que el menú lateral según la identidad de `/me`. */

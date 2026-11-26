@@ -53,6 +53,12 @@ import {
   ],
 })
 export class DashboardLayout {
+  protected readonly inicialUsuario = computed(() => {
+    const e = this.sesion?.estado();
+    return e?.tipo === 'valida'
+      ? (Array.from(e.identidad.nombre.trim())[0] ?? 'P').toLocaleUpperCase()
+      : 'P';
+  });
   protected readonly qaPersonal = inject(M1_PERSONAL_LOCAL);
   protected readonly sesion = this.qaPersonal ? inject(SesionPersonalM1) : null;
   private readonly destroyRef = inject(DestroyRef);

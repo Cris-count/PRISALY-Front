@@ -46,7 +46,7 @@ export function seccionesPorRol(
   ).map((s) =>
     // DC-FE-60: etiqueta del panel administrador.
     rol === 'ADMINISTRADOR' && s.ruta === 'usuarios-docentes'
-      ? { ...s, titulo: 'Gestión de docentes' }
+      ? { ...s, titulo: 'Gestión de usuarios' }
       : s,
   );
 }
