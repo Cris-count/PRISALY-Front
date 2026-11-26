@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://prisaly.local/protocolo/v1/sobre.schema.json",
   "title": "Sobre de mensaje PRISALY v1",
-  "description": "ESTADO: PROPUESTO. Envoltura comun de todo mensaje Angular-Unreal.",
+  "description": "ESTADO: PROPUESTO v1.1 (CB-04). Envoltura comun de todo mensaje Angular-Unreal. contexto (opcional) identifica el contexto visual de caso.configurar.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -34,6 +34,7 @@
         "orden.error",
         "sesion.iniciar",
         "estado.restaurar",
+        "caso.configurar",
         "interactuable.estado",
         "puerta.abrir",
         "camara.enfocar",
@@ -70,6 +71,10 @@
         "unreal",
         "angular"
       ]
+    },
+    "contexto": {
+      "type": "string",
+      "pattern": "^cv-[0-9a-f]{32}$"
     },
     "datos": {
       "type": "object"
