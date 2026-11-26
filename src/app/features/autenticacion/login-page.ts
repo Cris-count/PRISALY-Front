@@ -51,7 +51,8 @@ export class LoginPage {
     };
     preferencia.addEventListener('change', reducirMovimiento);
     this.destroyRef.onDestroy(() => preferencia.removeEventListener('change', reducirMovimiento));
-    if (preferencia.matches) {
+    // DC-115: al llegar desde /acceso (perfil elegido) el formulario aparece de inmediato, sin presentación.
+    if (preferencia.matches || new URLSearchParams(window.location.search).has('perfil')) {
       this.finalizarPresentacion();
       return;
     }
