@@ -103,6 +103,11 @@
                   "with": "src/environments/environment.dc106-qa.ts"
                 }
               ]
+            },
+            "test": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
@@ -135,7 +140,8 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "runner": "karma"
+            "runner": "karma",
+            "buildTarget": "PRISALY-Front:build:test"
           }
         }
       }
