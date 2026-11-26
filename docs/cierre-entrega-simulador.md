@@ -60,3 +60,7 @@ docker compose -p prisaly-cierre-sim -f ops/qa-simulador/compose.yaml stop visor
 El contexto Docker excluye todos los archivos excepto Dockerfile, configuración Nginx y el resultado público de Angular. `browser-cierre` está ignorado por Git. No copiar .env, .private, node_modules, claves o evidencias a ese directorio.
 
 Corrección de proxy reproducida: `/simulador-unreal` comparte nombre con una carpeta pública del protocolo. `try_files $uri $uri/ /index.html` provocaba redirección al puerto 80. El proxy versionado usa `try_files $uri /index.html`, sirve la ruta Angular sin redirección y conserva las rutas de archivos del protocolo. Verificado por HTTP real en ambos QA.
+
+## Control obligatorio antes de publicar
+
+Aplicar [Control de salida de accesos QA](CONTROL-SALIDA-ACCESOS-QA.md) al artefacto exacto que se empaquetará y verificar los tres roles en el navegador antes de publicar ramas compartidas.
