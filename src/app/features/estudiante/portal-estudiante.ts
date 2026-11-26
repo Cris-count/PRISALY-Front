@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnIni
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
+import { environment } from '../../../environments/environment';
+import { URL_SENALIZACION_LOCAL } from '../../../environments/senalizacion-unreal';
 import { ContenidoIntentoM5 } from '../simulador/models/contenido-intento.models';
 import {
   ConvocatoriaEstudiante,
@@ -12,6 +14,8 @@ import {
 } from './portal-estudiante.api';
 
 type Vista = 'convocatorias' | 'intento' | 'finalizado' | 'resultado';
+/** Estado REAL del simulador 3D (Unreal Pixel Streaming); nunca se simula una conexión. */
+type EstadoSimulador = 'comprobando' | 'no-disponible' | 'servidor-sin-habilitar' | 'disponible';
 type Aviso = { tipo: 'error' | 'exito' | 'info'; texto: string } | null;
 
 const CLAVE_INTENTOS = 'prisaly.portal.intentos';
@@ -66,6 +70,7 @@ export class PortalEstudiante implements OnInit {
   protected readonly contenido = signal<ContenidoIntentoM5 | null>(null);
   protected readonly guardando = signal<string | null>(null);
   protected readonly resultado = signal<ResultadoEstudiante | null>(null);
+  protected readonly simulador = signal<EstadoSimulador>('comprobando');
   private readonly seleccion = signal<Readonly<Record<string, { opcion: string; revision: number }>>>({});
 
   protected readonly totalPreguntas = computed(
@@ -151,6 +156,7 @@ export class PortalEstudiante implements OnInit {
           this.contenido.set(contenido);
           this.cargando.set(false);
           this.vista.set('intento');
+          this.comprobarSimulador();
         },
         error: (e: unknown) => this.fallo(e),
       });
@@ -247,6 +253,34 @@ export class PortalEstudiante implements OnInit {
       sessionStorage.removeItem(CLAVE_INTENTOS);
       void this.router.navigate(['/acceso']);
     });
+  }
+
+  /**
+   * Punto de entrada al simulador 3D desde el intento activo. Comprueba de verdad la señalización de Pixel
+   * Streaming (laboratorio local PS2-LAB-03). La vista 3D solo se abre en el entorno autorizado
+   * (`simuladorUnrealLocal` y ruta de demostración); en otro caso se informa el estado real y el recorrido
+   * académico sigue en esta pantalla.
+   */
+  protected comprobarSimulador(): void {
+    this.simulador.set('comprobando');
+    let ws: WebSocket | null = null;
+    const fin = (estado: EstadoSimulador) => {
+      clearTimeout(limite);
+      try { ws?.close(); } catch { /* sin efecto */ }
+      this.simulador.set(estado);
+    };
+    const limite = setTimeout(() => fin('no-disponible'), 2500);
+    try {
+      ws = new WebSocket(URL_SENALIZACION_LOCAL);
+      ws.onopen = () => fin(environment.simuladorUnrealLocal ? 'disponible' : 'servidor-sin-habilitar');
+      ws.onerror = () => fin('no-disponible');
+    } catch {
+      fin('no-disponible');
+    }
+  }
+
+  protected abrirSimulador(): void {
+    if (this.simulador() === 'disponible') void this.router.navigate(['/simulador-unreal']);
   }
 
   private fallo(e: unknown): void {

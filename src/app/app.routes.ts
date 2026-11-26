@@ -16,7 +16,7 @@ export const routes: Routes = [
     title: 'Acceso por roles · PRISALY',
     loadComponent: () => import('./features/autenticacion/acceso-roles').then((m) => m.AccesoRoles),
   },
-  { path: '', pathMatch: 'full', redirectTo: 'login' },
+  { path: '', pathMatch: 'full', redirectTo: 'acceso' },
   {
     path: 'login',
     title: 'Iniciar sesión · PRISALY',

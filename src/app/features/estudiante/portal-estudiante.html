@@ -85,6 +85,24 @@
               </div>
             </div>
 
+            <aside class="simulador" data-prueba="portal-simulador" [attr.data-estado]="simulador()">
+              <div>
+                <strong>Simulación 3D</strong>
+                @switch (simulador()) {
+                  @case ('comprobando') { <span role="status">Comprobando el servidor de Pixel Streaming…</span> }
+                  @case ('disponible') { <span>Entorno 3D disponible para explorar el caso.</span> }
+                  @case ('servidor-sin-habilitar') {
+                    <span>El servidor 3D responde, pero la vista 3D no está habilitada en este entorno. Continúa con el caso aquí.</span>
+                  }
+                  @default { <span>El simulador 3D (Unreal · Pixel Streaming) no está disponible en este momento. Puedes responder el caso aquí sin problema.</span> }
+                }
+              </div>
+              <div class="acciones">
+                <button type="button" class="secundario" (click)="comprobarSimulador()" [disabled]="simulador() === 'comprobando'">Reintentar</button>
+                <button type="button" (click)="abrirSimulador()" [disabled]="simulador() !== 'disponible'" data-prueba="portal-abrir-simulador">Abrir simulación 3D</button>
+              </div>
+            </aside>
+
             @if (c.caso.historia) {
               <article class="historia"><h2>Historia</h2><p>{{ c.caso.historia }}</p></article>
             }

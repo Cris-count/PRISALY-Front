@@ -58,3 +58,7 @@ button.secundario { background: var(--color-superficie); color: var(--color-prim
 .nota .escala { color: var(--color-texto-suave); }
 .retro { text-align: left; width: 100%; max-width: 40rem; }
 @media (max-width: 40rem) { .barra { padding: var(--espacio-3); } .contenido { padding: var(--espacio-4) var(--espacio-3); } }
+.simulador { display: flex; justify-content: space-between; align-items: center; gap: var(--espacio-3); flex-wrap: wrap; padding: var(--espacio-3) var(--espacio-4); margin-bottom: var(--espacio-4); border-radius: 0.75rem; border: 1px solid var(--color-borde); background: linear-gradient(90deg, #eaf1f8, var(--color-superficie)); }
+.simulador strong { display: block; color: #17314f; }
+.simulador span { font-size: 0.9rem; color: var(--color-texto-suave); }
+.simulador[data-estado='disponible'] { border-color: var(--color-exito); }
