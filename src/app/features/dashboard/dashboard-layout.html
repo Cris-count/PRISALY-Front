@@ -145,14 +145,16 @@
           </button>
         }
       </div>
-      <a
-        class="volver"
-        routerLink="/login"
-        aria-label="Volver al inicio de sesión"
-        title="Volver al inicio de sesión"
-        ><span aria-hidden="true">←</span>
-        <span class="nav-texto">Volver al inicio de sesión</span></a
-      >
+      @if (sesion?.estado()?.tipo !== 'valida') {
+        <a
+          class="volver"
+          routerLink="/login"
+          aria-label="Volver al inicio de sesión"
+          title="Volver al inicio de sesión"
+          ><span aria-hidden="true">←</span>
+          <span class="nav-texto">Volver al inicio de sesión</span></a
+        >
+      }
       <button class="cerrar-menu" type="button" (click)="cerrarMenu()">Cerrar menú</button>
     </div>
   </aside>

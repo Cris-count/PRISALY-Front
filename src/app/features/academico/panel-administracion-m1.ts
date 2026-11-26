@@ -96,6 +96,8 @@ export class PanelAdministracionM1 {
     this.buscarUsuarios(false);
   }
   protected seleccionarUsuario(u: UsuarioAdministrativo): void {
+    this.usuarioConsultado.set(null);
+    this.efectivos.set(null);
     this.seleccionado.set(u);
     this.formUsuario.controls.idUsuario.setValue(u.idUsuario);
     this.formActivacion.controls.idUsuario.setValue(u.idUsuario);
