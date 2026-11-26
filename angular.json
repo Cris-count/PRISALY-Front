@@ -32,7 +32,9 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.css"]
+            "styles": [
+              "src/styles.css"
+            ]
           },
           "configurations": {
             "production": {
@@ -108,6 +110,17 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "laboratorio": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.laboratorio.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -133,6 +146,9 @@
             "dc106-qa": {
               "buildTarget": "PRISALY-Front:build:dc106-qa",
               "proxyConfig": "proxy.dc106-qa.json"
+            },
+            "laboratorio": {
+              "buildTarget": "PRISALY-Front:build:laboratorio"
             }
           },
           "defaultConfiguration": "development"
