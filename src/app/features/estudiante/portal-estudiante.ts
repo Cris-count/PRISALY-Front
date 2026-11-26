@@ -1,9 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
-import { environment } from '../../../environments/environment';
-import { URL_SENALIZACION_LOCAL } from '../../../environments/senalizacion-unreal';
+import {
+  SESION_VISUAL_UNREAL,
+  validarSesionVisual,
+} from '../simulador/unreal/configuracion-unreal';
 import { ContenidoIntentoM5 } from '../simulador/models/contenido-intento.models';
 import {
   ConvocatoriaEstudiante,
@@ -15,7 +25,12 @@ import {
 
 type Vista = 'convocatorias' | 'intento' | 'finalizado' | 'resultado';
 /** Estado REAL del simulador 3D (Unreal Pixel Streaming); nunca se simula una conexión. */
-type EstadoSimulador = 'comprobando' | 'no-disponible' | 'servidor-sin-habilitar' | 'disponible';
+type EstadoSimulador =
+  | 'configuracion-pendiente'
+  | 'contexto-pendiente'
+  | 'comprobando'
+  | 'no-disponible'
+  | 'senalizacion-disponible';
 type Aviso = { tipo: 'error' | 'exito' | 'info'; texto: string } | null;
 
 const CLAVE_INTENTOS = 'prisaly.portal.intentos';
@@ -30,7 +45,8 @@ const ESTADO_SESION: Readonly<Record<string, string>> = {
 /** Mensaje claro para cada código tipado del servidor; el resto, mensaje genérico sin detalles técnicos. */
 export function mensajePortal(e: unknown): string {
   const f = e instanceof FalloPortal ? e : null;
-  if (f?.estado === 401) return 'Tu sesión estudiantil terminó. Vuelve a ingresar con un nuevo código.';
+  if (f?.estado === 401)
+    return 'Tu sesión estudiantil terminó. Vuelve a ingresar con un nuevo código.';
   switch (f?.codigo) {
     case 'INICIO_NO_AUTORIZADO':
       return 'La sesión todavía no está abierta por tu docente. Inténtalo cuando la sesión esté en curso.';
@@ -58,6 +74,8 @@ export function mensajePortal(e: unknown): string {
 })
 export class PortalEstudiante implements OnInit {
   private readonly api = inject(PortalEstudianteApi);
+  private readonly sesionVisual = inject(SESION_VISUAL_UNREAL);
+  private sondeoVisual = 0;
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -71,14 +89,18 @@ export class PortalEstudiante implements OnInit {
   protected readonly guardando = signal<string | null>(null);
   protected readonly resultado = signal<ResultadoEstudiante | null>(null);
   protected readonly simulador = signal<EstadoSimulador>('comprobando');
-  private readonly seleccion = signal<Readonly<Record<string, { opcion: string; revision: number }>>>({});
+  private readonly seleccion = signal<
+    Readonly<Record<string, { opcion: string; revision: number }>>
+  >({});
 
   protected readonly totalPreguntas = computed(
     () => this.contenido()?.caso.escenarios.reduce((n, e) => n + e.preguntas.length, 0) ?? 0,
   );
   protected readonly respondidas = computed(() => Object.keys(this.seleccion()).length);
   protected readonly progreso = computed(() =>
-    this.totalPreguntas() === 0 ? 0 : Math.round((100 * this.respondidas()) / this.totalPreguntas()),
+    this.totalPreguntas() === 0
+      ? 0
+      : Math.round((100 * this.respondidas()) / this.totalPreguntas()),
   );
 
   ngOnInit(): void {
@@ -141,7 +163,12 @@ export class PortalEstudiante implements OnInit {
     this.guardarIntento(c.idSesion, intento.idIntento);
     this.intento.set(intento);
     this.seleccion.set(
-      Object.fromEntries(intento.respuestas.map((r) => [r.idPregunta, { opcion: r.idOpcionSeleccionada, revision: r.revision }])),
+      Object.fromEntries(
+        intento.respuestas.map((r) => [
+          r.idPregunta,
+          { opcion: r.idOpcionSeleccionada, revision: r.revision },
+        ]),
+      ),
     );
     if (intento.estado === 'Finalizado') {
       this.cargando.set(false);
@@ -174,7 +201,10 @@ export class PortalEstudiante implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (r) => {
-          this.seleccion.update((s) => ({ ...s, [idPregunta]: { opcion: r.idOpcionSeleccionada, revision: r.revision } }));
+          this.seleccion.update((s) => ({
+            ...s,
+            [idPregunta]: { opcion: r.idOpcionSeleccionada, revision: r.revision },
+          }));
           this.guardando.set(null);
         },
         error: (e: unknown) => {
@@ -191,7 +221,12 @@ export class PortalEstudiante implements OnInit {
     this.api.intento(intento.idIntento).subscribe({
       next: (i) =>
         this.seleccion.set(
-          Object.fromEntries(i.respuestas.map((r) => [r.idPregunta, { opcion: r.idOpcionSeleccionada, revision: r.revision }])),
+          Object.fromEntries(
+            i.respuestas.map((r) => [
+              r.idPregunta,
+              { opcion: r.idOpcionSeleccionada, revision: r.revision },
+            ]),
+          ),
         ),
     });
   }
@@ -208,7 +243,10 @@ export class PortalEstudiante implements OnInit {
         next: () => {
           this.cargando.set(false);
           this.vista.set('finalizado');
-          this.aviso.set({ tipo: 'exito', texto: 'Tu intento quedó registrado. Gracias por participar.' });
+          this.aviso.set({
+            tipo: 'exito',
+            texto: 'Tu intento quedó registrado. Gracias por participar.',
+          });
         },
         error: (e: unknown) => this.fallo(e),
       });
@@ -231,7 +269,8 @@ export class PortalEstudiante implements OnInit {
           } else {
             this.aviso.set({
               tipo: 'info',
-              texto: 'Tu docente todavía no ha publicado la calificación. Vuelve a consultar más tarde.',
+              texto:
+                'Tu docente todavía no ha publicado la calificación. Vuelve a consultar más tarde.',
             });
           }
         },
@@ -257,30 +296,64 @@ export class PortalEstudiante implements OnInit {
 
   /**
    * Punto de entrada al simulador 3D desde el intento activo. Comprueba de verdad la señalización de Pixel
-   * Streaming (laboratorio local PS2-LAB-03). La vista 3D solo se abre en el entorno autorizado
+   * Streaming de la asignación visual explícita. La vista 3D solo se abre en el entorno autorizado
    * (`simuladorUnrealLocal` y ruta de demostración); en otro caso se informa el estado real y el recorrido
    * académico sigue en esta pantalla.
    */
   protected comprobarSimulador(): void {
+    const sondeo = ++this.sondeoVisual;
+    const visual = this.sesionVisual;
+    if (!visual) {
+      this.simulador.set('configuracion-pendiente');
+      return;
+    }
+    if (!this.intento() || visual.casoId !== this.contenido()?.caso.idCaso) {
+      this.simulador.set('contexto-pendiente');
+      return;
+    }
+    try {
+      validarSesionVisual(visual);
+    } catch {
+      this.simulador.set('configuracion-pendiente');
+      return;
+    }
     this.simulador.set('comprobando');
     let ws: WebSocket | null = null;
+    let finalizado = false;
     const fin = (estado: EstadoSimulador) => {
+      if (finalizado) return;
+      finalizado = true;
       clearTimeout(limite);
-      try { ws?.close(); } catch { /* sin efecto */ }
-      this.simulador.set(estado);
+      try {
+        ws?.close();
+      } catch {}
+      if (sondeo === this.sondeoVisual) this.simulador.set(estado);
     };
     const limite = setTimeout(() => fin('no-disponible'), 2500);
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(limite);
+      finalizado = true;
+      try {
+        ws?.close();
+      } catch {}
+    });
     try {
-      ws = new WebSocket(URL_SENALIZACION_LOCAL);
-      ws.onopen = () => fin(environment.simuladorUnrealLocal ? 'disponible' : 'servidor-sin-habilitar');
+      ws = new WebSocket(visual.urlSenalizacion);
+      // Un handshake no demuestra que exista un streamer o intercambio académico.
+      ws.onopen = () => fin('senalizacion-disponible');
       ws.onerror = () => fin('no-disponible');
+      ws.onclose = () => fin('no-disponible');
     } catch {
       fin('no-disponible');
     }
   }
 
   protected abrirSimulador(): void {
-    if (this.simulador() === 'disponible') void this.router.navigate(['/simulador-unreal']);
+    this.aviso.set({
+      tipo: 'info',
+      texto:
+        'La conexión académica con MUNDO-24 está pendiente de su entrega y asignación. Puedes continuar esta actividad en el portal.',
+    });
   }
 
   private fallo(e: unknown): void {
@@ -297,6 +370,9 @@ export class PortalEstudiante implements OnInit {
   }
 
   private guardarIntento(idSesion: string, idIntento: string): void {
-    sessionStorage.setItem(CLAVE_INTENTOS, JSON.stringify({ ...this.leerIntentos(), [idSesion]: idIntento }));
+    sessionStorage.setItem(
+      CLAVE_INTENTOS,
+      JSON.stringify({ ...this.leerIntentos(), [idSesion]: idIntento }),
+    );
   }
 }
