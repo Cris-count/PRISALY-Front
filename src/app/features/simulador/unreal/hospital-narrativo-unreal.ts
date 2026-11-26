@@ -13,7 +13,7 @@ import { HospitalUnreal } from './hospital-unreal';
       <h2 id="recorrido-titulo">Tu investigación</h2>
       <button type="button" [disabled]="!hospital.puedeAbrirLibreta()" (click)="hospital.abrirLibreta()">Libreta ({{ libreta.estado().pistas.length }})</button>
       <p>Conversaciones terminadas: {{ hospital.conversacionesTerminadas() }} de {{ hospital.totalConversaciones() }}</p>
-      @for (edificio of hospital.recorrido(); track edificio.edificioId) {
+      @for (edificio of hospital.recorridoVisible(); track edificio.edificioId) {
         <article><h3>{{ edificio.nombre }}</h3><p>{{ edificio.visitado ? 'Interior visitado' : 'Interior por visitar' }}</p>
           @for (npc of edificio.npcs; track npc.espacialId) {
             <p>{{ npc.nombre }}: {{ npc.estado === 'completado' ? 'Conversación terminada' : npc.estado === 'en_curso' ? 'Conversación en curso' : 'Por conversar' }}</p>

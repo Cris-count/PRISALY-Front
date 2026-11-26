@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import { API_CONFIG, construirUrlApi } from '../../core/config/api.config';
@@ -296,6 +296,40 @@ function leerRubrica(v: unknown): Rubrica {
   };
 }
 
+/** Versión del guion narrativo (`GuionDto` de M3, CB-02). `definicion` es el documento prisaly-guion-1 persistido. */
+export interface GuionGuardado {
+  idGuion: string;
+  version: number;
+  estado: string;
+  hashDefinicion: string;
+  fechaActualizacion: string;
+  definicion: Record<string, unknown>;
+}
+export interface NarrativaDocente {
+  idCaso: string;
+  borrador: GuionGuardado | null;
+  publicado: GuionGuardado | null;
+}
+/** Error de validación del guion (422 `GUION_INVALIDO`) con la ruta de cada problema. */
+export interface ErrorGuion { campo: string; codigo: string }
+
+function leerGuion(v: unknown): GuionGuardado | null {
+  if (v === null || v === undefined) return null;
+  const g = v as Partial<Record<keyof GuionGuardado, unknown>>;
+  if (!esUuid(g.idGuion) || typeof g.version !== 'number' || !texto(g.estado) || !/^[0-9a-f]{64}$/.test(String(g.hashDefinicion))
+    || !g.definicion || typeof g.definicion !== 'object') throw respuestaInvalida();
+  return { idGuion: g.idGuion, version: g.version, estado: g.estado, hashDefinicion: String(g.hashDefinicion),
+    fechaActualizacion: String(g.fechaActualizacion ?? ''), definicion: g.definicion as Record<string, unknown> };
+}
+
+/** Errores del validador M3 en un 422 (`{code, message, errores:[{campo, codigo}]}`); vacío en otro caso. */
+export function erroresGuion(e: unknown): ErrorGuion[] {
+  const cuerpo = e instanceof HttpErrorResponse && e.status === 422 ? (e.error as { errores?: unknown }) : null;
+  return Array.isArray(cuerpo?.errores)
+    ? cuerpo.errores.filter((x): x is ErrorGuion => !!x && typeof x.campo === 'string' && typeof x.codigo === 'string')
+    : [];
+}
+
 function etag(r: HttpResponse<unknown>): string | null {
   const valor = r.headers.get('ETag');
   return valor && valor.trim().length > 0 ? valor : null;
@@ -522,6 +556,31 @@ export class CasosM3Api {
         }),
         catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
       );
+  }
+
+  /** Narrativa del caso (CB-02, `GET /v1/casos/{id}/narrativa`). Sin flag de narrativa, M3 responde 404. */
+  narrativa(idCaso: string): Observable<NarrativaDocente> {
+    if (!esUuid(idCaso)) return throwError(() => respuestaInvalida());
+    return this.http.get<unknown>(this.url(`v1/casos/${idCaso}/narrativa`), { context: contextoAcademico() }).pipe(
+      map((v) => {
+        const r = v as Partial<Record<keyof NarrativaDocente, unknown>> | null;
+        if (!r || r.idCaso !== idCaso) throw respuestaInvalida();
+        return { idCaso, borrador: leerGuion(r.borrador), publicado: leerGuion(r.publicado) };
+      }),
+      catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
+    );
+  }
+
+  /**
+   * Reemplaza el borrador con un documento prisaly-guion-1 completo (`PUT …/narrativa`). En un 422 el error original
+   * se conserva para leer {@link erroresGuion}; el resto se clasifica como {@link FalloAcademico}.
+   */
+  guardarNarrativa(idCaso: string, documento: object): Observable<GuionGuardado> {
+    if (!esUuid(idCaso)) return throwError(() => respuestaInvalida());
+    return this.http.put<unknown>(this.url(`v1/casos/${idCaso}/narrativa`), documento, { context: contextoAcademico() }).pipe(
+      map((v) => leerGuion(v) ?? (() => { throw respuestaInvalida(); })()),
+      catchError((e: unknown) => throwError(() => (erroresGuion(e).length ? e : aFalloAcademico(e)))),
+    );
   }
 
   private getVersionado<T>(

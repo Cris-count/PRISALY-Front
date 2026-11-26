@@ -167,7 +167,11 @@ export class PuenteUnreal {
     if (m.sesion !== this.op.sesion) { this.log('entrada', m.tipo, m.id, m.correlacion, 'IGNORADO:SESION_AJENA'); return; }
     if (m.origen !== 'unreal') { this.log('entrada', m.tipo, m.id, m.correlacion, 'IGNORADO:ORIGEN'); return; }
     if (this.recibidos.has(m.id)) { this.log('entrada', m.tipo, m.id, m.correlacion, 'IGNORADO:DUPLICADO'); return; }
-    if (m.contexto && m.contexto !== this.contextoVisual) {
+    // Unreal etiqueta todo con su contexto vigente, también mundo.listo y las respuestas. Un puente nuevo (otra
+    // conexión, otra vista previa) aún no conoce ese contexto: el saludo y las respuestas a órdenes propias
+    // pendientes (id con prefijo aleatorio de esta conexión) no pueden ser de un contexto anterior y se aceptan.
+    const respuestaPropia = (m.tipo === 'orden.ack' || m.tipo === 'orden.error') && this.pendientes.has(m.correlacion ?? '');
+    if (m.contexto && m.contexto !== this.contextoVisual && m.tipo !== 'mundo.listo' && !respuestaPropia) {
       this.log('entrada', m.tipo, m.id, m.correlacion, 'IGNORADO:CONTEXTO_AJENO');
       return;
     }

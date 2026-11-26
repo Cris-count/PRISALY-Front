@@ -51,6 +51,14 @@ describe('Académico: transporte de credencial acotado', () => {
     expect(esRutaAcademicaAutorizada('GET', 'v1/casos/no-uuid')).toBeFalse();
   });
 
+  it('CB-05A: transporta la credencial al borrador de la narrativa, pero no a su publicación', () => {
+    expect(esRutaAcademicaAutorizada('GET', `v1/casos/${ID}/narrativa`)).toBeTrue();
+    expect(esRutaAcademicaAutorizada('PUT', `v1/casos/${ID}/narrativa`)).toBeTrue();
+    expect(esRutaAcademicaAutorizada('POST', `v1/casos/${ID}/narrativa/publicar`)).toBeFalse();
+    expect(esRutaAcademicaAutorizada('DELETE', `v1/casos/${ID}/narrativa`)).toBeFalse();
+    expect(esRutaAcademicaAutorizada('GET', 'v1/casos/no-uuid/narrativa')).toBeFalse();
+  });
+
   it('calcula la ruta relativa solo dentro de la base configurada', () => {
     expect(rutaRelativaApi('/api', '/api/v1/casos?x=1')).toBe('v1/casos');
     expect(rutaRelativaApi('/api', 'https://otro.example/api/v1/casos')).toBeNull();
