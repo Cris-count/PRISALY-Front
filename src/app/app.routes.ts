@@ -1,3 +1,4 @@
+import { requiereAccesoSimulador } from './features/simulador/unreal/acceso-simulador';
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { M1_PERSONAL_LOCAL } from './features/autenticacion/m1-personal-http';
@@ -87,7 +88,7 @@ export const routes: Routes = [
   {
     path: 'simulador-unreal',
     title: 'Ciudad 3D · PRISALY',
-    canActivate: [requiereEntornoDemostracion],
+    canActivate: [requiereAccesoSimulador],
     loadComponent: () =>
       import('./features/simulador/unreal/simulador-unreal-page').then(
         (m) => m.SimuladorUnrealPage,

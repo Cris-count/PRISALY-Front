@@ -1,6 +1,23 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, NgZone, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { ContextoAcademicoUnreal } from './acceso-simulador';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  NgZone,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { SESION_VISUAL_UNREAL, validarSesionVisual } from './configuracion-unreal';
-import { CORRESPONDENCIA_MUNDO_UNREAL, PLAZA_UNREAL, edificioPorZonaUnreal } from './correspondencia-mundo';
+import {
+  CORRESPONDENCIA_MUNDO_UNREAL,
+  PLAZA_UNREAL,
+  edificioPorZonaUnreal,
+} from './correspondencia-mundo';
 import { CARGAR_ESQUEMAS_UNREAL } from './protocolo/cargar-esquemas-browser';
 import { Mensaje } from './protocolo/validador-mensaje';
 import { PuenteUnreal } from './puente/puente-unreal';
@@ -16,67 +33,176 @@ import { HospitalNarrativoUnreal } from './hospital-narrativo-unreal';
   selector: 'app-simulador-unreal-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HospitalNarrativoUnreal],
-  providers: [LibretaStore, AdaptadorPistasNarrativas, CoordinadorNarrativoInteriores, HospitalUnreal],
+  providers: [
+    LibretaStore,
+    AdaptadorPistasNarrativas,
+    CoordinadorNarrativoInteriores,
+    HospitalUnreal,
+  ],
   template: `
     <main class="pagina-unreal">
       <header>
         <p class="etiqueta">PRISALY · SIMULADOR 2.0</p>
-        <h1>Ciudad 3D en PRISALY</h1>
+        <h1>{{ tituloAcademico || 'Ciudad 3D en PRISALY' }}</h1>
         <p>Juega desde el navegador, sin instalar el simulador en tu computador.</p>
       </header>
       @if (!asignacion) {
         <section class="aviso" aria-labelledby="titulo-disponibilidad">
           <h2 id="titulo-disponibilidad">Ciudad 3D pendiente de habilitación</h2>
-          <p>Unreal todavía no puede conectarse desde PRISALY: falta habilitar el servidor Pixel Streaming y conectar el puente del juego. Abrir un caso de demostración no inicia una conexión 3D.</p>
-          <p>Si deseas probar el recorrido anterior, puedes elegir la demostración en Phaser 2.5D.</p>
-          <a href="simulador-integrado">Ver opciones y demostración anterior (Phaser 2.5D)</a>
+          <p>
+            Unreal todavía no puede conectarse desde PRISALY: falta habilitar el servidor Pixel
+            Streaming y conectar el puente del juego. Abrir un caso de demostración no inicia una
+            conexión 3D.
+          </p>
+          <p>Puedes volver al portal y continuar el cuestionario sin el simulador.</p>
         </section>
       } @else {
-        <p class="aviso">Recorrido demostrativo por Hospital, Comisaría y Fiscalía. Las conversaciones y la libreta se conservan mientras permanezcas en esta página.</p>
+        <p class="aviso">
+          Recorrido demostrativo por Hospital, Comisaría y Fiscalía. Las conversaciones y la libreta
+          se conservan mientras permanezcas en esta página.
+        </p>
         <div class="acciones">
-          <button type="button" (click)="conectar()" [disabled]="ocupado() || conectado()">{{ hospital.ultimaZona() ? 'Reconectar y recuperar recorrido' : 'Conectar ciudad 3D' }}</button>
-          <button type="button" (click)="desconectar()" [disabled]="!ocupado() && !conectado()">Desconectar</button>
+          <button type="button" (click)="conectar()" [disabled]="ocupado() || conectado()">
+            {{ hospital.ultimaZona() ? 'Reconectar y recuperar recorrido' : 'Conectar ciudad 3D' }}
+          </button>
+          <button type="button" (click)="desconectar()" [disabled]="!ocupado() && !conectado()">
+            Desconectar
+          </button>
           @if (requiereReproduccion()) {
             <button type="button" (click)="reproducir()">Reproducir ciudad</button>
           }
         </div>
       }
       <p role="status" aria-live="polite">{{ estado() }}</p>
-      @if (hospital.ultimaZona() && !conectado()) { <p>Al reconectar regresarás al último acceso o zona confirmada. Tus conversaciones, pistas y notas continúan en esta página.</p> }
-      @if (error()) { <p role="alert">{{ error() }}</p> }
-      <div #visor class="visor" tabindex="0" role="region" aria-label="Visor de la ciudad 3D"
-        [hidden]="!asignacion" (focusin)="foco.set(true)" (focusout)="foco.set(false)">
-      </div>
+      @if (hospital.ultimaZona() && !conectado()) {
+        <p>
+          Al reconectar regresarás al último acceso o zona confirmada. Tus conversaciones, pistas y
+          notas continúan en esta página.
+        </p>
+      }
+      @if (error()) {
+        <p role="alert">{{ error() }}</p>
+      }
+      <div
+        #visor
+        class="visor"
+        tabindex="0"
+        role="region"
+        aria-label="Visor de la ciudad 3D"
+        [hidden]="!asignacion"
+        (focusin)="foco.set(true)"
+        (focusout)="foco.set(false)"
+      ></div>
       @if (asignacion) {
-        <p>Activa el visor para usar los controles del juego. Presiona Tab para volver a los controles de PRISALY.</p>
+        <p>
+          Activa el visor para usar los controles del juego. Presiona Tab para volver a los
+          controles de PRISALY.
+        </p>
         <nav class="acciones" aria-label="Destinos de la ciudad 3D">
           @for (destino of destinos; track destino.zonaId) {
-            <button type="button" [disabled]="!conectado() || hospital.ocupado() || hospital.enInterior()" (click)="caminarA(destino.zonaId)">{{ destino.nombre }}</button>
+            <button
+              type="button"
+              [disabled]="!conectado() || hospital.ocupado() || hospital.enInterior()"
+              (click)="caminarA(destino.zonaId)"
+            >
+              {{ destino.nombre }}
+            </button>
           }
         </nav>
         <p>Ubicación: {{ ubicacion() }}</p>
       }
       <app-hospital-narrativo-unreal />
-      <footer><a href="simulador-integrado">Volver a las opciones del simulador</a></footer>
+      <footer>
+        <button type="button" (click)="volverAlPortal()">Volver al portal académico</button>
+      </footer>
     </main>
   `,
   styles: `
-    :host { display:block; min-width:0; }
-    .pagina-unreal { max-width:1200px; margin:auto; padding:clamp(1rem,3vw,2rem); color:#19384b; }
-    h1 { font-size:clamp(1.7rem,4vw,2.5rem); margin:.4rem 0; }
-    .etiqueta { font-size:.85rem; font-weight:700; letter-spacing:.08em; }
-    .aviso { padding:1rem; border:1px solid #bed2df; border-radius:.7rem; background:#f2f7fb; }
-    .acciones { display:flex; flex-wrap:wrap; gap:.7rem; margin:1rem 0; }
-    button { padding:.65rem 1rem; border:1px solid #92adbf; border-radius:.4rem; color:#19384b; background:white; cursor:pointer; }
-    button:disabled { opacity:.55; cursor:default; }
-    .visor { position:relative; width:100%; aspect-ratio:16/9; min-height:480px; height:580px; max-height:720px; overflow:hidden; background:#142b3a; }
-    .visor video, .visor #streamingVideo, .visor > * { width:100% !important; height:100% !important; object-fit:contain; display:block; }
-    .visor:focus-visible,button:focus-visible,a:focus-visible { outline:3px solid #cc7200; outline-offset:3px; }
-    .visor[hidden] { display:none; }
-    footer { margin-top:1.5rem; }
+    :host {
+      display: block;
+      min-width: 0;
+    }
+    .pagina-unreal {
+      max-width: 1200px;
+      margin: auto;
+      padding: clamp(1rem, 3vw, 2rem);
+      color: #19384b;
+    }
+    h1 {
+      font-size: clamp(1.7rem, 4vw, 2.5rem);
+      margin: 0.4rem 0;
+    }
+    .etiqueta {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .aviso {
+      padding: 1rem;
+      border: 1px solid #bed2df;
+      border-radius: 0.7rem;
+      background: #f2f7fb;
+    }
+    .acciones {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      margin: 1rem 0;
+    }
+    button {
+      padding: 0.65rem 1rem;
+      border: 1px solid #92adbf;
+      border-radius: 0.4rem;
+      color: #19384b;
+      background: white;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+    .visor {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      min-height: 480px;
+      height: 580px;
+      max-height: 720px;
+      overflow: hidden;
+      background: #142b3a;
+    }
+    .visor video,
+    .visor #streamingVideo,
+    .visor > * {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain;
+      display: block;
+    }
+    .visor:focus-visible,
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid #cc7200;
+      outline-offset: 3px;
+    }
+    .visor[hidden] {
+      display: none;
+    }
+    footer {
+      margin-top: 1.5rem;
+    }
   `,
 })
 export class SimuladorUnrealPage {
+  private readonly router = inject(Router);
+  readonly contextoAcademico = inject(ContextoAcademicoUnreal);
+  readonly tituloAcademico = this.contextoAcademico.actual()?.tituloCaso;
+  volverAlPortal(): void {
+    this.limpiar();
+    this.contextoAcademico.actual.set(null);
+    void this.router.navigate(['/estudiante/portal']);
+  }
+
   readonly hospital = inject(HospitalUnreal);
   readonly asignacion = inject(SESION_VISUAL_UNREAL);
   private readonly fabrica = inject(FABRICA_REPRODUCTOR_UNREAL);
@@ -93,7 +219,10 @@ export class SimuladorUnrealPage {
   readonly foco = signal(false);
   readonly ubicacion = signal('Sin ubicación confirmada');
   readonly destinos = [
-    ...CORRESPONDENCIA_MUNDO_UNREAL.map((entrada) => ({ zonaId: entrada.zonaId, nombre: `Caminar a ${entrada.narrativa === 'policia' ? 'Policía' : entrada.narrativa === 'fiscalia' ? 'Fiscalía' : 'Hospital'}` })),
+    ...CORRESPONDENCIA_MUNDO_UNREAL.map((entrada) => ({
+      zonaId: entrada.zonaId,
+      nombre: `Caminar a ${entrada.narrativa === 'policia' ? 'Policía' : entrada.narrativa === 'fiscalia' ? 'Fiscalía' : 'Hospital'}`,
+    })),
     { zonaId: PLAZA_UNREAL.zonaId, nombre: 'Caminar a Plaza Central' },
   ];
   private reproductor: ReproductorUnreal | null = null;
@@ -122,7 +251,7 @@ export class SimuladorUnrealPage {
     this.error.set(null);
     this.ocupado.set(true);
     this.estado.set('Conectando con la ciudad 3D…');
-    const cancelacion = this.cancelacion = new AbortController();
+    const cancelacion = (this.cancelacion = new AbortController());
     try {
       validarSesionVisual(this.asignacion);
       const esquemas = await this.cargarEsquemas(cancelacion.signal);
@@ -137,7 +266,9 @@ export class SimuladorUnrealPage {
         this.zona.run(() => {
           if (evento === 'desconectado') {
             this.limpiar();
-            this.estado.set('Se perdió la conexión. Vuelve a conectar para continuar la prueba visual.');
+            this.estado.set(
+              'Se perdió la conexión. Vuelve a conectar para continuar la prueba visual.',
+            );
           } else if (evento === 'video-listo') {
             this.videoReproduciendo.set(true);
             this.actualizarEstado();
@@ -148,18 +279,28 @@ export class SimuladorUnrealPage {
           }
         });
       });
-      if (!vigente()) { reproductor.cerrar(); return; }
+      if (!vigente()) {
+        reproductor.cerrar();
+        return;
+      }
       this.reproductor = reproductor;
-      this.puente = new PuenteUnreal(reproductor.transporte, esquemas, { sesion: this.asignacion.sesion });
+      this.puente = new PuenteUnreal(reproductor.transporte, esquemas, {
+        sesion: this.asignacion.sesion,
+      });
       this.hospital.vincular(this.puente, this.asignacion);
       this.puente.suscribir((mensaje) => {
-        if (vigente()) this.zona.run(() => { void this.procesar(mensaje, generacion); });
+        if (vigente())
+          this.zona.run(() => {
+            void this.procesar(mensaje, generacion);
+          });
       });
       this.espera = setTimeout(() => {
         if (!vigente() || this.conectado()) return;
         this.zona.run(() => {
           this.limpiar();
-          this.error.set('No se pudo confirmar la ciudad y su conexión. Intenta conectar de nuevo.');
+          this.error.set(
+            'No se pudo confirmar la ciudad y su conexión. Intenta conectar de nuevo.',
+          );
           this.estado.set('Conexión no confirmada.');
         });
       }, 20000);
@@ -167,25 +308,41 @@ export class SimuladorUnrealPage {
     } catch {
       if (!vigente()) return;
       this.limpiar();
-      this.error.set('No fue posible abrir el simulador. Revisa la asignación del servidor y vuelve a intentar.');
+      this.error.set(
+        'No fue posible abrir el simulador. Revisa la asignación del servidor y vuelve a intentar.',
+      );
       this.estado.set('Conexión no confirmada.');
     }
   }
 
   async caminarA(zonaId: string): Promise<void> {
-    if (!this.conectado() || !this.puente || this.hospital.ocupado() || this.hospital.enInterior() || !this.destinos.some((destino) => destino.zonaId === zonaId)) return;
+    if (
+      !this.conectado() ||
+      !this.puente ||
+      this.hospital.ocupado() ||
+      this.hospital.enInterior() ||
+      !this.destinos.some((destino) => destino.zonaId === zonaId)
+    )
+      return;
     const generacion = this.generacion;
     try {
       await this.puente.enviar('avatar.irA', { zoneId: zonaId });
-      if (generacion === this.generacion) this.estado.set('Destino aceptado. Esperando confirmación de ubicación.');
+      if (generacion === this.generacion)
+        this.estado.set('Destino aceptado. Esperando confirmación de ubicación.');
     } catch {
-      if (generacion === this.generacion) this.error.set('El mundo no confirmó la solicitud de movimiento.');
+      if (generacion === this.generacion)
+        this.error.set('El mundo no confirmó la solicitud de movimiento.');
     }
   }
 
-  reproducir(): void { this.reproductor?.reproducir(); }
+  reproducir(): void {
+    this.reproductor?.reproducir();
+  }
 
-  desconectar(): void { this.limpiar(); this.estado.set('Desconectado del simulador 3D.'); }
+  desconectar(): void {
+    this.limpiar();
+    this.estado.set('Desconectado del simulador 3D.');
+  }
 
   private async procesar(mensaje: Mensaje, generacion: number): Promise<void> {
     if (mensaje.tipo === 'mundo.listo' && !this.iniciandoSesion && !this.sesionIniciada()) {
@@ -193,15 +350,23 @@ export class SimuladorUnrealPage {
       try {
         await this.puente!.enviar('sesion.iniciar', {
           casoId: this.asignacion!.casoId,
-          preferencias: { reducirMovimiento: matchMedia('(prefers-reduced-motion: reduce)').matches, invertirCamara: false },
+          preferencias: {
+            reducirMovimiento: matchMedia('(prefers-reduced-motion: reduce)').matches,
+            invertirCamara: false,
+          },
         });
         if (generacion !== this.generacion) return;
-        if (this.hospital.ultimaZona()) this.estado.set('Recuperando el recorrido en el último acceso confirmado…');
+        if (this.hospital.ultimaZona())
+          this.estado.set('Recuperando el recorrido en el último acceso confirmado…');
         const zonaRestaurada = await this.hospital.restaurarEstadoVisual();
         if (generacion !== this.generacion) return;
         if (zonaRestaurada) {
           const edificio = edificioPorZonaUnreal(zonaRestaurada);
-          this.ubicacion.set(edificio ? `Acceso recuperado: ${edificio.narrativa === 'policia' ? 'Comisaría' : edificio.narrativa === 'fiscalia' ? 'Fiscalía' : 'Hospital'}` : 'Plaza Central recuperada');
+          this.ubicacion.set(
+            edificio
+              ? `Acceso recuperado: ${edificio.narrativa === 'policia' ? 'Comisaría' : edificio.narrativa === 'fiscalia' ? 'Fiscalía' : 'Hospital'}`
+              : 'Plaza Central recuperada',
+          );
         }
         this.sesionIniciada.set(true);
         this.actualizarEstado();
@@ -209,7 +374,9 @@ export class SimuladorUnrealPage {
         if (generacion !== this.generacion) return;
         this.limpiar();
         this.estado.set('La sesión visual no fue confirmada.');
-        this.error.set('El mundo no confirmó el inicio o la recuperación del recorrido. El progreso de esta página se conserva; vuelve a conectar.');
+        this.error.set(
+          'El mundo no confirmó el inicio o la recuperación del recorrido. El progreso de esta página se conserva; vuelve a conectar.',
+        );
       }
       return;
     }
@@ -217,7 +384,14 @@ export class SimuladorUnrealPage {
     if (mensaje.tipo === 'zona.entro' && this.hospital.espacio() === 'exterior') {
       const zonaId = mensaje.datos['zoneId'] as string;
       const edificio = edificioPorZonaUnreal(zonaId);
-      if (edificio) this.ubicacion.set(edificio.narrativa === 'policia' ? 'Entrada de Policía' : edificio.narrativa === 'fiscalia' ? 'Entrada de Fiscalía' : 'Entrada de Hospital');
+      if (edificio)
+        this.ubicacion.set(
+          edificio.narrativa === 'policia'
+            ? 'Entrada de Policía'
+            : edificio.narrativa === 'fiscalia'
+              ? 'Entrada de Fiscalía'
+              : 'Entrada de Hospital',
+        );
       else if (zonaId === PLAZA_UNREAL.zonaId) this.ubicacion.set('Plaza Central');
     } else if (mensaje.tipo === 'zona.salio' && this.hospital.espacio() === 'exterior') {
       this.ubicacion.set('En recorrido');
@@ -227,9 +401,20 @@ export class SimuladorUnrealPage {
     await this.hospital.procesar(mensaje);
     if (generacion !== this.generacion) return;
     const interiorActual = this.hospital.edificioActivo();
-    if (mensaje.tipo === 'edificio.entro' && interiorActual && this.hospital.enInterior() && mensaje.datos['zoneId'] === interiorActual.zonaId) {
+    if (
+      mensaje.tipo === 'edificio.entro' &&
+      interiorActual &&
+      this.hospital.enInterior() &&
+      mensaje.datos['zoneId'] === interiorActual.zonaId
+    ) {
       this.ubicacion.set(`Interior: ${interiorActual.nombre}`);
-    } else if (mensaje.tipo === 'edificio.salio' && interiorAnterior && estabaEnInterior && !this.hospital.enInterior() && mensaje.datos['zoneId'] === interiorAnterior.zonaId) {
+    } else if (
+      mensaje.tipo === 'edificio.salio' &&
+      interiorAnterior &&
+      estabaEnInterior &&
+      !this.hospital.enInterior() &&
+      mensaje.datos['zoneId'] === interiorAnterior.zonaId
+    ) {
       this.ubicacion.set(`Exterior: ${interiorAnterior.nombre}`);
     }
   }
@@ -241,7 +426,8 @@ export class SimuladorUnrealPage {
       if (this.espera) clearTimeout(this.espera);
       this.espera = null;
       this.estado.set('Ciudad 3D conectada. Sesión visual confirmada.');
-    } else if (this.sesionIniciada()) this.estado.set('Sesión visual confirmada. Esperando reproducción de la ciudad…');
+    } else if (this.sesionIniciada())
+      this.estado.set('Sesión visual confirmada. Esperando reproducción de la ciudad…');
   }
 
   private limpiar(): void {

@@ -1,3 +1,4 @@
+import { VISOR_QA_HABILITADO } from '../simulador/unreal/acceso-simulador';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -73,6 +74,7 @@ export function mensajePortal(e: unknown): string {
   styleUrl: './portal-estudiante.css',
 })
 export class PortalEstudiante implements OnInit {
+  protected readonly visorQaHabilitado = inject(VISOR_QA_HABILITADO);
   private readonly api = inject(PortalEstudianteApi);
   private readonly sesionVisual = inject(SESION_VISUAL_UNREAL);
   private sondeoVisual = 0;
@@ -307,7 +309,7 @@ export class PortalEstudiante implements OnInit {
       this.simulador.set('configuracion-pendiente');
       return;
     }
-    if (!this.intento() || visual.casoId !== this.contenido()?.caso.idCaso) {
+    if (!this.intento() || !this.contenido()) {
       this.simulador.set('contexto-pendiente');
       return;
     }
@@ -349,10 +351,22 @@ export class PortalEstudiante implements OnInit {
   }
 
   protected abrirSimulador(): void {
+    const i = this.intento(),
+      c = this.contenido();
+    if (this.visorQaHabilitado && i && c && c.idIntento === i.idIntento) {
+      void this.router.navigate(['/simulador-unreal'], {
+        state: {
+          idIntento: i.idIntento,
+          idSesion: c.idSesion,
+          idCaso: c.caso.idCaso,
+          tituloCaso: c.caso.titulo,
+        },
+      });
+      return;
+    }
     this.aviso.set({
       tipo: 'info',
-      texto:
-        'La conexión académica con MUNDO-24 está pendiente de su entrega y asignación. Puedes continuar esta actividad en el portal.',
+      texto: 'El simulador no está disponible. Puedes continuar esta actividad en el portal.',
     });
   }
 

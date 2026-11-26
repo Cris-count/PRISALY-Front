@@ -32,9 +32,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.css"
-            ]
+            "styles": ["src/styles.css"]
           },
           "configurations": {
             "production": {
@@ -121,6 +119,16 @@
                   "with": "src/environments/environment.laboratorio.ts"
                 }
               ]
+            },
+            "dc106-qa-sim": {
+              "optimization": true,
+              "sourceMap": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.dc106-qa-sim.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -149,6 +157,9 @@
             },
             "laboratorio": {
               "buildTarget": "PRISALY-Front:build:laboratorio"
+            },
+            "dc106-qa-sim": {
+              "buildTarget": "PRISALY-Front:build:dc106-qa-sim"
             }
           },
           "defaultConfiguration": "development"

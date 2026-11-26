@@ -1,3 +1,4 @@
+import { requiereAccesoSimulador } from '../simulador/unreal/acceso-simulador';
 import {
   HttpClient,
   HttpInterceptorFn,
@@ -503,6 +504,8 @@ describe('FE-58 H-58-01 rutas del simulador (matriz ratificada)', () => {
     for (const r of destinos)
       expect(r.canActivate)
         .withContext(r.path ?? '')
-        .toEqual([requiereEntornoDemostracion]);
+        .toEqual([
+          r.path === 'simulador-unreal' ? requiereAccesoSimulador : requiereEntornoDemostracion,
+        ]);
   });
 });

@@ -174,7 +174,7 @@
                 <button
                   type="button"
                   (click)="abrirSimulador()"
-                  disabled
+                  [disabled]="!visorQaHabilitado"
                   title="Pendiente de entrega y asignación académica de MUNDO-24"
                   data-prueba="portal-abrir-simulador"
                 >
