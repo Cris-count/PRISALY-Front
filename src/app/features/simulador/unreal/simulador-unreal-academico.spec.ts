@@ -113,6 +113,20 @@ describe('SimuladorUnrealPage — modo académico del estudiante (CB-07)', () =>
     p.pagina.desconectar();
   });
 
+  it('FE-UX-09 (R07-IMP): se presenta como recorrido del caso y solo ofrece caminar a los edificios habilitados', async () => {
+    const portal = { narrativa: jasmine.createSpy('narrativa').and.returnValue(of(narrativa())) };
+    const p = preparar(portal);
+    expect(p.pagina.esRecorridoAcademico).toBeTrue();
+    await p.pagina.conectar();
+    await p.mundoListo();
+    const zonas = p.pagina.destinosDisponibles().map((d) => d.zonaId);
+    expect(zonas).toContain('hospital_entrada');
+    expect(zonas).toContain('policia_entrada');
+    expect(zonas).not.toContain('fiscalia_entrada');
+    expect(zonas.length).toBe(3); // dos edificios del caso + Plaza Central
+    p.pagina.desconectar();
+  });
+
   it('al reconectar vuelve a pedir la narrativa del intento y reutiliza el contexto visual', async () => {
     const portal = { narrativa: jasmine.createSpy('narrativa').and.returnValue(of(narrativa())) };
     const p = preparar(portal);

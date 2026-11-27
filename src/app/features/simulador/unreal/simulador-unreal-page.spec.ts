@@ -699,6 +699,102 @@ describe('SimuladorUnrealPage', () => {
     expect(prueba.fabrica).not.toHaveBeenCalled();
   });
 
+  describe('FE-UX-09 · panel de conversación (R07-IMP)', () => {
+    const raiz = (prueba: ReturnType<typeof preparar>) => prueba.fixture.nativeElement as HTMLElement;
+    const refrescar = async (prueba: ReturnType<typeof preparar>) => {
+      await prueba.fixture.whenStable();
+      prueba.fixture.detectChanges();
+      await new Promise<void>((r) => setTimeout(r, 0));
+      prueba.fixture.detectChanges();
+    };
+
+    it('identifica al personaje y el edificio, muestra el estado en texto y lleva el foco al personaje', async () => {
+      const prueba = preparar();
+      await entrarAlDoctor(prueba);
+      await refrescar(prueba);
+      const panel = raiz(prueba).querySelector('[data-prueba="panel-conversacion"]') as HTMLElement;
+      expect(panel).toBeTruthy();
+      expect(panel.getAttribute('aria-labelledby')).toBe('conversacion-titulo');
+      expect(panel.querySelector('#conversacion-titulo')!.textContent).toContain('Dr. Mendoza');
+      expect(panel.querySelector('.lugar')!.textContent).toContain('Hospital Central');
+      expect(panel.querySelector('[data-prueba="estado-conversacion"]')!.textContent!.trim()).toBe('En curso');
+      expect(document.activeElement).toBe(panel.querySelector('#conversacion-titulo'));
+      const dialogo = panel.querySelector('[data-prueba="dialogo"]')!;
+      expect(dialogo.getAttribute('aria-live')).toBe('polite');
+      expect(dialogo.querySelector('.hablante')!.textContent!.trim()).toBeTruthy();
+      // Mientras conversa, las indicaciones de cómo moverse no compiten con el diálogo.
+      expect(raiz(prueba).querySelector('.indicacion')).toBeNull();
+      prueba.pagina.desconectar();
+    });
+
+    it('anuncia la pista obtenida en esta conversación y marca la conversación como completada', async () => {
+      const prueba = preparar();
+      const hospital = prueba.pagina.hospital;
+      await entrarAlDoctor(prueba);
+      await refrescar(prueba);
+      expect(raiz(prueba).querySelector('[data-prueba="pista-nueva"]')).toBeNull();
+      hospital.avanzarDialogo();
+      hospital.avanzarDialogo();
+      hospital.elegir('consultar-expediente');
+      await refrescar(prueba);
+      const aviso = raiz(prueba).querySelector('[data-prueba="pista-nueva"]') as HTMLElement;
+      expect(aviso.getAttribute('role')).toBe('status');
+      expect(aviso.textContent).toContain('Guardado en tu libreta');
+      expect(aviso.textContent).toContain('Historia Clínica de Emergencia');
+      hospital.completarTransicion();
+      hospital.avanzarDialogo();
+      await refrescar(prueba);
+      const panel = raiz(prueba).querySelector('[data-prueba="panel-conversacion"]') as HTMLElement;
+      expect(panel.classList).toContain('completada');
+      expect(panel.querySelector('[data-prueba="estado-conversacion"]')!.textContent!.trim()).toBe('Completada');
+      expect(panel.textContent).toContain('Conversación completada');
+      prueba.pagina.desconectar();
+    });
+
+    it('Esc cierra la conversación y el foco vuelve al visor para seguir caminando', async () => {
+      const prueba = preparar();
+      await entrarAlDoctor(prueba);
+      await refrescar(prueba);
+      const panel = raiz(prueba).querySelector('[data-prueba="panel-conversacion"]') as HTMLElement;
+      panel.querySelector('#conversacion-titulo')!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+      await refrescar(prueba);
+      await new Promise<void>((r) => setTimeout(r, 20));
+      await refrescar(prueba);
+      expect(prueba.pagina.hospital.conversacion()).toBe('cerrada');
+      expect(raiz(prueba).querySelector('[data-prueba="panel-conversacion"]')).toBeNull();
+      expect(document.activeElement).toBe(raiz(prueba).querySelector('.visor'));
+      expect(prueba.pagina.foco()).toBeTrue();
+      prueba.pagina.desconectar();
+    });
+
+    it('estados críticos: preparando, sin confirmar con su recuperación, y cierre en curso sin repetir el cierre', async () => {
+      const prueba = preparar();
+      const hospital = prueba.pagina.hospital;
+      await entrarAlDoctor(prueba);
+      await refrescar(prueba);
+      const estado = () => raiz(prueba).querySelector('[data-prueba="estado-conversacion"]')!.textContent!.trim();
+      const cerrar = () =>
+        Array.from(raiz(prueba).querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Cerrar conversación')!;
+      hospital.conversacion.set('abriendo');
+      prueba.fixture.detectChanges();
+      expect(estado()).toBe('Preparando…');
+      expect(raiz(prueba).querySelector('.espera')!.textContent).toContain('Preparando la conversación con Dr. Mendoza');
+      expect(cerrar().disabled).toBeTrue();
+      hospital.conversacion.set('error');
+      prueba.fixture.detectChanges();
+      expect(estado()).toBe('Sin confirmar');
+      expect(raiz(prueba).querySelector('.recuperacion')!.textContent).toContain('vuelve a pulsar');
+      expect(cerrar().disabled).toBeFalse();
+      hospital.conversacion.set('cerrando');
+      prueba.fixture.detectChanges();
+      expect(estado()).toBe('Cerrando…');
+      expect(cerrar().disabled).toBeTrue();
+      prueba.pagina.desconectar();
+    });
+  });
+
   it('sin conexiones simultáneas: el botón durante la espera sustituye al reintento y durante un intento no abre otro', async () => {
     const prueba = preparar(asignacion, [40, 40, 40]);
     await conectarConfirmado(prueba);

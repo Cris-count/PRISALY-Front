@@ -21,5 +21,7 @@ export const environment = {
     consultaParticipaciones: true,
     reporteParticipacion: true,
     participacionHttp: false,
+    /** DC-ALINEACION-INTEGRAL-01: requiere PRISALY_M3_LISTADO_ENABLED=true en el Backend QA. */
+    listadoCasos: true,
   },
 };
