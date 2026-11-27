@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -198,6 +198,10 @@ export class PanelSesionesM4 {
     },
     { validators: rangoFechas },
   );
+
+  protected readonly casoParaProgramar = toSignal(this.formCrear.controls.casoId.valueChanges, {
+    initialValue: this.formCrear.controls.casoId.value,
+  });
 
   protected readonly formEditar = new FormGroup(
     {

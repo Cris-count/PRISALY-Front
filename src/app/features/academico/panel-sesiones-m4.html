@@ -63,20 +63,23 @@
 
     <form class="fila" [formGroup]="formCrear" (ngSubmit)="crear()">
       <h3>Programar sesión</h3>
-      <label
-        >Caso (UUID de un caso publicado)
-        <input formControlName="casoId" autocomplete="off" spellcheck="false" />
-      </label>
       @if (casosPublicados().length > 0) {
-        <p>Casos publicados de esta sesión (estado de la última lectura del servidor):</p>
-        <div class="acciones" data-prueba="casos-publicados">
+        <p id="casos-programables">Elige un caso publicado que ya consultaste:</p>
+        <div class="acciones" role="group" aria-labelledby="casos-programables" data-prueba="casos-publicados">
           @for (c of casosPublicados(); track c.idCaso) {
-            <button type="button" (click)="usarCaso(c.idCaso)">
-              {{ c.titulo }} · {{ c.estado }}
+            <button type="button" (click)="usarCaso(c.idCaso)" [attr.aria-pressed]="casoParaProgramar() === c.idCaso">
+              {{ c.titulo }}
             </button>
           }
         </div>
       }
+      <label>
+        Identificador del caso publicado
+        <input formControlName="casoId" autocomplete="off" spellcheck="false" aria-describedby="caso-programacion-ayuda" />
+      </label>
+      <p id="caso-programacion-ayuda" class="etiqueta-real">
+        Al elegir un caso se completa este campo. Si el caso aún no aparece, consúltalo en Casos académicos.
+      </p>
       @if (casosNoPublicados().length > 0) {
         <p class="etiqueta-real" data-prueba="casos-no-publicados">
           Casos recordados aún no publicados (M4 los rechaza):
