@@ -33,12 +33,14 @@ import { AdaptadorPistasNarrativas } from '../services/adaptador-pistas-narrativ
 import { CoordinadorNarrativoInteriores } from '../services/coordinador-narrativo-interiores';
 import { HospitalUnreal } from './hospital-unreal';
 import { HospitalNarrativoUnreal } from './hospital-narrativo-unreal';
+import { avisoConexion } from './aviso-interaccion';
+import { AvisosVisorMundo } from './avisos-visor-mundo';
 
 /** Acceso de integración visual. No crea intentos, pistas ni evaluaciones académicas. */
 @Component({
   selector: 'app-simulador-unreal-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HospitalNarrativoUnreal],
+  imports: [HospitalNarrativoUnreal, AvisosVisorMundo],
   providers: [
     LibretaStore,
     AdaptadorPistasNarrativas,
@@ -99,17 +101,30 @@ import { HospitalNarrativoUnreal } from './hospital-narrativo-unreal';
       @if (error()) {
         <p role="alert">{{ error() }}</p>
       }
-      <div
-        #visor
-        class="visor"
-        tabindex="0"
-        role="region"
-        aria-label="Visor de la ciudad 3D"
-        [hidden]="!asignacion"
-        (focusin)="foco.set(true)"
-        (focusout)="foco.set(false)"
-      ></div>
+      <div class="escena" [hidden]="!asignacion">
+        <div
+          #visor
+          class="visor"
+          tabindex="0"
+          role="region"
+          aria-label="Visor de la ciudad 3D"
+          (focusin)="foco.set(true)"
+          (focusout)="foco.set(false)"
+        ></div>
+        <app-avisos-visor-mundo [aviso]="avisoInteraccion()" [conexion]="avisoConexion()" />
+      </div>
       @if (asignacion) {
+        <ul class="controles" aria-label="Controles de la ciudad 3D">
+          <li><span class="teclas"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span> Caminar</li>
+          <li><kbd>E</kbd> Interactuar</li>
+          <li><span class="teclas"><kbd>Clic</kbd></span> Ir al punto</li>
+          <li><span class="teclas"><kbd>Clic der.</kbd></span> + ratón: girar la vista</li>
+          <li><kbd>R</kbd> Vista general</li>
+          <li><kbd>M</kbd> Reducir movimiento</li>
+          @if (hospital.enInterior()) {
+            <li>Para salir, camina hasta la puerta del vestíbulo</li>
+          }
+        </ul>
         <p>
           Activa el visor para usar los controles del juego. Presiona Tab para volver a los
           controles de PRISALY.
@@ -179,6 +194,48 @@ import { HospitalNarrativoUnreal } from './hospital-narrativo-unreal';
       opacity: 0.55;
       cursor: default;
     }
+    .escena {
+      position: relative;
+    }
+    .escena[hidden] {
+      display: none;
+    }
+    .controles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+      margin: 0.75rem 0 0;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid #c7d5e8;
+      border-radius: 0.5rem;
+      background: #edf4ff;
+      list-style: none;
+      font-size: 0.9375rem;
+    }
+    .controles li {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    .teclas {
+      display: inline-flex;
+      gap: 0.1875rem;
+    }
+    .controles kbd {
+      display: inline-grid;
+      place-items: center;
+      min-width: 1.5rem;
+      height: 1.5rem;
+      padding: 0 0.375rem;
+      border: 1px solid #c7d5e8;
+      border-bottom: 2px solid #52606d;
+      border-radius: 0.5rem;
+      background: #fff;
+      color: #172b4d;
+      font: inherit;
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
     .visor {
       position: relative;
       width: 100%;
@@ -202,9 +259,6 @@ import { HospitalNarrativoUnreal } from './hospital-narrativo-unreal';
     a:focus-visible {
       outline: 3px solid #cc7200;
       outline-offset: 3px;
-    }
-    .visor[hidden] {
-      display: none;
     }
     footer {
       margin-top: 1.5rem;
@@ -250,6 +304,14 @@ export class SimuladorUnrealPage {
   readonly requiereReproduccion = signal(false);
   readonly foco = signal(false);
   readonly ubicacion = signal('Sin ubicación confirmada');
+  /** G4-V11 / FE-UX-09: avisos del visor (sustituyen a los mensajes de depuración de Unreal). */
+  readonly avisoInteraccion = computed(() => this.hospital.aviso(this.conectado()));
+  readonly avisoConexion = computed(() => avisoConexion({
+    conectado: this.conectado(),
+    conectando: this.ocupado(),
+    reconectando: this.hospital.ultimaZona() !== null,
+    fallo: this.error() !== null,
+  }));
   readonly destinos = [
     ...CORRESPONDENCIA_MUNDO_UNREAL.map((entrada) => ({
       zonaId: entrada.zonaId,
@@ -507,6 +569,7 @@ export class SimuladorUnrealPage {
     const fuente = this.fuenteDelCaso();
     const puente = this.puente;
     this.hospital.usarGuionesDelCaso(new Map()); // nada conversa hasta tener el caso del servidor
+    this.hospital.zonasHabilitadas.set(new Set()); // ni se ofrece ninguna entrada
     try {
       if (!fuente || !puente) throw new Error('Sin caso');
       this.estado.set('Cargando el caso guardado en el servidor…');
@@ -527,6 +590,7 @@ export class SimuladorUnrealPage {
       const mismo = previo?.contexto === datos.idContextoVisual;
       fuente.recordar(datos.huella, datos.idContextoVisual);
       this.hospital.usarGuionesDelCaso(guiones);
+      this.hospital.zonasHabilitadas.set(new Set(datos.edificiosHabilitados));
       this.personajesCaso.set((guion.personajes ?? []).filter((p) => p.recursoVisual).map((p) => p.nombre));
       return mismo ? 'mismo-contexto' : 'contexto-nuevo';
     } catch {

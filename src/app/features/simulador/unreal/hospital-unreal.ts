@@ -10,6 +10,8 @@ import { Mensaje } from './protocolo/validador-mensaje';
 import { PuenteUnreal } from './puente/puente-unreal';
 import { HOSPITAL_UNREAL, INTERIORES_NARRATIVOS_UNREAL, InteriorNarrativoUnreal, NPCS_HOSPITAL_UNREAL, NpcInteriorUnreal } from './interiores-narrativos-unreal';
 import { PLAZA_UNREAL } from './correspondencia-mundo';
+import { AvisoInteraccion, CategoriaInteractuable, InteractuableDisponible, TEXTO_RESTRINGIDO, avisoInteraccion } from './aviso-interaccion';
+import { ErrorOrden } from './puente/puente-unreal';
 
 export { HOSPITAL_UNREAL, NPCS_HOSPITAL_UNREAL } from './interiores-narrativos-unreal';
 
@@ -74,6 +76,29 @@ export class HospitalUnreal {
       .map(e => ({ ...e, npcs: e.npcs.filter(n => nombres.has(n.espacialId)).map(n => ({ ...n, nombre: nombres.get(n.espacialId)! })) }))
       .filter(e => e.npcs.length > 0);
   });
+  /** G4-V11: interactuable que Unreal declara al alcance (`interactuable.disponible`), hasta su `no_disponible`. */
+  readonly disponible = signal<InteractuableDisponible | null>(null);
+  /** Zonas que habilita el caso aplicado (`edificiosHabilitados` de caso.configurar); null en la demostración. */
+  readonly zonasHabilitadas = signal<ReadonlySet<string> | null>(null);
+  /** Aviso contextual del visor, derivado solo del estado confirmado por Unreal. */
+  aviso(conectado: boolean): AvisoInteraccion | null {
+    const habilitadas = this.zonasHabilitadas();
+    const interior = this.edificioActivo();
+    return avisoInteraccion({
+      conectado, recuperando: this.recuperando(), libretaAbierta: this.libretaAbierta(),
+      espacio: this.espacio(), conversacion: this.conversacion(), interior: interior?.nombre ?? null,
+      disponible: this.disponible(),
+      puerta: (id) => {
+        const destino = INTERIORES_NARRATIVOS_UNREAL.find(e => e.puertaId === id);
+        return destino ? { nombre: destino.nombre, habilitado: !habilitadas || habilitadas.has(destino.zonaId) } : null;
+      },
+      personaje: (id) => {
+        if (!interior?.npcs.some(n => n.espacialId === id) || (this.guionesCaso && !this.guionesCaso.has(id))) return null;
+        const progreso = this.recorridoVisible().flatMap(e => e.npcs).find(n => n.espacialId === id);
+        return progreso ? { nombre: progreso.nombre, completado: progreso.estado === 'completado' } : null;
+      },
+    });
+  }
   readonly conversacionesTerminadas = computed(() => this.recorridoVisible().flatMap(e => e.npcs).filter(n => n.estado === 'completado').length);
   readonly totalConversaciones = computed(() => this.recorridoVisible().flatMap(e => e.npcs).length);
   private puente: PuenteUnreal | null = null;
@@ -112,6 +137,7 @@ export class HospitalUnreal {
     this.edificioActivo.set(null);
     this.libretaAbierta.set(false);
     this.recuperando.set(false);
+    this.disponible.set(null);
   }
 
   abrirLibreta(): void { if (this.puedeAbrirLibreta()) this.libretaAbierta.set(true); }
@@ -150,6 +176,16 @@ export class HospitalUnreal {
     if (!this.puente || this.puente.bloqueado || mensaje.sesion !== this.sesion || mensaje.origen !== 'unreal') return;
     const datos = mensaje.datos;
     const interior = this.edificioActivo();
+    if (mensaje.tipo === 'interactuable.disponible') {
+      this.disponible.set({ id: datos['interactuableId'] as string, categoria: datos['categoria'] as CategoriaInteractuable });
+      return;
+    }
+    if (mensaje.tipo === 'interactuable.no_disponible') {
+      if (this.disponible()?.id === datos['interactuableId']) this.disponible.set(null);
+      return;
+    }
+    // Un cambio de espacio deja atrás lo que estaba al alcance.
+    if (mensaje.tipo === 'edificio.entro' || mensaje.tipo === 'edificio.salio') this.disponible.set(null);
     if (mensaje.tipo === 'zona.entro' && this.espacio() === 'exterior' &&
         (datos['zoneId'] === PLAZA_UNREAL.zonaId || INTERIORES_NARRATIVOS_UNREAL.some(e => e.zonaId === datos['zoneId']))) {
       this.ultimaZona.set(datos['zoneId'] as string);
@@ -243,12 +279,15 @@ export class HospitalUnreal {
     }, 8000);
     try {
       await puente.enviar('puerta.abrir', { zoneId: interior.zonaId });
-    } catch {
+    } catch (e) {
       if (this.puente !== puente || this.revision !== revision || this.enInterior()) return;
       this.cancelarEspera();
       this.espacio.set('exterior');
       this.edificioActivo.set(null);
-      this.error.set(`No se confirmó la apertura de ${interior.nombre}. Puedes volver a interactuar con la puerta.`);
+      // CB-04: Unreal rechaza la puerta de un edificio que el caso no habilita. No es un fallo que se pueda reintentar.
+      this.error.set(e instanceof ErrorOrden && e.codigo === 'EDIFICIO_RESTRINGIDO'
+        ? `${TEXTO_RESTRINGIDO}: ${interior.nombre} no está disponible en este caso.`
+        : `No se confirmó la apertura de ${interior.nombre}. Puedes volver a interactuar con la puerta.`);
     }
   }
 
