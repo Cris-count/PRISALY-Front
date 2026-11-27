@@ -76,14 +76,20 @@
                       </div>
                     </dl>
                     <div class="acciones">
-                      <button
-                        type="button"
-                        (click)="entrar(c)"
-                        [disabled]="cargando()"
-                        data-prueba="portal-entrar"
-                      >
-                        {{ c.estadoSesion === 'EnCurso' ? 'Iniciar o continuar' : 'Abrir' }}
-                      </button>
+                      @if (c.estadoSesion === 'EnCurso') {
+                        <button
+                          type="button"
+                          (click)="entrar(c)"
+                          [disabled]="cargando()"
+                          data-prueba="portal-entrar"
+                        >
+                          Iniciar o continuar
+                        </button>
+                      } @else if (c.estadoSesion === 'SinIniciar') {
+                        <p>Podrás participar cuando tu docente inicie la sesión.</p>
+                      } @else if (c.estadoSesion === 'Finalizado') {
+                        <p>El periodo de participación terminó.</p>
+                      }
                       @if (intentoGuardado(c); as id) {
                         <button
                           type="button"
