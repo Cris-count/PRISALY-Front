@@ -46,7 +46,7 @@ import { LibretaStore } from './libreta.store';
     </dialog>
   `,
   styles: `
-    dialog { box-sizing: border-box; width: min(660px, calc(100vw - 2rem)); max-height: 88dvh; padding: 0; overflow: hidden; border: 1px solid #c4d8e6; border-top: 5px solid #ed963e; border-radius: 16px; background: #f7fafc; color: #183d53; box-shadow: 0 20px 80px #12334c55; }
+    dialog { box-sizing: border-box; width: min(660px, calc(100vw - 2rem)); max-height: 88dvh; padding: 0; overflow: hidden; border: 1px solid #c4d8e6; border-radius: 16px; background: #f7fafc; color: #183d53; box-shadow: 0 20px 80px #12334c55; }
     dialog::backdrop { background: #0e2b4770; }
     header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem 1.4rem; background: #f7fafc; border-bottom: 1px solid #d5e2eb; } .cuerpo { max-height: calc(88dvh - 110px); overflow-y: auto; padding: 0 1.4rem 1.2rem; } h2 { margin: .3rem 0; font-size: 1.4rem; } h3 { margin-bottom: .65rem; scroll-margin-top: 1rem; } h4 { margin: 0; }
     .etiqueta { font-size: .7rem; font-weight: 700; letter-spacing: .07em; color: #386b91; } .aviso { padding: .7rem; background: #fff2df; border-radius: 8px; font-size: .88rem; }
