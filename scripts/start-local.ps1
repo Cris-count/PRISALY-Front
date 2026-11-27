@@ -7,7 +7,7 @@ $front = Split-Path -Parent $PSScriptRoot
 $state = if ($StateDirectory) { [IO.Path]::GetFullPath($StateDirectory) } else { Join-Path $front '.prisaly-local' }
 $configPath = Join-Path $state 'config.json'
 $cfg = if (Test-Path -LiteralPath $configPath) { Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json }
-$profile = if ($cfg.profile) { [string]$cfg.profile } else { 'academico' }
+$profile = if ($env:PRISALY_LOCAL_PROFILE) { $env:PRISALY_LOCAL_PROFILE } elseif ($cfg.profile) { [string]$cfg.profile } else { 'academico' }
 if ($profile -cnotin 'academico','demo-ops85') { throw "Perfil local no admitido: $profile" }
 $demo = $profile -ceq 'demo-ops85'
 $pgVolume = if ($demo) { 'prisaly_ops85_demo_pg_data' } else { 'prisaly_pg_data' }
@@ -17,7 +17,10 @@ $pgPort = if ($demo) { 55440 } elseif ($null -ne $cfg.postgresPort) { [int]$cfg.
 if ($pgPort -lt 1 -or $pgPort -gt 65535 -or $pgPort -in 4200,8080,8898,8899) {
     throw 'Puerto PostgreSQL inválido o reservado por otro componente de PRISALY.'
 }
-$ports = [ordered]@{Angular=4200; Backend=8080; PostgreSQL=$pgPort; PlayerPS2=8898; StreamerPS2=8899}
+$angularPort = if ($demo) { 4213 } else { 4200 }
+$angularHost = if ($demo) { '127.0.0.1' } else { 'localhost' }
+$angularOrigin = "http://${angularHost}:${angularPort}"
+$ports = [ordered]@{Angular=$angularPort; Backend=8080; PostgreSQL=$pgPort; PlayerPS2=8898; StreamerPS2=8899}
 $mailSmtp = 11028
 $mailWeb = 18028
 if ($demo) {
@@ -79,12 +82,13 @@ try {
     $node = (Get-Command node.exe).Source
     if ($Mode -in 'all','check') { Need (Join-Path $front 'node_modules/@angular/cli/bin/ng.js') }
     if ($db) {
-        $backend = (Resolve-Path -LiteralPath $cfg.backendDir).Path
-        $jar = [IO.Path]::GetFullPath($cfg.backendJar)
+        $backend = (Resolve-Path -LiteralPath $(if ($demo) { $cfg.demoBackendDir } else { $cfg.backendDir })).Path
+        $jar = if ($demo) { Join-Path $backend 'app/target/app-0.0.1-SNAPSHOT.jar' } else { [IO.Path]::GetFullPath($cfg.backendJar) }
         $java = (Get-Command java.exe).Source
         Need (Join-Path $backend 'mvnw.cmd')
         $credentialPath = Join-Path $state $secretName
         Need $credentialPath
+        if ($demo) { Need (Join-Path $state 'ops85-mail.properties') }
         $credential = ConvertTo-SecureString (Get-Content -LiteralPath $credentialPath -Raw).Trim()
         if ($env:APP_PORT -and $env:APP_PORT -ne '8080') { throw 'APP_PORT debe ser 8080 para development.' }
     }
@@ -98,7 +102,7 @@ try {
     if($db){$required += $pgPort,8080}
     if($db -and $demo){$required += $mailSmtp,$mailWeb}
     if($sim){$required += 8898,8899}
-    if($Mode -in 'all','check'){$required += 4200}
+    if($Mode -in 'all','check'){$required += $angularPort}
     foreach($port in $required){ if(Listener $port){throw "Puerto $port ocupado. Se conserva la instancia existente."} }
     if ($Mode -eq 'check') { Write-Host 'Configuración y puertos listos. Verificación JDBC pendiente de arranque.'; return }
     if ($db) {
@@ -147,7 +151,8 @@ try {
             $backendEnv['SPRING_MAIL_PORT'] = [string]$mailSmtp
             $backendArguments += @(
                 '--prisaly.m4.schema-contract=bd0052-v013-integral'
-                '--prisaly.cors.allowed-origins=http://localhost:4200'
+                "--prisaly.cors.allowed-origins=$angularOrigin"
+                ('--spring.config.additional-location="file:' + (Join-Path $state 'ops85-mail.properties') + '"')
                 '--prisaly.m7.correo.remitente=no-reply@prisaly.test'
                 '--prisaly.m7.worker.enabled=false'
                 '--prisaly.m7.codigo-acceso.worker.enabled=true'
@@ -158,7 +163,7 @@ try {
                 '--prisaly.m1.activacion-docente.enabled=true'
                 '--prisaly.m1.activacion-docente.vigencia=PT2H'
                 '--prisaly.m1.activacion-docente.remitente=no-reply@prisaly.test'
-                '--prisaly.m1.activacion-docente.enlace=http://localhost:4200/activacion-docente'
+                "--prisaly.m1.activacion-docente.enlace=$angularOrigin/activacion-docente"
                 '--prisaly.m1.alta-estudiantes.enabled=true'
             )
         }
@@ -185,11 +190,11 @@ try {
         Write-Host 'Identidad del streamer, video y DataChannel pendientes de comprobación en el visor.'
     }
     if ($Mode -eq 'all') {
-        Start-Owned 'angular' $node @('node_modules/@angular/cli/bin/ng.js','serve') $front
+        Start-Owned 'angular' $node @('node_modules/@angular/cli/bin/ng.js','serve','--host',$angularHost,'--port',"$angularPort") $front
         Wait-Ready 'Angular' {
-            (& curl.exe --noproxy '*' --silent --max-time 3 -o NUL -w '%{http_code}' http://localhost:4200/acceso) -eq '200'
+            (& curl.exe --noproxy '*' --silent --max-time 3 -o NUL -w '%{http_code}' "$angularOrigin/acceso") -eq '200'
         } 120
-        Write-Host 'http://localhost:4200/acceso'
+        Write-Host "$angularOrigin/acceso"
     }
     Write-Host 'Ctrl+C o npm run stop para cerrar esta ejecución.'
     while (!(Test-Path -LiteralPath $stop)) {
