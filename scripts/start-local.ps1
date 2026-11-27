@@ -190,7 +190,9 @@ try {
         Write-Host 'Identidad del streamer, video y DataChannel pendientes de comprobación en el visor.'
     }
     if ($Mode -eq 'all') {
-        Start-Owned 'angular' $node @('node_modules/@angular/cli/bin/ng.js','serve','--host',$angularHost,'--port',"$angularPort") $front
+        $angularArguments = @('node_modules/@angular/cli/bin/ng.js','serve','--host',$angularHost,'--port',"$angularPort")
+        if ($demo) { $angularArguments += '--configuration', 'demo-ops85' }
+        Start-Owned 'angular' $node $angularArguments $front
         Wait-Ready 'Angular' {
             (& curl.exe --noproxy '*' --silent --max-time 3 -o NUL -w '%{http_code}' "$angularOrigin/acceso") -eq '200'
         } 120
