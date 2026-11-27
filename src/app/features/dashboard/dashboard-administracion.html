@@ -8,28 +8,18 @@
     </div>
   </header>
   @if (operativo()) {
-    <nav class="fila" aria-label="Gestión administrativa">
-      <button
-        type="button"
-        (click)="pestana.set('docentes')"
-        [attr.aria-pressed]="pestana() === 'docentes'"
-      >
-        Docentes
-      </button>
-      <button
-        type="button"
-        (click)="pestana.set('estudiantes')"
-        [attr.aria-pressed]="pestana() === 'estudiantes'"
-      >
-        Estudiantes
-      </button>
-      <button
-        type="button"
-        (click)="pestana.set('permisos')"
-        [attr.aria-pressed]="pestana() === 'permisos'"
-      >
-        Roles y permisos
-      </button>
+    <nav class="pestanas" aria-label="Gestión administrativa">
+      @for (p of pestanas; track p.id) {
+        <button
+          type="button"
+          class="pestana"
+          (click)="pestana.set(p.id)"
+          [attr.aria-pressed]="pestana() === p.id"
+          [attr.aria-current]="pestana() === p.id ? 'page' : null"
+        >
+          {{ p.etiqueta }}
+        </button>
+      }
     </nav>
     @for (vistaActual of [pestana()]; track vistaActual) {
       <app-panel-administracion-m1 [vista]="vistaActual" />

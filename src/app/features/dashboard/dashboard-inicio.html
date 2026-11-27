@@ -24,10 +24,10 @@
     </aside>
   }
   <section aria-labelledby="secciones-dashboard">
-    <div class="seccion-cabecera"><h2 id="secciones-dashboard">Accesos disponibles</h2></div>
+    <div class="seccion-cabecera"><h2 id="secciones-dashboard">Accesos principales</h2></div>
     <div class="tarjetas">
-      @for (s of secciones(); track s.ruta) {
-        <a class="acceso" [routerLink]="['/dashboard', s.ruta]"
+      @for (s of accesos(); track s.ruta + (s.vista ?? '')) {
+        <a class="acceso" [routerLink]="['/dashboard', s.ruta]" [queryParams]="s.vista ? { vista: s.vista } : null"
           ><span class="icono-acceso" aria-hidden="true"
             ><svg viewBox="0 0 24 24" focusable="false"><path [attr.d]="s.icono" /></svg></span
           ><div class="acceso-contenido">
