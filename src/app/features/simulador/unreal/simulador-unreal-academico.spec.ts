@@ -1,4 +1,4 @@
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { CasosM3Api } from '../../academico/casos-m3.api';
@@ -9,8 +9,8 @@ import { ContextoAcademicoUnreal } from './acceso-simulador';
 import { SESION_VISUAL_UNREAL, SesionVisualUnreal } from './configuracion-unreal';
 import { CARGAR_ESQUEMAS_UNREAL, cargarEsquemasBrowser } from './protocolo/cargar-esquemas-browser';
 import { Esquemas, Mensaje, validarObjeto } from './protocolo/validador-mensaje';
-import { FABRICA_REPRODUCTOR_UNREAL, ReproductorUnreal } from './reproductor-unreal';
-import { SimuladorUnrealPage } from './simulador-unreal-page';
+import { FABRICA_REPRODUCTOR_UNREAL, FabricaReproductorUnreal, ReproductorUnreal } from './reproductor-unreal';
+import { RETARDOS_RECONEXION_UNREAL, SimuladorUnrealPage } from './simulador-unreal-page';
 import { CanalPixelStreaming, TransportePixelStreaming } from './transporte-pixel-streaming';
 
 /** CB-07 (DC-CB-AVANCE-08): en modo estudiante el visor usa la narrativa FIJADA en el intento (M5), nunca M3 ni la demo. */
@@ -40,7 +40,7 @@ describe('SimuladorUnrealPage — modo académico del estudiante (CB-07)', () =>
   let esquemas: Esquemas;
   beforeAll(async () => { esquemas = await cargarEsquemasBrowser(); });
 
-  function preparar(portal: Pick<PortalEstudianteApi, 'narrativa'>) {
+  function preparar(portal: Pick<PortalEstudianteApi, 'narrativa'>, retardos?: readonly number[]) {
     let responder!: (texto: string) => void;
     let numero = 1;
     const canal: jasmine.SpyObj<CanalPixelStreaming> = jasmine.createSpyObj('PixelStreaming',
@@ -57,8 +57,11 @@ describe('SimuladorUnrealPage — modo académico del estudiante (CB-07)', () =>
       })));
       return true;
     });
-    const fabrica = jasmine.createSpy('fabrica').and.callFake(async () => {
-      const t = new TransportePixelStreaming(canal);
+    let informar: Parameters<FabricaReproductorUnreal>[2] = () => {};
+    let transporte: TransportePixelStreaming | null = null;
+    const fabrica = jasmine.createSpy('fabrica').and.callFake(async (_c: unknown, _a: unknown, callback: typeof informar) => {
+      informar = callback;
+      const t = (transporte = new TransportePixelStreaming(canal));
       return { transporte: t, conectar: () => t.abrir(), reproducir: () => {}, permitirEntrada: () => {}, cerrar: () => t.cerrar() } as ReproductorUnreal;
     });
     const m3 = { narrativa: jasmine.createSpy('narrativaM3') };
@@ -71,6 +74,7 @@ describe('SimuladorUnrealPage — modo académico del estudiante (CB-07)', () =>
         { provide: FABRICA_REPRODUCTOR_UNREAL, useValue: fabrica },
         { provide: PortalEstudianteApi, useValue: portal },
         { provide: CasosM3Api, useValue: m3 },
+        ...(retardos ? [{ provide: RETARDOS_RECONEXION_UNREAL, useValue: retardos }] : []),
       ],
     });
     TestBed.inject(ContextoAcademicoUnreal).actual.set(CONTEXTO);
@@ -84,7 +88,10 @@ describe('SimuladorUnrealPage — modo académico del estudiante (CB-07)', () =>
     };
     const enviados = () => canal.emitUIInteraction.calls.allArgs().map(([m]) => m as Mensaje);
     const guiones = () => (pagina.hospital as unknown as { guionesCaso: ReadonlyMap<string, GuionNarrativo> | null }).guionesCaso;
-    return { pagina, mundoListo, enviados, guiones, m3, fixture };
+    /** Caída del canal tal como la notifica el reproductor (dataChannelClose / webRtcDisconnected). */
+    const caer = () => { transporte?.notificarDesconexion(); informar('desconectado'); };
+    const video = () => informar('video-listo');
+    return { pagina, mundoListo, enviados, guiones, m3, fabrica, caer, video, fixture };
   }
 
   it('lee la narrativa fijada de M5 (no M3) y configura MUNDO-24 sin identificadores académicos', async () => {
@@ -178,5 +185,94 @@ describe('SimuladorUnrealPage — modo académico del estudiante (CB-07)', () =>
     expect(dato('siguiente-paso')).toBe('Siguiente: ve a Hospital Central y conversa con Dr. Martínez.');
     expect(dato('fuera-del-caso')).toContain('Fiscalía de Turno');
     p.pagina.desconectar();
+  });
+  // FE-UX-09 · reconexión automática acotada en el intento académico (candidata; sin cambios de contrato Backend).
+  const esperarHasta = async (condicion: () => boolean, limiteMs = 3000) => {
+    const inicio = Date.now();
+    while (!condicion()) {
+      if (Date.now() - inicio > limiteMs) throw new Error('Condición no alcanzada');
+      await new Promise((r) => setTimeout(r, 5));
+    }
+  };
+
+  it('reconexión automática: vuelve a leer la narrativa del intento y conserva el contexto visual sin duplicar órdenes', async () => {
+    const portal = { narrativa: jasmine.createSpy('narrativa').and.returnValue(of(narrativa())) };
+    const p = preparar(portal, [5, 5, 5]);
+    await p.pagina.conectar();
+    await p.mundoListo();
+    const primero = p.enviados().find((m) => m.tipo === 'caso.configurar')!;
+    const n0 = p.enviados().length;
+    p.caer();
+    p.caer(); // segundo aviso del mismo reproductor (webRtcDisconnected tras dataChannelClose)
+    expect(p.pagina.reintento()).toEqual({ intento: 1, total: 3 });
+    await esperarHasta(() => p.fabrica.calls.count() === 2);
+    await p.mundoListo();
+    p.video();
+    await esperarHasta(() => p.pagina.reintento() === null);
+    expect(p.pagina.estado()).toBe('Conexión recuperada. Sesión visual confirmada.');
+    const nuevas = p.enviados().slice(n0);
+    expect(nuevas.filter((m) => m.tipo === 'sesion.iniciar').length).toBe(1);
+    expect(nuevas.filter((m) => m.tipo === 'caso.configurar').length).toBe(1);
+    expect(nuevas.find((m) => m.tipo === 'caso.configurar')!.contexto).toBe(primero.contexto);
+    expect(portal.narrativa).toHaveBeenCalledTimes(2);
+    expect(portal.narrativa.calls.allArgs().every(([id]) => id === CONTEXTO.idIntento)).toBeTrue();
+    expect(p.fabrica).toHaveBeenCalledTimes(2);
+    expect(p.pagina.sesionIniciada()).toBeTrue();
+    p.pagina.desconectar();
+  });
+
+  for (const [estado, codigo, motivo] of [
+    [401, null, 'sesión expirada'],
+    [403, 'PARTICIPACION_REVOCADA', 'acceso revocado'],
+    [409, 'EXPLORACION_CERRADA', 'intento finalizado'],
+  ] as const) {
+    it(`reconexión automática con ${motivo} (${estado}): no reintenta, no configura el mundo ni reabre el intento`, async () => {
+      const portal = { narrativa: jasmine.createSpy('narrativa').and.returnValue(of(narrativa())) };
+      const p = preparar(portal, [5, 5, 5]);
+      await p.pagina.conectar();
+      await p.mundoListo();
+      const n0 = p.enviados().length;
+      portal.narrativa.and.returnValue(throwError(() => new FalloPortal(estado, codigo)));
+      p.caer();
+      await esperarHasta(() => p.fabrica.calls.count() === 2);
+      await p.mundoListo();
+      await esperarHasta(() => p.pagina.error() !== null);
+      await new Promise((r) => setTimeout(r, 40));
+      expect(p.fabrica).toHaveBeenCalledTimes(2);
+      expect(p.pagina.reintento()).toBeNull();
+      expect(p.enviados().slice(n0).map((m) => m.tipo)).toEqual(['sesion.iniciar']);
+      expect(p.pagina.error()).toContain('La narrativa de tu intento no está disponible');
+      expect(p.pagina.conectado()).toBeFalse();
+      expect(p.guiones()!.size).toBe(0);
+    });
+  }
+
+  it('salir al portal (cambio de caso o cierre de sesión) durante la espera anula el reintento', async () => {
+    const portal = { narrativa: jasmine.createSpy('narrativa').and.returnValue(of(narrativa())) };
+    const p = preparar(portal, [30, 30, 30]);
+    await p.pagina.conectar();
+    await p.mundoListo();
+    const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    p.caer();
+    expect(p.pagina.reintento()).not.toBeNull();
+    p.pagina.volverAlPortal();
+    expect(navegar).toHaveBeenCalledWith(['/estudiante/portal']);
+    expect(p.pagina.reintento()).toBeNull();
+    expect(TestBed.inject(ContextoAcademicoUnreal).actual()).toBeNull();
+    await new Promise((r) => setTimeout(r, 80));
+    expect(p.fabrica).toHaveBeenCalledTimes(1);
+    expect(portal.narrativa).toHaveBeenCalledTimes(1);
+  });
+
+  it('destruir la página (navegación por cierre de sesión) durante la espera limpia el temporizador', async () => {
+    const portal = { narrativa: jasmine.createSpy('narrativa').and.returnValue(of(narrativa())) };
+    const p = preparar(portal, [30, 30, 30]);
+    await p.pagina.conectar();
+    await p.mundoListo();
+    p.caer();
+    p.fixture.destroy();
+    await new Promise((r) => setTimeout(r, 80));
+    expect(p.fabrica).toHaveBeenCalledTimes(1);
+    expect(portal.narrativa).toHaveBeenCalledTimes(1);
   });
 });

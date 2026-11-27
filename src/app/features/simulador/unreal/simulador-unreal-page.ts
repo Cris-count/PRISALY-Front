@@ -11,6 +11,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  InjectionToken,
   NgZone,
   computed,
   effect,
@@ -37,6 +38,14 @@ import { avisoConexion } from './aviso-interaccion';
 import { AvisosVisorMundo } from './avisos-visor-mundo';
 
 const ERROR_MOVIMIENTO = 'La ciudad no aceptó ese destino. Prueba de nuevo o camina con W A S D.';
+/**
+ * FE-UX-09: esperas antes de cada reintento automático tras perder un recorrido ya confirmado. La lista acota los
+ * intentos (el reproductor PS2 sigue con `MaxReconnectAttempts` 0 y no hay reconexión ilimitada); agotada, la
+ * página vuelve al botón manual. Cada intento crea reproductor y puente nuevos y recupera con `estado.restaurar`.
+ */
+export const RETARDOS_RECONEXION_UNREAL = new InjectionToken<readonly number[]>('RETARDOS_RECONEXION_UNREAL', {
+  factory: () => [1000, 3000, 8000],
+});
 
 /** Acceso de integración visual. No crea intentos, pistas ni evaluaciones académicas. */
 @Component({
@@ -286,6 +295,7 @@ export class SimuladorUnrealPage {
   /** Personajes del caso tal como los devolvió M3 en esta conexión. */
   readonly personajesCaso = signal<readonly string[]>([]);
   volverAlPortal(): void {
+    this.cancelarReconexion();
     this.limpiar();
     this.contextoAcademico.actual.set(null);
     if (this.esVistaPrevia) {
@@ -314,11 +324,14 @@ export class SimuladorUnrealPage {
   readonly ubicacion = signal('Sin ubicación confirmada');
   /** G4-V11 / FE-UX-09: avisos del visor (sustituyen a los mensajes de depuración de Unreal). */
   readonly avisoInteraccion = computed(() => this.hospital.aviso(this.conectado()));
+  /** Reintento automático en curso (esperando o conectando), o null si la conexión depende del botón. */
+  readonly reintento = signal<{ readonly intento: number; readonly total: number } | null>(null);
   readonly avisoConexion = computed(() => avisoConexion({
     conectado: this.conectado(),
     conectando: this.ocupado(),
     reconectando: this.hospital.ultimaZona() !== null,
     fallo: this.error() !== null,
+    reintento: this.reintento(),
   }));
   readonly destinos = [
     ...CORRESPONDENCIA_MUNDO_UNREAL.map((entrada) => ({
@@ -345,6 +358,9 @@ export class SimuladorUnrealPage {
   private iniciandoSesion = false;
   private espera: ReturnType<typeof setTimeout> | null = null;
   private contenedorReproductor: HTMLDivElement | null = null;
+  private readonly retardosReconexion = inject(RETARDOS_RECONEXION_UNREAL);
+  private intentosReconexion = 0;
+  private temporizadorReconexion: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     effect(() => {
@@ -353,10 +369,20 @@ export class SimuladorUnrealPage {
       const permitir = this.conectado() && this.foco() && !this.hospital.ocupado();
       this.reproductor?.permitirEntrada(permitir);
     });
-    inject(DestroyRef).onDestroy(() => this.limpiar());
+    inject(DestroyRef).onDestroy(() => {
+      this.cancelarReconexion();
+      this.limpiar();
+    });
   }
 
-  async conectar(): Promise<void> {
+  /** Conexión pedida por la persona (botón). Anula cualquier reintento automático pendiente. */
+  conectar(): Promise<void> {
+    if (!this.asignacion || this.ocupado() || this.conectado()) return Promise.resolve();
+    this.cancelarReconexion();
+    return this.abrirConexion();
+  }
+
+  private async abrirConexion(): Promise<void> {
     if (!this.asignacion || this.ocupado() || this.conectado()) return;
     this.limpiar();
     const generacion = this.generacion;
@@ -378,7 +404,10 @@ export class SimuladorUnrealPage {
         if (!vigente()) return;
         this.zona.run(() => {
           if (evento === 'desconectado') {
+            // Solo se reintenta solo un recorrido que ya estaba confirmado (o un reintento en curso).
+            const recuperable = this.sesionIniciada() || this.reintento() !== null;
             this.limpiar();
+            if (recuperable) return void this.programarReconexion();
             this.estado.set(
               'Se perdió la conexión. Vuelve a conectar para continuar la prueba visual.',
             );
@@ -415,6 +444,7 @@ export class SimuladorUnrealPage {
         if (!vigente() || this.conectado()) return;
         this.zona.run(() => {
           this.limpiar();
+          if (this.reintento() !== null) return void this.programarReconexion();
           this.error.set(
             'No se pudo confirmar la ciudad y su conexión. Intenta conectar de nuevo.',
           );
@@ -425,6 +455,7 @@ export class SimuladorUnrealPage {
     } catch {
       if (!vigente()) return;
       this.limpiar();
+      if (this.reintento() !== null) return void this.programarReconexion();
       this.error.set(
         'No fue posible abrir el simulador. Revisa la asignación del servidor y vuelve a intentar.',
       );
@@ -464,6 +495,7 @@ export class SimuladorUnrealPage {
   }
 
   desconectar(): void {
+    this.cancelarReconexion();
     this.limpiar();
     this.estado.set('Desconectado del simulador 3D.');
   }
@@ -503,6 +535,7 @@ export class SimuladorUnrealPage {
       } catch {
         if (generacion !== this.generacion) return;
         this.limpiar();
+        if (this.reintento() !== null) return void this.programarReconexion();
         this.estado.set('La sesión visual no fue confirmada.');
         this.error.set(
           'El mundo no confirmó el inicio o la recuperación del recorrido. El progreso de esta página se conserva; vuelve a conectar.',
@@ -621,6 +654,8 @@ export class SimuladorUnrealPage {
       return mismo ? 'mismo-contexto' : 'contexto-nuevo';
     } catch {
       if (generacion !== this.generacion) return null;
+      // Respuesta del servidor sobre el caso, no un corte de red: no se reintenta.
+      this.cancelarReconexion();
       this.limpiar();
       this.estado.set('El caso no se aplicó en la ciudad 3D.');
       this.error.set(
@@ -632,13 +667,54 @@ export class SimuladorUnrealPage {
     }
   }
 
+  /**
+   * Tras `limpiar()`: programa el siguiente reintento automático si quedan. Devuelve false cuando se agotaron; en
+   * ese caso deja el aviso para reconectar a mano (el progreso de la página se conserva).
+   */
+  private programarReconexion(): boolean {
+    const total = this.retardosReconexion.length;
+    const indice = this.intentosReconexion;
+    if (indice >= total) {
+      this.cancelarReconexion();
+      this.estado.set('Conexión no recuperada.');
+      this.error.set(
+        `No se pudo recuperar la conexión tras ${total} intentos automáticos. Tu progreso en esta página se conserva; pulsa «Reconectar y recuperar recorrido».`,
+      );
+      return false;
+    }
+    this.intentosReconexion = indice + 1;
+    this.reintento.set({ intento: indice + 1, total });
+    this.error.set(null);
+    this.estado.set(`Se perdió la conexión. Reintento automático ${indice + 1} de ${total}…`);
+    this.temporizadorReconexion = this.zona.runOutsideAngular(() =>
+      setTimeout(() => {
+        this.temporizadorReconexion = null;
+        this.zona.run(() => void this.abrirConexion());
+      }, this.retardosReconexion[indice]),
+    );
+    return true;
+  }
+
+  private cancelarReconexion(): void {
+    if (this.temporizadorReconexion) clearTimeout(this.temporizadorReconexion);
+    this.temporizadorReconexion = null;
+    this.intentosReconexion = 0;
+    this.reintento.set(null);
+  }
+
   private actualizarEstado(): void {
     if (this.conectado()) {
       this.ocupado.set(false);
       this.requiereReproduccion.set(false);
       if (this.espera) clearTimeout(this.espera);
       this.espera = null;
-      this.estado.set('Ciudad 3D conectada. Sesión visual confirmada.');
+      const recuperada = this.reintento() !== null;
+      this.cancelarReconexion();
+      this.estado.set(
+        recuperada
+          ? 'Conexión recuperada. Sesión visual confirmada.'
+          : 'Ciudad 3D conectada. Sesión visual confirmada.',
+      );
     } else if (this.sesionIniciada())
       this.estado.set('Sesión visual confirmada. Esperando reproducción de la ciudad…');
   }
