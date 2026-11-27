@@ -17,6 +17,8 @@ colors:
   texto-secundario: "#344968"
   borde: "#c7d5e8"
   borde-panel: "#dbe2ec"
+  borde-campo: "#d5d9e0"
+  texto-suave: "#52606d"
   superficie-suave: "#edf4ff"
   fondo: "#f4f6fa"
   superficie: "#ffffff"
@@ -48,8 +50,10 @@ typography:
 rounded:
   control: "0.5rem"
   inicio: "1rem"
+  bloque: "0.75rem"
   panel: "1.25rem"
   banner: "1.5rem"
+  pildora: "999px"
 spacing:
   xs: "4px"
   sm: "8px"
