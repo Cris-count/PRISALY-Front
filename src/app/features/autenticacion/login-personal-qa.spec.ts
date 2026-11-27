@@ -41,11 +41,11 @@ describe('Formulario personal QA con HTTP simulado, sin Backend real', () => {
     fixture.destroy();
     http.verify();
   });
-  function enviar(): void {
+  function enviar(clave = 'clave-solo-prueba'): void {
     const raiz = fixture.nativeElement as HTMLElement;
     for (const [id, valor] of [
       ['correo', respuesta.correo],
-      ['clave', 'clave-solo-prueba'],
+      ['clave', clave],
     ]) {
       const input = raiz.querySelector<HTMLInputElement>('#' + id)!;
       input.value = valor;
@@ -90,11 +90,36 @@ describe('Formulario personal QA con HTTP simulado, sin Backend real', () => {
       const aviso = fixture.nativeElement.querySelector('[role="status"]').textContent;
       expect(aviso.trim()).not.toBe('');
       expect(aviso).not.toContain('detalle-privado');
-      if (status === 429) expect(aviso).toContain('30 segundos');
+      if (status === 429) expect(fixture.nativeElement.querySelector('[role=timer]').textContent).toContain('30 segundos');
       expect(navegar).not.toHaveBeenCalled();
       http.expectNone(() => true);
     });
   }
+  it('preserva una clave de 40 caracteres y bloquea el envío solo durante Retry-After', () => {
+    jasmine.clock().install();
+    jasmine.clock().mockDate();
+    try {
+      const clave = 'a'.repeat(36) + 'Az#1';
+      enviar(clave);
+      const login = http.expectOne('/api-qa-prueba/v1/personal/autenticar');
+      expect(login.request.body.password).toBe(clave);
+      login.flush({}, { status: 429, statusText: 'Too Many Requests', headers: { 'Retry-After': '2' } });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.iniciar').disabled).toBeTrue();
+      enviar(clave);
+      http.expectNone(() => true);
+      jasmine.clock().tick(1000);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[role=timer]').textContent).toContain('1 segundos');
+      jasmine.clock().tick(1000);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.iniciar').disabled).toBeFalse();
+      expect(fixture.nativeElement.querySelector('[role=timer]')).toBeNull();
+      http.expectNone(() => true);
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
   it('no permite acceso si falla me después del POST exitoso', () => {
     enviar();
     http.expectOne('/api-qa-prueba/v1/personal/autenticar').flush(respuesta);

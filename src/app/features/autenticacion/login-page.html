@@ -133,7 +133,7 @@
             <p class="error" id="error-clave" role="alert">Ingresa tu contraseña.</p>
           }
         </div>
-        <button class="iniciar" type="submit" [disabled]="enviando()">
+        <button class="iniciar" type="submit" [disabled]="enviando() || segundosRestantes() > 0">
           {{ enviando() ? 'Verificando sesión…' : 'Iniciar sesión' }}
           <span aria-hidden="true">↗</span>
         </button>
@@ -146,6 +146,11 @@
           }
         </p>
         <p class="aviso" role="status" aria-live="polite">{{ aviso() }}</p>
+        @if (segundosRestantes() > 0) {
+          <p class="aviso" role="timer" aria-live="off">
+            Reintenta después de {{ segundosRestantes() }} segundos.
+          </p>
+        }
       </form>
       @if (qaPersonal) {
         <a
