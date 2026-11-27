@@ -1,0 +1,7 @@
+{
+  "postgresPort": 5435,
+  "backendDir": "D:/proyectos/PRISALY-Backen-cierre-entrega",
+  "backendJar": "D:/proyectos/PRISALY-Backen-cierre-entrega/app/target/app-0.0.1-SNAPSHOT.jar",
+  "signallingScript": "D:/laboratorios/PS2-LAB-03/infraestructura/senalizacion-local.mjs",
+  "unrealExe": "D:/entregas/MUNDO-24/Windows/PrisalyPrototipo/Binaries/Win64/PrisalyPrototipo.exe"
+}
