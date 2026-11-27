@@ -1,0 +1,24 @@
+# DC-DEPLOY-01 · Frontend de PRISALY para Railway (Staging).
+# Etapa 1: build de producción con las mismas versiones que el CI (frontend-ci.yml).
+# Etapa 2: nginx sirve el resultado compilado y reenvía /api al Backend por la red privada de Railway.
+# No contiene secretos: la URL del Backend llega en tiempo de ejecución (BACKEND_INTERNO).
+FROM node:26.13.0-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm exec --yes --package=npm@11.17.0 -- npm ci --no-audit --no-fund
+COPY angular.json tsconfig.json tsconfig.app.json ./
+COPY public ./public
+COPY src ./src
+RUN npx ng build --configuration production
+
+FROM nginx:1.28-alpine
+ARG RAILWAY_GIT_COMMIT_SHA=sin-identificar
+LABEL org.opencontainers.image.revision=$RAILWAY_GIT_COMMIT_SHA
+# La imagen oficial sustituye variables en /etc/nginx/templates/*.template al arrancar y, con
+# NGINX_ENTRYPOINT_LOCAL_RESOLVERS, publica los DNS del contenedor (incluido el interno de Railway).
+ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
+    NGINX_ENVSUBST_FILTER="^(PORT|BACKEND_INTERNO|NGINX_LOCAL_RESOLVERS)$" \
+    PORT=8080
+RUN rm /etc/nginx/conf.d/default.conf
+COPY deploy/railway/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist/PRISALY-Front/browser/ /usr/share/nginx/html/

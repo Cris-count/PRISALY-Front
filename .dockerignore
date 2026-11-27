@@ -1,0 +1,15 @@
+# DC-DEPLOY-01: solo entra en la imagen lo que necesita el build de producción.
+.git
+.github
+.angular
+node_modules
+dist
+coverage
+docs
+ops
+scripts
+graph-export.json
+opencode.jsonc
+*.log
+.env*
+**/*.spec.ts
