@@ -22,6 +22,8 @@ export interface ContextoAcademicoVisor {
 @Injectable({ providedIn: 'root' })
 export class ContextoAcademicoUnreal {
   readonly actual = signal<ContextoAcademicoVisor | null>(null);
+  /** CB-07: contexto visual aplicado para este intento; al reconectar con la misma huella se reutiliza (A.8). */
+  aplicado: { idIntento: string; huella: string; contexto: string } | null = null;
 }
 /**
  * CB-05A: vista previa docente de un caso. No es un intento académico: no consulta ni crea nada en M5. La narrativa la

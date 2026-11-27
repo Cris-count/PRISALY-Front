@@ -5,6 +5,7 @@ import { catchError, map, Observable, of, throwError } from 'rxjs';
 import { API_CONFIG, construirUrlApi } from '../../core/config/api.config';
 import { ContenidoIntentoM5 } from '../simulador/models/contenido-intento.models';
 import { leerContenidoIntento } from '../simulador/services/leer-contenido-intento';
+import type { GuionM3 } from '../simulador/narrativa/adaptador-guion-m3';
 
 /**
  * DC-DEMO-112 · Portal del estudiante sobre los contratos existentes del Backend (cookie DD-02 B):
@@ -47,6 +48,36 @@ export interface ResultadoEstudiante {
   readonly caracter: string | null;
   readonly fechaLiberacion: string | null;
   readonly retroalimentacionGeneral: string | null;
+}
+
+/**
+ * CB-07 · P1 de M5 (`GET …/intentos/{id}/narrativa`): el guion publicado **fijado en el intento**, nunca el borrador ni
+ * la última versión publicada. `definicion` es el documento prisaly-guion-1 tal como lo persistió M3.
+ */
+export interface NarrativaIntentoM5 {
+  readonly idIntento: string;
+  readonly idGuion: string;
+  readonly version: number;
+  readonly hashDefinicion: string;
+  readonly definicion: GuionM3;
+}
+
+/** CB-07 · P2 de M5 (`GET …/fase`): fase persistida; base de la recuperación tras recargar. */
+export interface FaseIntentoM5 {
+  readonly idIntento: string;
+  readonly estadoIntento: 'EnCurso' | 'Finalizado';
+  readonly fase: 'SIN_FASES' | 'EXPLORACION' | 'CUESTIONARIO';
+  readonly fechaInicioExploracion: string | null;
+  readonly fechaInicioCuestionario: string | null;
+  readonly limiteTemporal: string | null;
+  readonly ahoraServidor: string | null;
+}
+
+/** CB-07 · P3 de M5 (`POST …/cuestionario`): entrada atómica e idempotente; `yaIniciado` en un reintento. */
+export interface EntradaCuestionarioM5 {
+  readonly idIntento: string;
+  readonly fechaInicioCuestionario: string;
+  readonly yaIniciado: boolean;
 }
 
 /** Fallo clasificado: código tipado del servidor (si lo hay) y estado HTTP. */
@@ -105,6 +136,47 @@ export function leerIntentoEstudiante(v: unknown): IntentoEstudiante {
         idOpcionSeleccionada: texto(r['idOpcionSeleccionada']) ?? '',
         revision: Number(r['revision'] ?? 0),
       })),
+  };
+}
+
+const invalida = () => new FalloPortal(0, 'RESPUESTA_INVALIDA');
+
+/** Integridad disponible en el contrato P1: intento pedido, versión, huellas y formato. El servidor ya verificó la huella. */
+export function leerNarrativaIntento(v: unknown, idIntento: string): NarrativaIntentoM5 {
+  const n = v as Record<string, unknown> | null;
+  const definicion = n?.['definicion'] as Record<string, unknown> | null | undefined;
+  if (
+    !n || n['idIntento'] !== idIntento || !UUID.test(texto(n['idGuion']) ?? '') ||
+    typeof n['version'] !== 'number' || n['version'] < 1 ||
+    !/^[0-9a-f]{64}$/.test(texto(n['hashDefinicion']) ?? '') ||
+    !definicion || typeof definicion !== 'object' || definicion['formato'] !== 'prisaly-guion-1' ||
+    !Array.isArray(definicion['espacios'])
+  ) throw invalida();
+  return {
+    idIntento,
+    idGuion: n['idGuion'] as string,
+    version: n['version'],
+    hashDefinicion: n['hashDefinicion'] as string,
+    definicion: definicion as unknown as GuionM3,
+  };
+}
+
+const ESTADOS = ['EnCurso', 'Finalizado'] as const;
+const FASES = ['SIN_FASES', 'EXPLORACION', 'CUESTIONARIO'] as const;
+
+export function leerFaseIntento(v: unknown, idIntento: string): FaseIntentoM5 {
+  const f = v as Record<string, unknown> | null;
+  const estado = f?.['estadoIntento'], fase = f?.['fase'];
+  if (!f || f['idIntento'] !== idIntento || !ESTADOS.includes(estado as never) || !FASES.includes(fase as never))
+    throw invalida();
+  return {
+    idIntento,
+    estadoIntento: estado as FaseIntentoM5['estadoIntento'],
+    fase: fase as FaseIntentoM5['fase'],
+    fechaInicioExploracion: texto(f['fechaInicioExploracion']),
+    fechaInicioCuestionario: texto(f['fechaInicioCuestionario']),
+    limiteTemporal: texto(f['limiteTemporal']),
+    ahoraServidor: texto(f['ahoraServidor']),
   };
 }
 
@@ -185,6 +257,44 @@ export class PortalEstudianteApi {
       .pipe(
         map(() => undefined),
         catchError((e: unknown) => throwError(() => aFallo(e))),
+      );
+  }
+
+  /** P1: narrativa fijada en el intento. 409 `EXPLORACION_CERRADA` en cuestionario o finalizado (se propaga). */
+  narrativa(idIntento: string): Observable<NarrativaIntentoM5> {
+    if (!UUID.test(idIntento)) return throwError(() => new FalloPortal(0, 'IDENTIFICADOR_INVALIDO'));
+    return this.http
+      .get<unknown>(this.url(`v1/estudiantes/intentos/${idIntento}/narrativa`), { withCredentials: true })
+      .pipe(
+        map((cuerpo) => leerNarrativaIntento(cuerpo, idIntento)),
+        catchError((e: unknown) => throwError(() => (e instanceof FalloPortal ? e : aFallo(e)))),
+      );
+  }
+
+  /** P2: fase persistida del intento. */
+  fase(idIntento: string): Observable<FaseIntentoM5> {
+    if (!UUID.test(idIntento)) return throwError(() => new FalloPortal(0, 'IDENTIFICADOR_INVALIDO'));
+    return this.http
+      .get<unknown>(this.url(`v1/estudiantes/intentos/${idIntento}/fase`), { withCredentials: true })
+      .pipe(
+        map((cuerpo) => leerFaseIntento(cuerpo, idIntento)),
+        catchError((e: unknown) => throwError(() => (e instanceof FalloPortal ? e : aFallo(e)))),
+      );
+  }
+
+  /** P3: entrada al cuestionario; cierra la exploración en el servidor. Idempotente. */
+  iniciarCuestionario(idIntento: string): Observable<EntradaCuestionarioM5> {
+    if (!UUID.test(idIntento)) return throwError(() => new FalloPortal(0, 'IDENTIFICADOR_INVALIDO'));
+    return this.http
+      .post<unknown>(this.url(`v1/estudiantes/intentos/${idIntento}/cuestionario`), null, { withCredentials: true })
+      .pipe(
+        map((cuerpo) => {
+          const c = cuerpo as Record<string, unknown> | null;
+          if (!c || c['idIntento'] !== idIntento || c['fase'] !== 'CUESTIONARIO' || typeof c['yaIniciado'] !== 'boolean'
+            || !texto(c['fechaInicioCuestionario'])) throw invalida();
+          return { idIntento, fechaInicioCuestionario: c['fechaInicioCuestionario'] as string, yaIniciado: c['yaIniciado'] };
+        }),
+        catchError((e: unknown) => throwError(() => (e instanceof FalloPortal ? e : aFallo(e)))),
       );
   }
 

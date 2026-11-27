@@ -2,6 +2,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ContextoAcademicoUnreal, VistaPreviaDocenteUnreal } from './acceso-simulador';
 import { CasosM3Api } from '../../academico/casos-m3.api';
+import { PortalEstudianteApi } from '../../estudiante/portal-estudiante.api';
 import type { GuionM3 } from '../narrativa/adaptador-guion-m3';
 import type { GuionNarrativo } from '../narrativa/narrativa.models';
 import { cargarCatalogoVisual, derivarCasoConfigurar, guionMotorParaPuesto, nuevoContextoVisual } from './caso-visual';
@@ -217,6 +218,8 @@ export class SimuladorUnrealPage {
   /** CB-05A: vista previa docente de un caso guardado en M3 (sin intento académico). */
   private readonly vistaPrevia = inject(VistaPreviaDocenteUnreal);
   private readonly casosApi = inject(CasosM3Api);
+  /** CB-07: narrativa fijada en el intento del estudiante (M5, cookie DD-02 B). */
+  private readonly portalApi = inject(PortalEstudianteApi);
   readonly esVistaPrevia = this.vistaPrevia.actual() !== null;
   /** Personajes del caso tal como los devolvió M3 en esta conexión. */
   readonly personajesCaso = signal<readonly string[]>([]);
@@ -318,9 +321,8 @@ export class SimuladorUnrealPage {
       });
       // CB-05A: Unreal etiqueta todos sus mensajes (mundo.listo y acks incluidos) con el contexto vigente. Al
       // reconectar la vista previa, el puente nuevo arranca en ese contexto para no descartarlos como ajenos.
-      const aplicado = this.vistaPrevia.aplicado;
-      if (this.esVistaPrevia && aplicado && aplicado.idCaso === this.vistaPrevia.actual()?.idCaso)
-        this.puente.fijarContexto(aplicado.contexto);
+      const aplicado = this.fuenteDelCaso()?.aplicado();
+      if (aplicado) this.puente.fijarContexto(aplicado.contexto);
       this.hospital.vincular(this.puente, this.asignacion);
       this.puente.suscribir((mensaje) => {
         if (vigente())
@@ -391,8 +393,8 @@ export class SimuladorUnrealPage {
         });
         if (generacion !== this.generacion) return;
         let restaurar = true;
-        if (this.esVistaPrevia) {
-          const configuracion = await this.configurarVistaPrevia(generacion);
+        if (this.fuenteDelCaso()) {
+          const configuracion = await this.configurarCaso(generacion);
           if (configuracion === null) return;
           restaurar = configuracion === 'mismo-contexto';
         }
@@ -460,24 +462,57 @@ export class SimuladorUnrealPage {
   }
 
   /**
-   * CB-05A (PROPUESTA-CASO-CONFIGURAR §6): en cada conexión vuelve a pedir la narrativa a M3 con la sesión de personal,
-   * deriva `caso.configurar` del borrador persistido y lo envía con su contexto visual. Los diálogos que verá el docente
-   * son los del servidor; si algo falla no se usan guiones de demostración. Devuelve si Unreal conserva el contexto
-   * anterior (reconexión: hay que restaurar) o abre uno nuevo, o null si la configuración no se aplicó.
+   * De dónde sale el caso de esta conexión (CB-05A y CB-07). Docente: el borrador de M3 con su sesión de personal
+   * (vista previa, sin intento). Estudiante: la narrativa **fijada en su intento** por M5, con su cookie. Fuera de esos
+   * dos contextos no hay caso que aplicar. Nunca se recurre a los guiones de demostración.
    */
-  private async configurarVistaPrevia(generacion: number): Promise<'mismo-contexto' | 'contexto-nuevo' | null> {
-    const idCaso = this.vistaPrevia.actual()?.idCaso;
+  private fuenteDelCaso(): {
+    cargar: () => Promise<GuionM3>;
+    aplicado: () => { huella: string; contexto: string } | null;
+    recordar: (huella: string, contexto: string) => void;
+  } | null {
+    const previa = this.vistaPrevia.actual();
+    if (previa) {
+      const idCaso = previa.idCaso;
+      return {
+        cargar: async () => {
+          const narrativa = await firstValueFrom(this.casosApi.narrativa(idCaso));
+          const guardado = narrativa.borrador ?? narrativa.publicado;
+          if (!guardado) throw new Error('El caso no tiene narrativa');
+          return guardado.definicion as unknown as GuionM3;
+        },
+        aplicado: () => (this.vistaPrevia.aplicado?.idCaso === idCaso ? this.vistaPrevia.aplicado : null),
+        recordar: (huella, contexto) => (this.vistaPrevia.aplicado = { idCaso, huella, contexto }),
+      };
+    }
+    const academico = this.contextoAcademico.actual();
+    if (academico) {
+      const idIntento = academico.idIntento;
+      return {
+        cargar: async () => (await firstValueFrom(this.portalApi.narrativa(idIntento))).definicion,
+        aplicado: () => (this.contextoAcademico.aplicado?.idIntento === idIntento ? this.contextoAcademico.aplicado : null),
+        recordar: (huella, contexto) => (this.contextoAcademico.aplicado = { idIntento, huella, contexto }),
+      };
+    }
+    return null;
+  }
+
+  /**
+   * CB-05A/CB-07 (PROPUESTA-CASO-CONFIGURAR §6): en cada conexión vuelve a pedir la narrativa al servidor, deriva
+   * `caso.configurar` y lo envía con su contexto visual. Los diálogos son los del servidor; si algo falla no se usan
+   * guiones de demostración. Devuelve si Unreal conserva el contexto anterior (reconexión: hay que restaurar) o abre
+   * uno nuevo, o null si la configuración no se aplicó.
+   */
+  private async configurarCaso(generacion: number): Promise<'mismo-contexto' | 'contexto-nuevo' | null> {
+    const fuente = this.fuenteDelCaso();
     const puente = this.puente;
     this.hospital.usarGuionesDelCaso(new Map()); // nada conversa hasta tener el caso del servidor
     try {
-      if (!idCaso || !puente) throw new Error('Sin caso');
+      if (!fuente || !puente) throw new Error('Sin caso');
       this.estado.set('Cargando el caso guardado en el servidor…');
-      const [narrativa, catalogo] = await Promise.all([firstValueFrom(this.casosApi.narrativa(idCaso)), cargarCatalogoVisual()]);
+      const [guion, catalogo] = await Promise.all([fuente.cargar(), cargarCatalogoVisual()]);
       if (generacion !== this.generacion) return null;
-      const guardado = narrativa.borrador ?? narrativa.publicado;
-      if (!guardado) throw new Error('El caso no tiene narrativa');
-      const guion = guardado.definicion as unknown as GuionM3;
-      const previo = this.vistaPrevia.aplicado?.idCaso === idCaso ? this.vistaPrevia.aplicado : null;
+      const previo = fuente.aplicado();
       let datos = await derivarCasoConfigurar(guion, catalogo, previo?.contexto ?? nuevoContextoVisual());
       if (previo && previo.huella !== datos.huella) datos = { ...datos, idContextoVisual: nuevoContextoVisual() };
       const guiones = new Map<string, GuionNarrativo>();
@@ -490,7 +525,7 @@ export class SimuladorUnrealPage {
       await puente.enviar('caso.configurar', { ...datos });
       if (generacion !== this.generacion) return null;
       const mismo = previo?.contexto === datos.idContextoVisual;
-      this.vistaPrevia.aplicado = { idCaso, huella: datos.huella, contexto: datos.idContextoVisual };
+      fuente.recordar(datos.huella, datos.idContextoVisual);
       this.hospital.usarGuionesDelCaso(guiones);
       this.personajesCaso.set((guion.personajes ?? []).filter((p) => p.recursoVisual).map((p) => p.nombre));
       return mismo ? 'mismo-contexto' : 'contexto-nuevo';
@@ -499,7 +534,9 @@ export class SimuladorUnrealPage {
       this.limpiar();
       this.estado.set('El caso no se aplicó en la ciudad 3D.');
       this.error.set(
-        'No se pudo cargar o aplicar el caso guardado. Comprueba que el caso tenga edificios y personajes guardados y vuelve a conectar.',
+        this.esVistaPrevia
+          ? 'No se pudo cargar o aplicar el caso guardado. Comprueba que el caso tenga edificios y personajes guardados y vuelve a conectar.'
+          : 'La narrativa de tu intento no está disponible o no es compatible con la ciudad 3D. Vuelve al portal; tu progreso académico lo conserva el servidor.',
       );
       return null;
     }
