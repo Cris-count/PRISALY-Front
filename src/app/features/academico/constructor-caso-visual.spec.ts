@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { CasosM3Api, GuionGuardado, NarrativaDocente } from './casos-m3.api';
 import { ConstructorCasoVisual, contarIntervenciones } from './constructor-caso-visual';
 
@@ -9,12 +10,15 @@ describe('ConstructorCasoVisual (FE-UX-06)', () => {
   const ID = '0b6f5a52-6d0e-4a43-9a0e-2f1d7c3b9e11';
   let respuesta: NarrativaDocente;
   let guardados: object[];
+  /** DC-MVP-09-R12: el servidor no expone la narrativa (flag M3 apagado) y responde 404. */
+  let narrativa404 = false;
+  beforeEach(() => (narrativa404 = false));
 
   async function crear() {
     respuesta = { idCaso: ID, borrador: null, publicado: null };
     guardados = [];
     const api: Pick<CasosM3Api, 'narrativa' | 'guardarNarrativa'> = {
-      narrativa: () => of(respuesta),
+      narrativa: () => (narrativa404 ? throwError(() => new HttpErrorResponse({ status: 404 })) : of(respuesta)),
       guardarNarrativa: (_id: string, doc: object) => {
         guardados.push(doc);
         const g: GuionGuardado = { idGuion: '6a1d2b3c-4e5f-4a7b-8c9d-0e1f2a3b4c5d', version: guardados.length, estado: 'Borrador',
@@ -80,6 +84,33 @@ describe('ConstructorCasoVisual (FE-UX-06)', () => {
     const nav = spyOn(TestBed.inject(Router), 'navigate');
     t.clic('vista-previa');
     expect(nav).not.toHaveBeenCalled();
+  });
+
+  it('narrativa no disponible (404): lo explica y no ofrece editar, guardar ni previsualizar (DC-MVP-09-R12)', async () => {
+    narrativa404 = true;
+    const t = await crear();
+    expect(t.$('diseno-no-disponible').textContent).toContain('no está disponible en este servidor');
+    expect(t.raiz.querySelector('.mensaje.error')).toBeNull(); // no es un fallo del docente
+    expect(t.$('edificio-hospital_entrada').disabled).toBeTrue();
+    expect(t.$('guardar-narrativa').disabled).toBeTrue();
+    expect(t.$('vista-previa').disabled).toBeTrue();
+    expect(t.raiz.textContent).toContain('no se puede guardar ni abrir la vista previa');
+    expect(guardados.length).toBe(0);
+  });
+
+  it('un rechazo de validación del servidor se lee en lenguaje del docente y se anuncia como alerta (R07-IMP)', async () => {
+    const t = await crear();
+    const api = TestBed.inject(CasosM3Api) as unknown as { guardarNarrativa: unknown };
+    api.guardarNarrativa = () => throwError(() => new HttpErrorResponse({ status: 422, error: { errores: [{ campo: 'personajes[0].dialogo', codigo: 'DIALOGO_REQUERIDO' }] } }));
+    t.clic('edificio-hospital_entrada');
+    t.clic('puesto-hosp-npc-doctor');
+    t.escribir('nombre-hosp-npc-doctor', 'Dra. López');
+    t.escribir('dialogo-hosp-npc-doctor', 'Hola.');
+    t.clic('guardar-narrativa');
+    const alerta = t.raiz.querySelector('.mensaje.error') as HTMLElement;
+    expect(alerta.getAttribute('role')).toBe('alert');
+    expect(alerta.textContent).toContain('Falta el diálogo del personaje.');
+    expect(alerta.textContent).not.toContain('DIALOGO_REQUERIDO');
   });
 
   it('contarIntervenciones separa por líneas en blanco e ignora espacios', () => {

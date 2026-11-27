@@ -58,7 +58,8 @@ describe('Rutas públicas de presentación', () => {
       const pantalla = harness.routeNativeElement as HTMLElement;
       expect(TestBed.inject(Router).url).toBe('/simulador-unreal');
       expect(pantalla.textContent).toContain('Ciudad 3D pendiente de habilitación');
-      expect(pantalla.textContent).toContain('Pixel Streaming');
+      // DC-MVP-09-R07-IMP: el aviso ya no expone «Pixel Streaming» al estudiante; se identifica el visor por su bloque.
+      expect(pantalla.querySelector('#titulo-disponibilidad')).not.toBeNull();
       expect(pantalla.textContent).not.toContain('2.5D');
       expect(pantalla.querySelector('canvas, app-visor-ciudad-2d5, app-simulador-temporal, app-simulador-integrado-page')).toBeNull();
       expect(pantalla.querySelector('video')).toBeNull();

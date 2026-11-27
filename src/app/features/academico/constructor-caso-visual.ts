@@ -49,6 +49,12 @@ export const contarIntervenciones = (dialogo: string) => dialogo.split(/\n\s*\n/
         }
       </ol>
 
+      @if (noDisponible()) {
+        <p class="mensaje" role="status" data-prueba="diseno-no-disponible">
+          El diseño del caso en la ciudad 3D no está disponible en este servidor: no está habilitado en este entorno
+          o el caso no admite diseño 3D. Puedes consultar las opciones, pero no se guardarán ni abrirán en la vista previa.
+        </p>
+      }
       @if (aviso(); as a) {
         <p class="mensaje" [class.error]="a.tipo === 'error'" [class.exito]="a.tipo === 'exito'" [attr.role]="a.tipo === 'error' ? 'alert' : 'status'">{{ a.texto }}</p>
       }
@@ -59,7 +65,7 @@ export const contarIntervenciones = (dialogo: string) => dialogo.split(/\n\s*\n/
             @for (e of cat.catalogo.edificios; track e.clave) {
               <label class="tarjeta-edificio" [class.seleccionada]="edificios().includes(e.clave)">
                 <input type="checkbox" [checked]="edificios().includes(e.clave)" (change)="alternarEdificio(e.clave)"
-                  [disabled]="ocupado()" [attr.data-prueba]="'edificio-' + e.zoneId" />
+                  [disabled]="bloqueado()" [attr.data-prueba]="'edificio-' + e.zoneId" />
                 <span class="tarjeta-edificio-texto">
                   <strong>{{ e.nombre }}</strong>
                   <small>{{ ocupacion(e.clave) }} de {{ capacidad(e.clave) }} {{ capacidad(e.clave) === 1 ? 'puesto' : 'puestos' }} en uso</small>
@@ -78,16 +84,16 @@ export const contarIntervenciones = (dialogo: string) => dialogo.split(/\n\s*\n/
                 <div class="puesto" [class.seleccionado]="!!personajes()[p.clave]">
                   <label class="opcion">
                     <input type="checkbox" [checked]="!!personajes()[p.clave]" (change)="alternarPuesto(p.clave)"
-                      [disabled]="ocupado()" [attr.data-prueba]="'puesto-' + p.npcId" />
+                      [disabled]="bloqueado()" [attr.data-prueba]="'puesto-' + p.npcId" />
                     <span><strong>{{ modelos[p.modelo] ?? p.modelo }}</strong>
                       <small>{{ personajes()[p.clave] ? 'Participa en el caso' : 'Disponible' }}</small></span>
                   </label>
                   @if (personajes()[p.clave]; as per) {
                     <div class="campos campos-puesto">
-                      <label>Nombre del personaje <input [value]="per.nombre" (input)="editar(p.clave, 'nombre', $event)" maxlength="120" [disabled]="ocupado()" [attr.data-prueba]="'nombre-' + p.npcId" /></label>
-                      <label>Rol <input [value]="per.rol" (input)="editar(p.clave, 'rol', $event)" maxlength="120" [disabled]="ocupado()" [attr.data-prueba]="'rol-' + p.npcId" /></label>
+                      <label>Nombre del personaje <input [value]="per.nombre" (input)="editar(p.clave, 'nombre', $event)" maxlength="120" [disabled]="bloqueado()" [attr.data-prueba]="'nombre-' + p.npcId" /></label>
+                      <label>Rol <input [value]="per.rol" (input)="editar(p.clave, 'rol', $event)" maxlength="120" [disabled]="bloqueado()" [attr.data-prueba]="'rol-' + p.npcId" /></label>
                       <label class="campo-dialogo">Diálogo
-                        <textarea rows="4" [value]="per.dialogo" (input)="editar(p.clave, 'dialogo', $event)" [disabled]="ocupado()"
+                        <textarea rows="4" [value]="per.dialogo" (input)="editar(p.clave, 'dialogo', $event)" [disabled]="bloqueado()"
                           [attr.aria-describedby]="'ayuda-' + p.npcId" [attr.data-prueba]="'dialogo-' + p.npcId"></textarea>
                       </label>
                       <small class="etiqueta-real" [id]="'ayuda-' + p.npcId">Una línea en blanco separa las intervenciones · {{ contarIntervenciones(per.dialogo) }} {{ contarIntervenciones(per.dialogo) === 1 ? 'intervención' : 'intervenciones' }}</small>
@@ -122,12 +128,13 @@ export const contarIntervenciones = (dialogo: string) => dialogo.split(/\n\s*\n/
         </section>
 
         <div class="acciones">
-          <button type="button" (click)="guardar()" [disabled]="ocupado() || erroresLocales().length > 0 || !hayCambios()" data-prueba="guardar-narrativa">Guardar en el caso</button>
-          <button type="button" (click)="vistaPrevia()" [disabled]="ocupado() || !guardado() || hayCambios()" data-prueba="vista-previa"
+          <button type="button" (click)="guardar()" [disabled]="bloqueado() || erroresLocales().length > 0 || !hayCambios()" data-prueba="guardar-narrativa">Guardar en el caso</button>
+          <button type="button" (click)="vistaPrevia()" [disabled]="bloqueado() || !guardado() || hayCambios()" data-prueba="vista-previa"
             aria-describedby="ayuda-vista-previa">7. Vista previa en la ciudad 3D</button>
         </div>
         <p class="etiqueta-real" id="ayuda-vista-previa">
-          @if (!guardado()) { Guarda el caso para poder verlo en la ciudad 3D. }
+          @if (noDisponible()) { Sin el diseño 3D habilitado en el servidor no se puede guardar ni abrir la vista previa. }
+          @else if (!guardado()) { Guarda el caso para poder verlo en la ciudad 3D. }
           @else if (hayCambios()) { Guarda los cambios: la vista previa muestra la versión guardada en el servidor. }
           @else { La vista previa usa exactamente la versión guardada. }
         </p>
@@ -191,6 +198,12 @@ export class ConstructorCasoVisual {
   protected readonly guardado = signal<GuionGuardado | null>(null);
   protected readonly ocupado = signal(false);
   protected readonly aviso = signal<{ tipo: 'exito' | 'error' | 'info'; texto: string } | null>(null);
+  /**
+   * FE-UX-06 (DC-MVP-09-R12): el servidor respondió 404 al pedir la narrativa del caso (p. ej. narrativa M3 apagada en
+   * este entorno). No se ofrece una edición que no se podrá guardar: los campos y acciones quedan desactivados.
+   */
+  protected readonly noDisponible = signal(false);
+  protected readonly bloqueado = computed(() => this.ocupado() || this.noDisponible());
 
   private readonly seleccion = computed<SeleccionCaso>(() => {
     const cat = this.catalogo()?.catalogo;
@@ -317,7 +330,7 @@ export class ConstructorCasoVisual {
 
   protected guardar(): void {
     const cat = this.catalogo()?.catalogo;
-    if (!cat || this.ocupado() || this.erroresLocales().length) return;
+    if (!cat || this.bloqueado() || this.erroresLocales().length) return;
     const idCaso = this.idCaso();
     this.ocupado.set(true);
     this.aviso.set(null);
@@ -341,9 +354,17 @@ export class ConstructorCasoVisual {
 
   private recuperar(idCaso: string): void {
     this.ocupado.set(true);
+    this.noDisponible.set(false);
     this.api.narrativa(idCaso).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (n) => { this.aplicar(n.borrador); this.ocupado.set(false); },
-      error: (e: unknown) => this.fallar(e),
+      error: (e: unknown) => {
+        if (aFalloAcademico(e).estado === 404) {
+          this.ocupado.set(false);
+          this.noDisponible.set(true);
+          return;
+        }
+        this.fallar(e);
+      },
     });
   }
 
