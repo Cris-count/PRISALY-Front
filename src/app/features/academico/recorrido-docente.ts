@@ -63,17 +63,18 @@ export const PASOS_RECORRIDO: readonly PasoRecorrido[] = [
   template: `
     @if (sesionValida()) {
       <nav class="recorrido" aria-label="Recorrido docente">
-        <p class="titulo">Pasos del caso</p>
+        <p class="titulo">Recorrido académico</p>
         <ol>
-          @for (paso of pasos; track paso.titulo; let i = $index) {
+          @for (paso of pasos; track paso.titulo) {
             <li>
               <a
                 [routerLink]="paso.ruta"
                 [queryParams]="parametros()"
                 [attr.aria-current]="paso.etapa === etapa() ? 'step' : null"
                 [title]="paso.detalle"
-                >{{ paso.titulo }}</a
               >
+                {{ paso.titulo }}
+              </a>
             </li>
           }
         </ol>
@@ -91,8 +92,8 @@ export const PASOS_RECORRIDO: readonly PasoRecorrido[] = [
     }
     .recorrido {
       margin: 0 0 1rem;
-      padding: 0.75rem 1rem;
-      border: 1px solid #c9d4e5;
+      padding: 1rem;
+      border: 1px solid var(--p-borde);
       border-radius: 0.5rem;
       background: #f5f8fc;
     }
@@ -103,13 +104,24 @@ export const PASOS_RECORRIDO: readonly PasoRecorrido[] = [
     ol {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem 1.5rem;
+      gap: 0.35rem 0.75rem;
       margin: 0;
       padding: 0;
       list-style: none;
     }
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-height: 2.75rem;
+      padding-inline: 0.65rem;
+      border-radius: 0.5rem;
+      color: var(--p-azul);
+    }
     a[aria-current] {
       font-weight: 700;
+      background: var(--p-azul-profundo);
+      color: var(--p-blanco, white);
     }
     .contexto {
       margin: 0.25rem 0 0;

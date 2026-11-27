@@ -26,6 +26,7 @@ import {
 import { filter, map, tap } from 'rxjs';
 import { MAPEO_RUTAS_PERSONAL } from '../autenticacion/m1-mapeo-rutas';
 import { SesionEstudianteDemo } from '../autenticacion/acceso-estudiante-demo';
+import { PARAM_CASO, PARAM_SESION, uuidDeParametro } from '../academico/contexto-recorrido';
 import {
   hayRutasHabilitadas,
   NAVEGACION_ESTUDIANTE,
@@ -87,6 +88,18 @@ export class DashboardLayout {
   }
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly consulta = toSignal(this.ruta.queryParamMap);
+  protected parametrosDocentes(ruta: string): Record<string, string> {
+    const estado = this.sesion?.estado();
+    if (estado?.tipo !== 'valida') return {};
+    if (!['casos-academicos', 'rubricas', 'sesiones', 'convocatorias'].includes(ruta)) return {};
+    const parametros: Record<string, string> = {};
+    for (const nombre of [PARAM_CASO, PARAM_SESION]) {
+      const id = uuidDeParametro(this.consulta()?.get(nombre));
+      if (id) parametros[nombre] = id;
+    }
+    return parametros;
+  }
   private readonly botonMenu = viewChild<ElementRef<HTMLButtonElement>>('botonMenu');
   private readonly mapeo = inject(MAPEO_RUTAS_PERSONAL);
   /** DC-FE-UX-ROLES-24: banner técnico solo en QA ordinario (sin rutas efectivamente habilitadas). */
