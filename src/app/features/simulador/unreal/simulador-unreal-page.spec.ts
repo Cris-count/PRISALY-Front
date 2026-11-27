@@ -793,6 +793,7 @@ describe('SimuladorUnrealPage', () => {
       expect(cerrar().disabled).toBeTrue();
       prueba.pagina.desconectar();
     });
+  });
 
   it('sin conexiones simultáneas: el botón durante la espera sustituye al reintento y durante un intento no abre otro', async () => {
     const prueba = preparar(asignacion, [40, 40, 40]);
