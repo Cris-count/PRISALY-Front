@@ -148,7 +148,7 @@ const ERROR_MOVIMIENTO = 'La ciudad no aceptó ese destino. Prueba de nuevo o ca
         </nav>
         <p>Ubicación: {{ ubicacion() }}</p>
       }
-      <app-hospital-narrativo-unreal />
+      <app-hospital-narrativo-unreal (conversacionCerrada)="enfocarVisor()" />
       <footer>
         <button type="button" (click)="volverAlPortal()">
           {{ esVistaPrevia ? 'Volver al panel docente' : 'Volver al portal académico' }}
@@ -456,6 +456,11 @@ export class SimuladorUnrealPage {
 
   reproducir(): void {
     this.reproductor?.reproducir();
+  }
+
+  /** FE-UX-09: tras cerrar una conversación el foco vuelve al visor para seguir caminando con el teclado. */
+  enfocarVisor(): void {
+    if (this.conectado()) this.visor().nativeElement.focus();
   }
 
   desconectar(): void {
