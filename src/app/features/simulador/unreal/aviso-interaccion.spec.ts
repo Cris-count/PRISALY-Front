@@ -59,4 +59,12 @@ describe('G4-V11 / FE-UX-09 · avisos de interacción de MUNDO-24', () => {
     expect(avisoConexion({ ...c, reconectando: true })?.tipo).toBe('problema');
     expect(avisoConexion({ ...c, conectado: true })).toBeNull();
   });
+
+  it('durante un reintento automático muestra el número de intento, también mientras conecta', () => {
+    const c = { conectado: false, conectando: false, reconectando: true, fallo: false, reintento: { intento: 2, total: 3 } };
+    expect(avisoConexion(c)).toEqual({ tipo: 'progreso', texto: 'Conexión perdida. Reintentando (2 de 3)…' });
+    expect(avisoConexion({ ...c, conectando: true })?.texto).toBe('Conexión perdida. Reintentando (2 de 3)…');
+    expect(avisoConexion({ ...c, conectado: true })).toBeNull();
+    expect(avisoConexion({ ...c, reintento: null })?.tipo).toBe('problema');
+  });
 });

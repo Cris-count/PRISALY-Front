@@ -9,7 +9,7 @@ import {
   FabricaReproductorUnreal,
   ReproductorUnreal,
 } from './reproductor-unreal';
-import { SimuladorUnrealPage } from './simulador-unreal-page';
+import { RETARDOS_RECONEXION_UNREAL, SimuladorUnrealPage } from './simulador-unreal-page';
 import { CanalPixelStreaming, TransportePixelStreaming } from './transporte-pixel-streaming';
 
 describe('SimuladorUnrealPage', () => {
@@ -24,7 +24,7 @@ describe('SimuladorUnrealPage', () => {
     esquemas = await cargarEsquemasBrowser();
   });
 
-  function preparar(sesion: SesionVisualUnreal | null = asignacion) {
+  function preparar(sesion: SesionVisualUnreal | null = asignacion, retardos?: readonly number[]) {
     let responder!: (texto: string) => void;
     let informar!: Parameters<FabricaReproductorUnreal>[2];
     let numero = 1;
@@ -77,6 +77,7 @@ describe('SimuladorUnrealPage', () => {
         { provide: SESION_VISUAL_UNREAL, useValue: sesion },
         { provide: CARGAR_ESQUEMAS_UNREAL, useValue: cargar },
         { provide: FABRICA_REPRODUCTOR_UNREAL, useValue: fabrica },
+        ...(retardos ? [{ provide: RETARDOS_RECONEXION_UNREAL, useValue: retardos }] : []),
       ],
     });
     const fixture = TestBed.createComponent(SimuladorUnrealPage);
@@ -495,8 +496,40 @@ describe('SimuladorUnrealPage', () => {
     expect(prueba.pagina.hospital.conversacion()).toBe('abierta');
   }
 
-  it('tras una caída real del canal de datos no reconecta solo y al reconectar envía estado.restaurar con el progreso (canal simulado)', async () => {
-    const prueba = preparar();
+  /** Prepara el reproductor que entregará la fábrica en la próxima conexión (manual o automática). */
+  function siguienteReproductor(prueba: ReturnType<typeof preparar>) {
+    const transporte = new TransportePixelStreaming(prueba.canal);
+    const control: { informar: Parameters<FabricaReproductorUnreal>[2] | null } = { informar: null };
+    prueba.fabrica.and.callFake(async (_contenedor, _sesion, callback) => {
+      control.informar = callback;
+      return {
+        ...prueba.reproductor,
+        transporte,
+        cerrar: jasmine.createSpy('cerrar-siguiente').and.callFake(() => transporte.cerrar()),
+      };
+    });
+    return { transporte, control };
+  }
+
+  async function esperarHasta(condicion: () => boolean, limiteMs = 3000) {
+    const inicio = Date.now();
+    while (!condicion()) {
+      if (Date.now() - inicio > limiteMs) throw new Error('Condición no alcanzada');
+      await new Promise<void>((resolver) => setTimeout(resolver, 5));
+    }
+  }
+
+  async function conectarConfirmado(prueba: ReturnType<typeof preparar>) {
+    await prueba.pagina.conectar();
+    prueba.reproductor.transporte.abrir();
+    prueba.informar('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' });
+    await prueba.fixture.whenStable();
+    await esperarHasta(() => prueba.pagina.conectado());
+  }
+
+  it('tras una caída real del canal de datos reconecta sola y envía estado.restaurar con el progreso (canal simulado)', async () => {
+    const prueba = preparar(asignacion, [10, 10, 10]);
     const hospital = prueba.pagina.hospital;
     const libreta = prueba.fixture.debugElement.injector.get(LibretaStore);
     await entrarAlDoctor(prueba);
@@ -511,23 +544,27 @@ describe('SimuladorUnrealPage', () => {
     expect(hospital.conversacion()).toBe('cerrada');
     libreta.crearNota('Retomar tras la caída del canal');
     const n0 = prueba.canal.emitUIInteraction.calls.count();
+    const { transporte, control } = siguienteReproductor(prueba);
 
     caerCanal(prueba);
-    await prueba.fixture.whenStable();
     expect(prueba.pagina.conectado()).toBeFalse();
-    expect(prueba.fabrica).toHaveBeenCalledTimes(1);
-    expect(prueba.reproductor.conectar).toHaveBeenCalledTimes(1);
+    expect(prueba.pagina.reintento()).toEqual({ intento: 1, total: 3 });
+    expect(prueba.pagina.estado()).toContain('Reintento automático 1 de 3');
+    expect(prueba.pagina.avisoConexion()?.texto).toContain('Reintentando (1 de 3)');
+    expect(prueba.pagina.error()).toBeNull();
     expect(prueba.canal.emitUIInteraction.calls.count()).toBe(n0);
-    expect(prueba.pagina.estado()).toContain('Se perdió la conexión');
     expect(hospital.ultimaZona()).toBe('hospital_entrada');
-    expect(hospital.enInterior()).toBeFalse();
-    expect(
-      hospital.recorrido()[0].npcs.find((n) => n.espacialId === 'hosp-npc-doctor')?.estado,
-    ).toBe('completado');
     expect(libreta.estado().pistas.length).toBe(1);
     expect(libreta.estado().notas.length).toBe(1);
 
-    await reconectar(prueba);
+    await esperarHasta(() => (prueba.reproductor.conectar as jasmine.Spy).calls.count() === 2);
+    expect(prueba.fabrica).toHaveBeenCalledTimes(2);
+    transporte.abrir();
+    control.informar!('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' });
+    await prueba.fixture.whenStable();
+    // Tiempo de quietud del contrato con MUNDO-24 antes de habilitar controles.
+    await esperarHasta(() => prueba.pagina.conectado());
     const nuevas = prueba.canal.emitUIInteraction.calls
       .allArgs()
       .slice(n0)
@@ -550,12 +587,64 @@ describe('SimuladorUnrealPage', () => {
         { interactuableId: 'fis-npc-fiscal', estado: 'disponible' },
       ],
     });
-    expect(prueba.fabrica).toHaveBeenCalledTimes(2);
-    expect(prueba.pagina.conectado()).toBeTrue();
+    expect(prueba.pagina.reintento()).toBeNull();
+    expect(prueba.pagina.estado()).toBe('Conexión recuperada. Sesión visual confirmada.');
+    expect(prueba.pagina.avisoConexion()).toBeNull();
     expect(prueba.pagina.ubicacion()).toBe('Acceso recuperado: Hospital');
     expect(libreta.estado().pistas.length).toBe(1);
     expect(libreta.estado().notas.length).toBe(1);
     prueba.pagina.desconectar();
+  });
+
+  it('agota los reintentos automáticos acotados y vuelve al botón manual sin perder el progreso', async () => {
+    const prueba = preparar(asignacion, [5, 5, 5]);
+    await conectarConfirmado(prueba);
+    prueba.fabrica.and.rejectWith(new Error('Servidor de señalización caído'));
+
+    caerCanal(prueba);
+    await esperarHasta(() => prueba.pagina.error() !== null);
+    expect(prueba.fabrica).toHaveBeenCalledTimes(4);
+    expect(prueba.pagina.reintento()).toBeNull();
+    expect(prueba.pagina.error()).toContain('3 intentos automáticos');
+    expect(prueba.pagina.estado()).toBe('Conexión no recuperada.');
+    expect(prueba.pagina.avisoConexion()?.tipo).toBe('problema');
+    await new Promise<void>((resolver) => setTimeout(resolver, 40));
+    expect(prueba.fabrica).toHaveBeenCalledTimes(4);
+
+    // El botón manual vuelve a empezar la cuenta.
+    const { transporte, control } = siguienteReproductor(prueba);
+    const conexion = prueba.pagina.conectar();
+    expect(prueba.pagina.error()).toBeNull();
+    await conexion;
+    transporte.abrir();
+    control.informar!('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' });
+    await esperarHasta(() => prueba.pagina.conectado());
+    expect(prueba.pagina.estado()).toBe('Ciudad 3D conectada. Sesión visual confirmada.');
+    prueba.pagina.desconectar();
+  });
+
+  it('desconectar durante la espera de un reintento lo anula', async () => {
+    const prueba = preparar(asignacion, [30, 30, 30]);
+    await conectarConfirmado(prueba);
+    caerCanal(prueba);
+    expect(prueba.pagina.reintento()).not.toBeNull();
+    prueba.pagina.desconectar();
+    expect(prueba.pagina.reintento()).toBeNull();
+    await new Promise<void>((resolver) => setTimeout(resolver, 80));
+    expect(prueba.fabrica).toHaveBeenCalledTimes(1);
+    expect(prueba.pagina.estado()).toBe('Desconectado del simulador 3D.');
+  });
+
+  it('una caída antes de confirmar la sesión no reintenta sola', async () => {
+    const prueba = preparar(asignacion, [5, 5, 5]);
+    await prueba.pagina.conectar();
+    prueba.reproductor.transporte.abrir();
+    caerCanal(prueba);
+    expect(prueba.pagina.reintento()).toBeNull();
+    await new Promise<void>((resolver) => setTimeout(resolver, 40));
+    expect(prueba.fabrica).toHaveBeenCalledTimes(1);
+    expect(prueba.pagina.estado()).toContain('Se perdió la conexión');
   });
 
   it('una caída real con la conversación abierta restaura al doctor como disponible (canal simulado)', async () => {

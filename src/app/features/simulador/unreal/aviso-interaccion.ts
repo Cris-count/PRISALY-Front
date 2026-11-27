@@ -68,8 +68,12 @@ export function avisoConexion(e: {
   readonly conectando: boolean;
   readonly reconectando: boolean;
   readonly fallo: boolean;
+  /** Reintento automático en curso tras perder un recorrido confirmado. */
+  readonly reintento?: { readonly intento: number; readonly total: number } | null;
 }): AvisoConexion | null {
   if (e.conectado) return null;
+  if (e.reintento)
+    return { tipo: 'progreso', texto: `Conexión perdida. Reintentando (${e.reintento.intento} de ${e.reintento.total})…` };
   if (e.conectando) return { tipo: 'progreso', texto: e.reconectando ? 'Reconectando con la ciudad 3D…' : 'Conectando con la ciudad 3D…' };
   if (e.fallo) return { tipo: 'problema', texto: 'No fue posible establecer la conexión con la ciudad 3D' };
   if (e.reconectando) return { tipo: 'problema', texto: 'La ciudad 3D se desconectó. Reconecta para continuar donde lo dejaste' };
