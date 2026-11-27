@@ -17,6 +17,10 @@
   --p-sec: #344968;
   --p-azul: #0755b8;
   --p-azul-electrico: #0755d9;
+  /* FE-UX-01 (extract): colores de identidad que estaban repetidos como literales. */
+  --p-azul-profundo: #052650;
+  --p-azul-banner: #073575;
+  --p-acento-banner: #ffad35;
   --p-celeste: #10d9f4;
   --p-naranja: #ff861b;
   --p-borde: #c7d5e8;

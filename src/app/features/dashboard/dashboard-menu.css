@@ -100,7 +100,7 @@
 .perfil {
   padding: 0.65rem 1rem;
   border-radius: 1.2rem 0.4rem 1.2rem 1.2rem;
-  background: #073575;
+  background: var(--p-azul-banner);
   color: #fff;
   box-shadow: 0 4px 16px #07357522;
 }
@@ -126,7 +126,7 @@
 /* Sidebar institucional único: independiente de la sección activa. */
 @media (min-width: 801px) {
   .lateral {
-    background: linear-gradient(155deg, #052650, #073575), #052650;
+    background: linear-gradient(155deg, var(--p-azul-profundo), var(--p-azul-banner)), var(--p-azul-profundo);
     padding-top: 1rem;
   }
   .lateral::before {
@@ -134,7 +134,7 @@
     bottom: 7rem;
     border-radius: 50% 0 0;
     background:
-      linear-gradient(0deg, #073575, transparent 45%),
+      linear-gradient(0deg, var(--p-azul-banner), transparent 45%),
       url('/images/inicio-ciudad.webp') center/cover;
   }
   .lateral::after {

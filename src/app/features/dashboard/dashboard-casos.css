@@ -17,7 +17,7 @@
     align-items: center;
     margin: 0.35rem 0 var(--vista-aviso-gap);
     padding: 0.875rem 1.6rem;
-    background: linear-gradient(100deg, #052650, #0755b8 52%, #a6dfff);
+    background: linear-gradient(100deg, var(--p-azul-profundo), #0755b8 52%, #a6dfff);
     border-radius: var(--vista-banner-radio);
   }
   .icono-docente {
@@ -83,7 +83,7 @@
   }
   .crear-caso small {
     display: block;
-    color: #052650;
+    color: var(--p-azul-profundo);
     background: #e9f6ff;
     border-radius: 0.5rem;
     padding: 0.25rem;

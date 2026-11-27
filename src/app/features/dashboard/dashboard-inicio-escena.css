@@ -50,7 +50,7 @@
   .bienvenida {
     grid-template-columns: minmax(0, 1fr);
     padding: 1rem;
-    background: linear-gradient(110deg, #052650, #0755b8), #052650;
+    background: linear-gradient(110deg, var(--p-azul-profundo), #0755b8), var(--p-azul-profundo);
   }
   .emblema-institucional {
     grid-row: 2;

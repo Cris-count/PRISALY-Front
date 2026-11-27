@@ -154,6 +154,6 @@
 /* Al apilar el banner, el texto permanece sobre la zona azul de alto contraste. */
 @container (max-width: 35rem) {
   .casos .cabecera-docente {
-    background: linear-gradient(110deg, #052650, #0755b8);
+    background: linear-gradient(110deg, var(--p-azul-profundo), #0755b8);
   }
 }

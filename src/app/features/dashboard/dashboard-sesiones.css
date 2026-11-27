@@ -22,7 +22,7 @@
   padding: 0.55rem 1.4rem 0.4rem;
   border: 1px solid #c9e4ff;
   border-radius: var(--vista-banner-radio);
-  background: linear-gradient(105deg, #052650, #0755b8 48%, #c9edff);
+  background: linear-gradient(105deg, var(--p-azul-profundo), #0755b8 48%, #c9edff);
   box-shadow: 0 8px 20px #123c7318;
   color: white;
 }
