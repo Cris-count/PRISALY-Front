@@ -31,4 +31,3 @@ Limitación: no hay evidencia del navegador ni del bundle del momento original d
 - Angular: acceso-roles.spec.ts y m1-personal-rutas-qa.spec.ts, 6/6 aprobadas en ChromeHeadless.
 - Control de artefactos: presentación, producción y visor aprobados; dos casos negativos rechazados (visor como presentación y QA como producción).
 - Durante la revisión apareció el commit ajeno 0f6997a; se preservó. El estado inicial de la aplicación ya era funcional, por lo que no se realizó un despliegue correctivo.
-
