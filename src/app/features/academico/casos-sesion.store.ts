@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { CasoDocente } from './casos-m3.api';
 
@@ -25,6 +25,20 @@ export class CasosSesionStore {
     const usuario = this.usuario();
     return usuario ? this.interno().filter((c) => c.propietario === usuario) : [];
   });
+
+  constructor() {
+    effect(() => {
+      const estado = this.sesion.estado().tipo;
+      if (
+        estado === 'cerrando' ||
+        estado === 'cierre-confirmado' ||
+        estado === 'no-autenticada' ||
+        estado === 'expirada'
+      ) {
+        this.interno.set([]);
+      }
+    });
+  }
 
   recordar(caso: CasoDocente): void {
     const propietario = this.usuario();

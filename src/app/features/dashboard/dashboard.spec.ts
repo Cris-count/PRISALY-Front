@@ -275,7 +275,7 @@ describe('Dashboard público de demostración', () => {
       preferencia.click();
       expect(preferencia.checked).toBeFalse();
     }
-    expect(raiz().textContent).toContain('No habilita operaciones administrativas reales');
+    expect(raiz().textContent).toContain('Las preferencias institucionales todavía no están disponibles');
     expect(raiz().textContent).toContain('Referencia estática demostrativa');
     expect(raiz().querySelectorAll('.config-tarjeta a, .config-tarjeta button').length).toBe(0);
     expect(guardar).not.toHaveBeenCalled();

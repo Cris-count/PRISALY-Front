@@ -83,6 +83,7 @@
         @for (seccion of secciones(); track seccion.ruta) {
           <a
             [routerLink]="['/dashboard', seccion.ruta]"
+            [queryParams]="parametrosDocentes(seccion.ruta)"
             [attr.aria-label]="seccion.titulo"
             [title]="seccion.titulo"
             routerLinkActive="activo"

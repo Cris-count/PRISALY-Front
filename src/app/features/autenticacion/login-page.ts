@@ -37,9 +37,15 @@ export class LoginPage {
   private readonly destroyRef = inject(DestroyRef);
   private temporizador?: ReturnType<typeof setTimeout>;
   protected readonly introduccionTerminada = signal(false);
+  protected readonly segundosRestantes = signal(0);
+  private finEspera = 0;
+  private cuentaRegresiva?: ReturnType<typeof setInterval>;
 
   constructor() {
-    this.destroyRef.onDestroy(() => clearTimeout(this.temporizador));
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(this.temporizador);
+      clearInterval(this.cuentaRegresiva);
+    });
     afterNextRender(() => {
       void this.prepararPresentacion();
     });
@@ -111,7 +117,22 @@ export class LoginPage {
     clave: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
+  private iniciarEspera(segundos: number): void {
+    this.finEspera = Date.now() + segundos * 1000;
+    this.segundosRestantes.set(segundos);
+    clearInterval(this.cuentaRegresiva);
+    this.cuentaRegresiva = setInterval(() => {
+      const restantes = Math.max(0, Math.ceil((this.finEspera - Date.now()) / 1000));
+      this.segundosRestantes.set(restantes);
+      if (restantes === 0) {
+        clearInterval(this.cuentaRegresiva);
+        this.aviso.set('Ya puedes intentar iniciar sesión nuevamente.');
+      }
+    }, 1000);
+  }
+
   protected enviar(): void {
+    if (Date.now() < this.finEspera || this.enviando()) return;
     this.formulario.markAllAsTouched();
     this.aviso.set('');
     if (this.formulario.invalid || this.enviando()) return;
@@ -131,10 +152,8 @@ export class LoginPage {
               void this.router.navigateByUrl('/dashboard');
             } else {
               const espera = estado.fallo?.reintentarEnSegundos;
-              this.aviso.set(
-                (estado.fallo?.mensaje ?? 'No se pudo verificar la sesión.') +
-                  (espera ? ` Reintenta después de ${espera} segundos.` : ''),
-              );
+              this.aviso.set(estado.fallo?.mensaje ?? 'No se pudo verificar la sesión.');
+              if (espera) this.iniciarEspera(espera);
             }
           },
           error: () => this.aviso.set('No fue posible completar el acceso. Inténtalo nuevamente.'),

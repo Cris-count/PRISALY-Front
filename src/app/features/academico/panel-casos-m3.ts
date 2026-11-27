@@ -11,6 +11,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { switchMap } from 'rxjs';
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { aFalloAcademico, esUuid, mensajeFallo, UUID_RE } from './academico-http';
+import { CambiosSinGuardarService } from './cambios-sin-guardar';
 import { CasoDocente, CasoPatch, CasosM3Api } from './casos-m3.api';
 import { CasosSesionStore } from './casos-sesion.store';
 import { ConstructorCasoVisual } from './constructor-caso-visual';
@@ -58,6 +59,7 @@ export class PanelCasosM3 {
   protected readonly requiereReconsulta = signal(false);
   /** FE-55: caso activo compartido por URL con contenido, rúbrica y sesiones. */
   private readonly paramCaso = new ParametroRecorrido(PARAM_CASO);
+  private readonly cambiosSinGuardar = inject(CambiosSinGuardarService);
   private casoPendiente: string | null = null;
 
   /** Siguiente paso del recorrido según el estado leído del servidor (solo orientación). */
@@ -72,6 +74,7 @@ export class PanelCasosM3 {
   });
 
   constructor() {
+    this.cambiosSinGuardar.vincularFormularios('casos-m3', [this.formCrear, this.formEditar]);
     this.paramCaso
       .invalidaciones()
       .pipe(takeUntilDestroyed())
@@ -172,6 +175,7 @@ export class PanelCasosM3 {
 
   protected consultar(idCaso: string, avisoFinal: Aviso = null): void {
     if (!esUuid(idCaso)) return;
+    if (!this.cambiosSinGuardar.confirmarCambioCaso(this.caso()?.idCaso, idCaso)) return;
     if (this.caso()?.idCaso.toLowerCase() !== idCaso.toLowerCase()) {
       this.caso.set(null);
       this.etag.set(null);

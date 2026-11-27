@@ -3,10 +3,11 @@ import {
   Component,
   computed,
   DestroyRef,
+  HostListener,
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -18,6 +19,8 @@ import {
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { aFalloAcademico, mensajeFallo, UUID_RE } from './academico-http';
 import { CasosSesionStore } from './casos-sesion.store';
+import { CasoDocente, CasosM3Api, Versionado } from './casos-m3.api';
+import { EMPTY, Observable, of, switchMap } from 'rxjs';
 import { PanelParticipacionesDc92 } from './panel-participaciones-dc92';
 import {
   PARAM_CASO,
@@ -117,6 +120,7 @@ export const ETIQUETA_ESTADO: Readonly<Record<EstadoSesion, string>> = {
 })
 export class PanelSesionesM4 {
   private readonly api = inject(SesionesM4Api);
+  private readonly apiCasos = inject(CasosM3Api);
   private readonly sesion = inject(SesionPersonalM1);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly casos = inject(CasosSesionStore);
@@ -199,6 +203,10 @@ export class PanelSesionesM4 {
     { validators: rangoFechas },
   );
 
+  protected readonly casoParaProgramar = toSignal(this.formCrear.controls.casoId.valueChanges, {
+    initialValue: this.formCrear.controls.casoId.value,
+  });
+
   protected readonly formEditar = new FormGroup(
     {
       titulo: new FormControl('', {
@@ -255,17 +263,36 @@ export class PanelSesionesM4 {
     const fin = aInstante(v.fechaFin);
     if (!inicio || !fin) return;
     this.iniciar();
-    this.api
-      .crear({
-        casoId: v.casoId.trim(),
-        titulo: v.titulo.trim(),
-        mensajePersonalizado: v.mensajePersonalizado.trim() || null,
-        fechaInicio: inicio,
-        fechaFin: fin,
-        tiempoMaximoParticipacionSegundos: Math.round((v.minutosMaximos ?? 0) * 60),
-        lugarFisico: v.lugarFisico.trim() || null,
-      })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    const idCaso = v.casoId.trim();
+    const recordado = this.casos.casos().some((caso) => caso.idCaso === idCaso.toLowerCase());
+    const verificarCaso: Observable<Versionado<CasoDocente> | null> = recordado
+      ? this.apiCasos.consultar(idCaso)
+      : of(null);
+    verificarCaso
+      .pipe(
+        switchMap((version) => {
+          if (version) {
+            this.casos.recordar(version.datos);
+            if (version.datos.estado !== 'PUBLICADO') {
+              this.terminar({
+                tipo: 'error',
+                texto: 'El caso ya no está publicado. Elige otro caso para programar la sesión.',
+              });
+              return EMPTY;
+            }
+          }
+          return this.api.crear({
+            casoId: idCaso,
+            titulo: v.titulo.trim(),
+            mensajePersonalizado: v.mensajePersonalizado.trim() || null,
+            fechaInicio: inicio,
+            fechaFin: fin,
+            tiempoMaximoParticipacionSegundos: Math.round((v.minutosMaximos ?? 0) * 60),
+            lugarFisico: v.lugarFisico.trim() || null,
+          });
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
         next: (s) => {
           this.seleccionar(s);
@@ -345,9 +372,23 @@ export class PanelSesionesM4 {
   }
 
   protected usarCaso(idCaso: string): void {
+    if (this.ocupado() || this.formCrear.controls.casoId.value === idCaso) return;
+    if (
+      this.hayDatosSinGuardar() &&
+      !window.confirm('Hay datos sin guardar. ¿Quieres cambiar el caso de la sesión?')
+    ) return;
     this.formCrear.controls.casoId.setValue(idCaso);
     this.formCrear.controls.casoId.markAsDirty();
     this.paramCaso.fijar(idCaso);
+  }
+
+  private hayDatosSinGuardar(): boolean {
+    return Object.entries(this.formCrear.controls).some(([nombre, campo]) => nombre !== 'casoId' && campo.dirty);
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  protected protegerFormulario(evento: BeforeUnloadEvent): void {
+    if (this.hayDatosSinGuardar() || this.formEditar.dirty) evento.preventDefault();
   }
 
   protected fecha(instante: string | null): string {

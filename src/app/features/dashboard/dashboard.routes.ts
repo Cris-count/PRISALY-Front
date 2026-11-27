@@ -6,6 +6,7 @@ import {
   requiereMapeoPersonalQa,
   requiereSesionPersonalQa,
 } from '../autenticacion/m1-personal-rutas-qa';
+import { protegerCambiosSinGuardar } from '../academico/cambios-sin-guardar';
 
 export const DASHBOARD_ROUTES: Routes = [
   {
@@ -40,6 +41,7 @@ export const DASHBOARD_ROUTES: Routes = [
       ...DASHBOARD_SECCIONES.map((seccion) => ({
         path: seccion.ruta,
         canActivate: [requiereMapeoPersonalQa],
+        canDeactivate: [protegerCambiosSinGuardar],
         title: `${seccion.titulo} · PRISALY`,
         data: { titulo: seccion.titulo, seccion },
         loadComponent:
