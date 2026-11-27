@@ -50,7 +50,7 @@ export const contarIntervenciones = (dialogo: string) => dialogo.split(/\n\s*\n/
       </ol>
 
       @if (aviso(); as a) {
-        <p class="mensaje" [class.error]="a.tipo === 'error'" [class.exito]="a.tipo === 'exito'" role="status">{{ a.texto }}</p>
+        <p class="mensaje" [class.error]="a.tipo === 'error'" [class.exito]="a.tipo === 'exito'" [attr.role]="a.tipo === 'error' ? 'alert' : 'status'">{{ a.texto }}</p>
       }
       @if (catalogo(); as cat) {
         <fieldset class="etapa-bloque">
@@ -359,7 +359,8 @@ export class ConstructorCasoVisual {
     this.ocupado.set(false);
     const errores: ErrorGuion[] = erroresGuion(e);
     if (errores.length) {
-      this.aviso.set({ tipo: 'error', texto: `El servidor rechazó el caso: ${errores.map((x) => `${x.campo} ${x.codigo}`).join('; ')}` });
+      // FE-UX-06 (DC-MVP-09-R07-IMP): el docente lee qué corregir, no el código interno de validación.
+      this.aviso.set({ tipo: 'error', texto: `El servidor no guardó el caso. Corrige: ${errores.map((x) => this.describir(x)).join(' ')}` });
       return;
     }
     const fallo = aFalloAcademico(e);

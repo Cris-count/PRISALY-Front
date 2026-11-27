@@ -36,6 +36,8 @@ import { HospitalNarrativoUnreal } from './hospital-narrativo-unreal';
 import { avisoConexion } from './aviso-interaccion';
 import { AvisosVisorMundo } from './avisos-visor-mundo';
 
+const ERROR_MOVIMIENTO = 'La ciudad no aceptó ese destino. Prueba de nuevo o camina con W A S D.';
+
 /** Acceso de integración visual. No crea intentos, pistas ni evaluaciones académicas. */
 @Component({
   selector: 'app-simulador-unreal-page',
@@ -52,15 +54,14 @@ import { AvisosVisorMundo } from './avisos-visor-mundo';
       <header>
         <p class="etiqueta">PRISALY · SIMULADOR 2.0</p>
         <h1>{{ tituloAcademico || 'Ciudad 3D en PRISALY' }}</h1>
-        <p>Juega desde el navegador, sin instalar el simulador en tu computador.</p>
+        <p>Recorre la ciudad desde el navegador, sin instalar nada en tu computador.</p>
       </header>
       @if (!asignacion) {
         <section class="aviso" aria-labelledby="titulo-disponibilidad">
           <h2 id="titulo-disponibilidad">Ciudad 3D pendiente de habilitación</h2>
           <p>
-            Unreal todavía no puede conectarse desde PRISALY: falta habilitar el servidor Pixel
-            Streaming y conectar el puente del juego. Abrir un caso de demostración no inicia una
-            conexión 3D.
+            La ciudad 3D todavía no está disponible en este entorno. Abrir un caso de demostración
+            no la conecta.
           </p>
           <p>Puedes volver al portal y continuar el cuestionario sin el simulador.</p>
         </section>
@@ -72,6 +73,11 @@ import { AvisosVisorMundo } from './avisos-visor-mundo';
             @if (personajesCaso().length) {
               Personajes: {{ personajesCaso().join(', ') }}.
             }
+          </p>
+        } @else if (esRecorridoAcademico) {
+          <p class="aviso" data-prueba="aviso-recorrido-academico">
+            Recorrido de tu caso. Solo están abiertos los edificios y personajes de tu investigación;
+            tu progreso académico lo guarda el servidor.
           </p>
         } @else {
           <p class="aviso">
@@ -130,7 +136,7 @@ import { AvisosVisorMundo } from './avisos-visor-mundo';
           controles de PRISALY.
         </p>
         <nav class="acciones" aria-label="Destinos de la ciudad 3D">
-          @for (destino of destinos; track destino.zonaId) {
+          @for (destino of destinosDisponibles(); track destino.zonaId) {
             <button
               type="button"
               [disabled]="!conectado() || hospital.ocupado() || hospital.enInterior()"
@@ -275,6 +281,8 @@ export class SimuladorUnrealPage {
   /** CB-07: narrativa fijada en el intento del estudiante (M5, cookie DD-02 B). */
   private readonly portalApi = inject(PortalEstudianteApi);
   readonly esVistaPrevia = this.vistaPrevia.actual() !== null;
+  /** FE-UX-09 (DC-MVP-09-R07-IMP): intento académico del estudiante; no se le presenta como demostración. */
+  readonly esRecorridoAcademico = !this.esVistaPrevia && this.contextoAcademico.actual() !== null;
   /** Personajes del caso tal como los devolvió M3 en esta conexión. */
   readonly personajesCaso = signal<readonly string[]>([]);
   volverAlPortal(): void {
@@ -319,6 +327,17 @@ export class SimuladorUnrealPage {
     })),
     { zonaId: PLAZA_UNREAL.zonaId, nombre: 'Caminar a Plaza Central' },
   ];
+  /**
+   * FE-UX-09 (DC-MVP-09-R07-IMP): con un caso aplicado solo se ofrecen los edificios habilitados y la plaza. Antes se
+   * ofrecía caminar a un edificio excluido, que al llegar solo mostraba «no forma parte de tu investigación».
+   * Sin caso (demostración) siguen todos.
+   */
+  readonly destinosDisponibles = computed(() => {
+    const habilitadas = this.hospital.zonasHabilitadas();
+    return habilitadas === null
+      ? this.destinos
+      : this.destinos.filter((d) => d.zonaId === PLAZA_UNREAL.zonaId || habilitadas.has(d.zonaId));
+  });
   private reproductor: ReproductorUnreal | null = null;
   private puente: PuenteUnreal | null = null;
   private cancelacion: AbortController | null = null;
@@ -425,11 +444,13 @@ export class SimuladorUnrealPage {
     const generacion = this.generacion;
     try {
       await this.puente.enviar('avatar.irA', { zoneId: zonaId });
-      if (generacion === this.generacion)
+      if (generacion === this.generacion) {
         this.estado.set('Destino aceptado. Esperando confirmación de ubicación.');
+        // Un rechazo anterior del movimiento ya no aplica: no dejar la alerta vieja visible.
+        if (this.error() === ERROR_MOVIMIENTO) this.error.set(null);
+      }
     } catch {
-      if (generacion === this.generacion)
-        this.error.set('El mundo no confirmó la solicitud de movimiento.');
+      if (generacion === this.generacion) this.error.set(ERROR_MOVIMIENTO);
     }
   }
 

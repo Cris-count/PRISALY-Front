@@ -56,7 +56,7 @@ import { HospitalUnreal } from './hospital-unreal';
         @for (pista of libreta.estado().pistas; track pista.id) {
           <article><h3>{{ pista.titulo }}</h3><p>{{ pista.descripcion }}</p><p>Origen: {{ pista.origen.lugar }}</p></article>
         } @empty { <p>Todavía no has obtenido pistas.</p> }
-        <p>El progreso se conserva al salir y reingresar durante esta sesión demostrativa. Se pierde al recargar la página.</p>
+        <p>El progreso se conserva al salir y reingresar mientras sigas en esta página. Se pierde al recargar la página.</p>
       </section>
     }
     @if (hospital.libretaAbierta()) { <app-libreta-panel (cerrar)="hospital.cerrarLibreta()" /> }

@@ -2,6 +2,7 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, Elemen
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LibretaStore } from './libreta.store';
+import { ContextoAcademicoUnreal, VistaPreviaDocenteUnreal } from '../unreal/acceso-simulador';
 
 @Component({
   selector: 'app-libreta-panel',
@@ -9,23 +10,23 @@ import { LibretaStore } from './libreta.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <dialog #panel aria-labelledby="libreta-titulo" aria-describedby="libreta-aviso" (cancel)="cancelarDialogo($event)">
-      <header><div><span class="etiqueta">INVESTIGACIÓN · DEMOSTRACIÓN</span><h2 id="libreta-titulo">Libreta de investigación</h2></div>
+      <header><div><span class="etiqueta">{{ academico ? 'INVESTIGACIÓN' : 'INVESTIGACIÓN · DEMOSTRACIÓN' }}</span><h2 id="libreta-titulo">Libreta de investigación</h2></div>
         <button type="button" autofocus aria-label="Cerrar libreta" (click)="cerrar.emit()">Cerrar</button></header>
       <div class="cuerpo">
-      <p id="libreta-aviso" class="aviso">Solo durante esta demostración. Las pistas y notas se perderán al recargar o salir del simulador.</p>
+      <p id="libreta-aviso" class="aviso">{{ academico ? 'Las pistas y notas se conservan mientras sigas en esta página; se pierden al recargar o salir del simulador.' : 'Solo durante esta demostración. Las pistas y notas se perderán al recargar o salir del simulador.' }}</p>
       <nav aria-label="Secciones de la libreta"><button type="button" (click)="irASeccion('libreta-pistas')">Pistas ({{ store.estado().pistas.length }})</button><button type="button" (click)="irASeccion('libreta-notas')">Mis notas ({{ store.estado().notas.length }})</button></nav>
       <section aria-labelledby="libreta-pistas">
         <h3 id="libreta-pistas" tabindex="-1">Pistas obtenidas</h3>
         @for (pista of store.estado().pistas; track pista.id) {
           <article class="pista"><h4>{{ pista.titulo }}</h4><p>{{ pista.descripcion }}</p>
-            <dl><dt>Identificador</dt><dd>{{ pista.id }}</dd><dt>Origen</dt><dd>{{ pista.origen.lugar }} · {{ pista.origen.espacioId }}</dd>
-              <dt>Interacción</dt><dd>{{ pista.origen.interaccionId }}</dd>
-              @if (pista.origen.personajeId) { <dt>Personaje</dt><dd>{{ pista.origen.personajeId }}</dd> }
+            <dl><dt>Origen</dt><dd>{{ pista.origen.lugar }}</dd>
               <dt>Obtenida</dt><dd>{{ pista.obtenidaEn | date:'short' }}</dd></dl>
           </article>
         } @empty { <p class="vacio">Todavía no has recopilado pistas.</p> }
+        @if (!academico) {
         <details><summary>Probar una pista de demostración</summary><p>Este ejemplo no pertenece a un caso ni responde una pregunta académica.</p>
           <button type="button" [disabled]="tieneEjemplo()" (click)="recopilarEjemplo()">Recopilar pista de ejemplo</button></details>
+        }
       </section>
       <section aria-labelledby="libreta-notas"><h3 id="libreta-notas" tabindex="-1">Mis notas</h3>
         <form (ngSubmit)="aplicarNota()"><label for="texto-nota">{{ editando() ? 'Editar nota personal' : 'Nueva nota personal' }}</label>
@@ -61,6 +62,8 @@ import { LibretaStore } from './libreta.store';
 })
 export class LibretaPanel {
   readonly store = inject(LibretaStore);
+  /** FE-UX-09 (DC-MVP-09-R07-IMP): en el intento académico la libreta no se presenta como demostración ni ofrece pistas de ejemplo. */
+  readonly academico = inject(ContextoAcademicoUnreal).actual() !== null && inject(VistaPreviaDocenteUnreal).actual() === null;
   readonly cerrar = output<void>();
   readonly texto = signal('');
   readonly editando = signal<string | null>(null);
@@ -81,7 +84,7 @@ export class LibretaPanel {
     const id = this.editando();
     const resultado = id ? this.store.actualizarNota(id, this.texto()) : this.store.crearNota(this.texto());
     if (!resultado) { this.mensaje.set('Escribe una nota de hasta 4000 caracteres.'); return; }
-    this.cancelarEdicion(); this.mensaje.set(id ? 'Nota actualizada en esta demostración.' : 'Nota añadida en esta demostración.'); this.editor().nativeElement.focus();
+    this.cancelarEdicion(); this.mensaje.set(id ? 'Nota actualizada.' : 'Nota añadida.'); this.editor().nativeElement.focus();
   }
   editar(id: string): void {
     const nota = this.store.estado().notas.find(n => n.id === id);
