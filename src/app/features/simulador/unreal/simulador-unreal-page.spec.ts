@@ -698,4 +698,59 @@ describe('SimuladorUnrealPage', () => {
     await conexion;
     expect(prueba.fabrica).not.toHaveBeenCalled();
   });
+
+  it('sin conexiones simultáneas: el botón durante la espera sustituye al reintento y durante un intento no abre otro', async () => {
+    const prueba = preparar(asignacion, [40, 40, 40]);
+    await conectarConfirmado(prueba);
+    caerCanal(prueba);
+    const { transporte, control } = siguienteReproductor(prueba);
+    const manual = prueba.pagina.conectar(); // anula el temporizador pendiente
+    expect(prueba.pagina.reintento()).toBeNull();
+    void prueba.pagina.conectar(); // ocupado: no abre una segunda conexión
+    await manual;
+    await new Promise<void>((resolver) => setTimeout(resolver, 90)); // más que el retardo anulado
+    expect(prueba.fabrica).toHaveBeenCalledTimes(2);
+    transporte.abrir();
+    control.informar!('video-listo');
+    prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' });
+    await esperarHasta(() => prueba.pagina.conectado());
+    expect(prueba.fabrica).toHaveBeenCalledTimes(2);
+    prueba.pagina.desconectar();
+  });
+
+  it('restauración idempotente: dos caídas seguidas envían el mismo estado.restaurar y no pierden lo confirmado', async () => {
+    const prueba = preparar(asignacion, [5, 5, 5]);
+    const libreta = prueba.fixture.debugElement.injector.get(LibretaStore);
+    await entrarAlDoctor(prueba);
+    prueba.pagina.hospital.avanzarDialogo();
+    prueba.pagina.hospital.avanzarDialogo();
+    prueba.pagina.hospital.elegir('consultar-expediente');
+    libreta.crearNota('Nota confirmada antes de las caídas');
+    const restauraciones: Mensaje[] = [];
+    let caer = () => caerCanal(prueba);
+    for (let ciclo = 0; ciclo < 2; ciclo++) {
+      const n0 = prueba.canal.emitUIInteraction.calls.count();
+      const { transporte, control } = siguienteReproductor(prueba);
+      caer();
+      await esperarHasta(() => control.informar !== null);
+      await esperarHasta(() => (prueba.reproductor.conectar as jasmine.Spy).calls.count() === ciclo + 2);
+      transporte.abrir();
+      control.informar!('video-listo');
+      prueba.emitir('mundo.listo', { versionContenido: 'prototipo-0.1.2' });
+      await esperarHasta(() => prueba.pagina.conectado());
+      const nuevas = prueba.canal.emitUIInteraction.calls.allArgs().slice(n0).map((a) => a[0] as Mensaje);
+      expect(nuevas.filter((m) => m.tipo === 'estado.restaurar').length).withContext(`ciclo ${ciclo}`).toBe(1);
+      restauraciones.push(nuevas.find((m) => m.tipo === 'estado.restaurar')!);
+      caer = () => {
+        transporte.notificarDesconexion();
+        control.informar!('desconectado');
+      };
+    }
+    expect(restauraciones[1].datos).toEqual(restauraciones[0].datos);
+    expect(restauraciones[0].datos['zonaActual']).toBe('hospital_entrada');
+    expect(libreta.estado().pistas.length).toBe(1);
+    expect(libreta.estado().notas.length).toBe(1);
+    expect(prueba.fabrica).toHaveBeenCalledTimes(3);
+    prueba.pagina.desconectar();
+  });
 });
