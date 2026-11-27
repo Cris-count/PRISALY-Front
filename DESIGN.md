@@ -123,3 +123,9 @@ Radios `rounded.*`: controles 0.5rem, panel 1.25rem, banner 1.5rem (Inicio 1rem)
 - Primero operar. Estados que no dependan solo del color. WCAG 2.2 AA medido. `prefers-reduced-motion`.
 - Sin degradados decorativos nuevos ni animación sin propósito. Sin datos inventados ni funciones simuladas.
 - **Excepciones justificadas a reglas genéricas de Impeccable:** «ceja» institucional («PRISALY · PSICOLOGÍA SOCIAL», «ADMINISTRACIÓN»; DC-FE-IMP-01 §6) · «Consultar →» (referencia de Dirección) · accesos del Inicio en tarjetas iguales (navegación) · pila del sistema en lugar de fuente propia (cambio global con Mariana) · franja naranja del banner sobre superficie redondeada (E-1, acento institucional).
+
+## PRISALY Spatial UI (DC-MVP-08-R03)
+Evolución progresiva de profundidad e iluminación sobre el sistema institucional (sin reconstruir el Frontend ni sustituir `MUNDO-24`):
+- **Capas y elevación:** Plano ambiental (`z: 0`, ondas/estelas suaves), superficie principal elevada (`backdrop-filter`, borde `#dbe4ef` + acento superior `#0755d9` / `#ff861b`, sombra controlada `#173a6518`) y plano focal interactivo (`±3.5°` máx. en tarjetas piloto; **prohibido** aplicar perspectiva a tablas o campos de entrada).
+- **Tecnología base:** CSS 3D (`perspective`, `transform`, `opacity`) + `Anime.js 4.5` para microinteracciones de entrada y reposo.
+- **Accesibilidad y rendimiento:** Respetar siempre `prefers-reduced-motion: reduce`, mantener contraste WCAG 2.2 AA, HTML semántico y cero superposiciones sobre el vídeo o DataChannel de Pixel Streaming 2.

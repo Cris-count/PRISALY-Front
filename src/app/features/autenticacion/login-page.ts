@@ -12,6 +12,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { computed } from '@angular/core';
+import { animate } from 'animejs';
 import { M1_PERSONAL_LOCAL } from './m1-personal-http';
 import { SesionPersonalM1 } from './m1-personal-sesion';
 import { VigilanciaAccesoPersonal } from './vigilancia-acceso-personal';
@@ -48,7 +49,43 @@ export class LoginPage {
     });
     afterNextRender(() => {
       void this.prepararPresentacion();
+      this.animarEntradaSpatial();
     });
+  }
+
+  private animarEntradaSpatial(): void {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const tarjeta = this.host.querySelector<HTMLElement>('.tarjeta-login');
+    if (!tarjeta) return;
+    animate(tarjeta, {
+      translateY: [12, 0],
+      opacity: [0.92, 1],
+      duration: 420,
+      ease: 'outCubic',
+    });
+  }
+
+  protected alMoverTarjeta(evento: PointerEvent): void {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const tarjeta = evento.currentTarget as HTMLElement | null;
+    if (!tarjeta) return;
+    const rect = tarjeta.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const nx = (evento.clientX - rect.left) / rect.width - 0.5;
+    const ny = (evento.clientY - rect.top) / rect.height - 0.5;
+    tarjeta.style.setProperty('--tilt-x', `${(-ny * 5).toFixed(2)}deg`);
+    tarjeta.style.setProperty('--tilt-y', `${(nx * 5).toFixed(2)}deg`);
+    tarjeta.style.setProperty('--glint-x', `${((nx + 0.5) * 100).toFixed(1)}%`);
+    tarjeta.style.setProperty('--glint-y', `${((ny + 0.5) * 100).toFixed(1)}%`);
+  }
+
+  protected alSalirTarjeta(): void {
+    const tarjeta = this.host.querySelector<HTMLElement>('.tarjeta-login');
+    if (!tarjeta) return;
+    tarjeta.style.removeProperty('--tilt-x');
+    tarjeta.style.removeProperty('--tilt-y');
+    tarjeta.style.removeProperty('--glint-x');
+    tarjeta.style.removeProperty('--glint-y');
   }
 
   private async prepararPresentacion(): Promise<void> {

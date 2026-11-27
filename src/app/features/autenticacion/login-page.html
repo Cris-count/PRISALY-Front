@@ -57,7 +57,11 @@
   <div class="presentacion">
     <img class="logo" src="images/prisaly-logo.png" alt="PRISALY" fetchpriority="high" />
   </div>
-  <div class="tarjeta-login">
+  <div
+    class="tarjeta-login"
+    (pointermove)="alMoverTarjeta($event)"
+    (pointerleave)="alSalirTarjeta()"
+  >
     <div class="interior">
       <p class="etiqueta">APRENDER · COMPRENDER · TRANSFORMAR</p>
       <h1 id="titulo-login">Bienvenido a PRISALY</h1>

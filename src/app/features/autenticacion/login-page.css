@@ -7,12 +7,16 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  perspective: 1100px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2.5rem 1.25rem;
-  background: #f6f8fc;
+  background:
+    radial-gradient(60rem 36rem at 15% 15%, #0755d90f, transparent 60%),
+    radial-gradient(48rem 32rem at 85% 80%, #ff861b0c, transparent 58%),
+    #f6f8fc;
   color: #172b4d;
 }
 .presentacion {
@@ -43,10 +47,35 @@
   width: min(100%, 29rem);
   border: 1px solid #dbe4ef;
   border-radius: 1.4rem;
-  background: #ffffffc9;
+  background: #ffffffdb;
+  backdrop-filter: blur(12px);
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition: transform 180ms ease-out, box-shadow 200ms ease-out;
   box-shadow:
-    0 18px 64px #173a6510,
-    0 2px 8px #173a6508;
+    0 22px 64px #05265018,
+    0 4px 12px #0755b80d;
+}
+.tarjeta-login::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    20rem circle at var(--glint-x, 50%) var(--glint-y, 20%),
+    #10d9f414,
+    transparent 65%
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta-login {
+    transform: none;
+    transition: none;
+  }
+  .tarjeta-login::after {
+    display: none;
+  }
 }
 .tarjeta-login::before {
   content: '';
