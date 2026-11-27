@@ -44,8 +44,8 @@ import { SesionPersonalM1 } from './m1-personal-sesion';
       margin: 1rem auto;
       max-width: 60rem;
       padding: 0.75rem 1rem;
-      border-left: 4px solid #87500a;
-      background: #fff3db;
+      border: 1px solid var(--color-aviso, #87500a);
+      background: var(--color-aviso-fondo, #fff3db);
       color: #4a2c05;
       border-radius: 0.5rem;
     }

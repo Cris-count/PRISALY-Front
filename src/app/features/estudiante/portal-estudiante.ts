@@ -372,6 +372,12 @@ export class PortalEstudiante implements OnInit {
 
   private fallo(e: unknown): void {
     this.cargando.set(false);
+    // FE-UX-03 (obs. 2 de DC-OPS-81): sin sesión estudiantil (401) no se deja la estructura vacía; se vuelve
+    // al acceso por código con un aviso. Es independiente de la sesión de personal.
+    if (e instanceof FalloPortal && e.estado === 401) {
+      void this.router.navigate(['/estudiante/acceso'], { queryParams: { aviso: 'sesion-estudiante' }, replaceUrl: true });
+      return;
+    }
     this.aviso.set({ tipo: 'error', texto: mensajePortal(e) });
   }
 

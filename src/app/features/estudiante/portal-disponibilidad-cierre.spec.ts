@@ -1,9 +1,9 @@
 import { VISOR_QA_HABILITADO } from '../simulador/unreal/acceso-simulador';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { PortalEstudiante } from './portal-estudiante';
-import { PortalEstudianteApi } from './portal-estudiante.api';
+import { FalloPortal, PortalEstudianteApi } from './portal-estudiante.api';
 import { SESION_VISUAL_UNREAL } from '../simulador/unreal/configuracion-unreal';
 describe('Cierre: simulador pendiente no bloquea el portal', () => {
   function crear(visual: unknown = null) {
@@ -58,5 +58,35 @@ describe('Cierre: simulador pendiente no bloquea el portal', () => {
     const nav = spyOn(TestBed.inject(Router), 'navigate');
     c.abrirSimulador();
     expect(nav).not.toHaveBeenCalled();
+  });
+});
+
+describe('FE-UX-03: portal estudiantil sin sesión (obs. 2 de DC-OPS-81)', () => {
+  function crear(convocatorias: () => unknown) {
+    TestBed.configureTestingModule({
+      imports: [PortalEstudiante],
+      providers: [
+        provideRouter([]),
+        { provide: VISOR_QA_HABILITADO, useValue: true },
+        { provide: PortalEstudianteApi, useValue: { convocatorias } },
+        { provide: SESION_VISUAL_UNREAL, useValue: null },
+      ],
+    });
+    const nav = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const f = TestBed.createComponent(PortalEstudiante);
+    f.detectChanges();
+    return { f, nav };
+  }
+
+  it('un 401 lleva al acceso por código con aviso en lugar de dejar la estructura vacía', () => {
+    const { nav } = crear(() => throwError(() => new FalloPortal(401, 'NO_AUTENTICADO')));
+    expect(nav).toHaveBeenCalledWith(['/estudiante/acceso'], { queryParams: { aviso: 'sesion-estudiante' }, replaceUrl: true });
+  });
+
+  it('un 500 no saca al estudiante: muestra el aviso de error en el portal', () => {
+    const { f, nav } = crear(() => throwError(() => new FalloPortal(500, null)));
+    f.detectChanges();
+    expect(nav).not.toHaveBeenCalled();
+    expect((f.nativeElement as HTMLElement).textContent).not.toContain('Tu sesión estudiantil terminó');
   });
 });

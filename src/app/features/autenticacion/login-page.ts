@@ -9,11 +9,12 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { computed } from '@angular/core';
 import { M1_PERSONAL_LOCAL } from './m1-personal-http';
 import { SesionPersonalM1 } from './m1-personal-sesion';
+import { VigilanciaAccesoPersonal } from './vigilancia-acceso-personal';
 
 @Component({
   selector: 'app-login-page',
@@ -52,7 +53,8 @@ export class LoginPage {
     preferencia.addEventListener('change', reducirMovimiento);
     this.destroyRef.onDestroy(() => preferencia.removeEventListener('change', reducirMovimiento));
     // DC-115: al llegar desde /acceso (perfil elegido) el formulario aparece de inmediato, sin presentación.
-    if (preferencia.matches || new URLSearchParams(window.location.search).has('perfil')) {
+    // I-08: con el aviso de sesión vencida, también (el mensaje debe verse sin esperar la animación).
+    if (preferencia.matches || new URLSearchParams(window.location.search).has('perfil') || this.sesionVencida) {
       this.finalizarPresentacion();
       return;
     }
@@ -94,7 +96,13 @@ export class LoginPage {
   }
 
   protected readonly mostrarClave = signal(false);
-  protected readonly aviso = signal('');
+  /** I-08: llegada desde una sesión de personal vencida (aviso fijado por `VigilanciaAccesoPersonal`). */
+  private readonly sesionVencida =
+    this.qaPersonal &&
+    inject(ActivatedRoute).snapshot.queryParamMap.get('aviso') === VigilanciaAccesoPersonal.AVISO_SESION_VENCIDA;
+  protected readonly aviso = signal(
+    this.sesionVencida ? 'Tu sesión venció o se cerró en el servidor. Inicia sesión nuevamente para continuar.' : '',
+  );
   protected readonly formulario = new FormGroup({
     correo: new FormControl('', {
       nonNullable: true,

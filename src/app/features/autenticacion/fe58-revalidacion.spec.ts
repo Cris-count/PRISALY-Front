@@ -365,7 +365,8 @@ describe('FE-58 H-58-02 revalidación periódica de /me (tiempo simulado)', () =
       .expectOne(URL_ME)
       .flush({ code: 'UNAUTHENTICATED' }, { status: 401, statusText: 'Unauthorized' });
     await microtareas();
-    expect(url()).toBe('/login');
+    // I-08 (FE-UX-03): el acceso explica que la sesión venció.
+    expect(url()).toBe('/login?aviso=sesion-vencida');
     expect(sesion.tienePermisos(['GESTIONAR_SESION'])).toBeFalse();
   });
 

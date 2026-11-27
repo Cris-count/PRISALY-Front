@@ -42,6 +42,10 @@ describe('Académico: transporte de credencial acotado', () => {
 
   it('acepta solo las plantillas publicadas por método', () => {
     expect(esRutaAcademicaAutorizada('GET', 'v1/admin/roles')).toBeTrue();
+    // I-08: listado de usuarios exacto (la consulta ?q= se quita antes de comparar); nada por prefijo.
+    expect(esRutaAcademicaAutorizada('GET', 'v1/admin/usuarios')).toBeTrue();
+    expect(esRutaAcademicaAutorizada('DELETE', 'v1/admin/usuarios')).toBeFalse();
+    expect(esRutaAcademicaAutorizada('GET', 'v1/admin/usuarios/otra-cosa')).toBeFalse();
     expect(esRutaAcademicaAutorizada('PUT', `v1/admin/usuarios/${ID}/permisos/3`)).toBeTrue();
     expect(esRutaAcademicaAutorizada('PUT', `v1/casos/${ID}/rubrica`)).toBeTrue();
     expect(esRutaAcademicaAutorizada('PATCH', `m4/sesiones/${ID}/estado`)).toBeTrue();
