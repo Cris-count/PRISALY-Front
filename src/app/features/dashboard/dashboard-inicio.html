@@ -28,20 +28,25 @@
     <div class="tarjetas">
       @for (s of secciones(); track s.ruta) {
         <a class="acceso" [routerLink]="['/dashboard', s.ruta]"
+          ><span class="icono-acceso" aria-hidden="true"
+            ><svg viewBox="0 0 24 24" focusable="false"><path [attr.d]="s.icono" /></svg></span
           ><div class="acceso-contenido">
             <h3>{{ s.titulo }}</h3>
             <p>{{ s.descripcion }}</p>
-          </div>
-          <span aria-hidden="true">→</span></a
+            <span class="acceso-accion" aria-hidden="true">Consultar →</span>
+          </div></a
         >
       }
       @if (identidad()) {
         <a class="acceso" routerLink="/dashboard/perfil"
-          ><div>
+          ><span class="icono-acceso" aria-hidden="true"
+            ><svg viewBox="0 0 24 24" focusable="false">
+              <path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10" /></svg></span
+          ><div class="acceso-contenido">
             <h3>Mi perfil</h3>
             <p>Consulta tu identidad y capacidades autorizadas.</p>
-          </div>
-          <span aria-hidden="true">→</span></a
+            <span class="acceso-accion" aria-hidden="true">Consultar →</span>
+          </div></a
         >
       }
     </div>

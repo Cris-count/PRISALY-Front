@@ -51,58 +51,11 @@ h1 {
   line-height: 1.12;
   letter-spacing: -0.04em;
 }
-h1 span {
-  color: #ffbf65;
-}
 .descripcion {
   max-width: 34rem;
   margin: 0.45rem 0;
   font-size: var(--t-base);
   line-height: 1.5;
-}
-.acento-hero {
-  display: block;
-  width: 4rem;
-  height: 4px;
-  margin-top: 0.5rem;
-  border-radius: 1rem;
-  background: #ffad35;
-}
-.bienvenida-accion {
-  position: relative;
-  z-index: 1;
-  justify-self: end;
-  display: grid;
-  gap: 0.6rem;
-  max-width: 20rem;
-  padding: 1rem;
-  border: 1px solid #fff;
-  border-radius: 1.75rem;
-  background: linear-gradient(120deg, #f8fcfff2, #e4efffe8), #edf6ff;
-  color: #12345e;
-  text-align: center;
-  box-shadow: 0 4px 16px #fff3;
-}
-.bienvenida-accion > span {
-  font-size: var(--t-xs);
-  line-height: 1.5;
-}
-.accion {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  padding: 0.85rem 0.7rem;
-  border-radius: 1rem;
-  background: linear-gradient(100deg, #ffb52e, #ff861b), #ff861b;
-  color: #281200;
-  font-size: var(--t-base);
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 5px 16px #d8791640;
-}
-.accion:hover {
-  background: #ffc15d;
 }
 .seccion-cabecera {
   margin: 1.1rem 0.65rem 0.85rem;
@@ -162,12 +115,7 @@ h2 {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.icono-acceso {
-  width: 3.2rem;
-  height: 3.2rem;
-}
-.acceso-contenido,
-.disponibilidad {
+.acceso-contenido {
   position: relative;
   z-index: 1;
 }
@@ -181,29 +129,6 @@ h3 {
   color: var(--p-sec);
   font-size: var(--t-base);
   line-height: 1.45;
-}
-.disponibilidad {
-  grid-column: 2;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: #064795;
-  font-size: var(--t-base);
-  font-weight: 600;
-  margin-top: 0.3rem;
-}
-.disponibilidad > span {
-  font-size: 1.3em;
-}
-.decoracion-acceso {
-  position: absolute;
-  width: 5rem;
-  height: 5rem;
-  right: 0.6rem;
-  bottom: 0.6rem;
-  opacity: 0.1;
-  transform: rotate(-7deg);
-  pointer-events: none;
 }
 .acceso--estudiante {
   grid-column: 1/-1;
@@ -236,26 +161,60 @@ a:focus-visible {
   }
 }
 
-.ciudad-inicio,
-.emblema-institucional {
-  display: none;
-}
+/*
+ * FE-UX-02 (DC-FE-UX-MASTER-01). La simplificación del 26/11 dejó el banner con fondo blanco y el texto heredado en
+ * blanco (#fff sobre #fff), y las tarjetas sin su icono: el contenido caía en la columna de 3.2rem reservada al icono.
+ * Banner: azul institucional con acento naranja (colores existentes) y una sola columna, sin el espacio de la escena
+ * retirada. Tarjetas: icono de la sección + contenido, columnas adaptables y sin partir palabras.
+ */
 .bienvenida {
+  grid-template-columns: minmax(0, 1fr);
   min-height: 0;
-  padding: 2rem;
-  background: #fff;
+  padding: 1.75rem 2rem;
+  background: linear-gradient(100deg, #052650 10%, #0755b8), #052650;
   border: 1px solid #dbe2ec;
   border-radius: 1rem;
+  box-shadow: inset 0 -4px #ffad35;
+  color: #fff;
+}
+.bienvenida .descripcion {
+  margin: 0.35rem 0 0;
+  color: #e8f2ff;
 }
 .tarjetas {
+  align-content: start;
   gap: 1rem;
 }
 .acceso {
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  align-items: start;
+  min-height: 0;
   background: #fff;
   box-shadow: none;
+  overflow-wrap: break-word;
+  hyphens: manual;
 }
-.decoracion-acceso {
-  display: none;
+.acceso:focus-visible {
+  outline: 3px solid #b45309;
+  outline-offset: 3px;
+}
+.icono-acceso {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: var(--tarjeta-suave);
+}
+.icono-acceso svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.acceso-accion {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-weight: 700;
+  color: var(--tarjeta-acento);
 }
 .sin-permisos {
   background: #fff7e8;
@@ -264,8 +223,9 @@ a:focus-visible {
   padding: 1.25rem;
 }
 .rol-confirmado {
+  margin: 0.35rem 0 0;
   font-weight: 600;
-  color: #0755d9;
+  color: #ffd59a;
 }
 .pie-pagina {
   margin-top: 2rem;

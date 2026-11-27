@@ -64,6 +64,18 @@ describe('Dashboard público de demostración', () => {
     expect(raiz().querySelector('img')?.getAttribute('src')).toBe('images/prisaly-logo.png');
   });
 
+  it('FE-UX-02: cada tarjeta de acceso lleva su icono y su contenido en columnas separadas', () => {
+    const tarjetas = Array.from(raiz().querySelectorAll<HTMLElement>('.acceso'));
+    expect(tarjetas.length).toBeGreaterThan(0);
+    for (const t of tarjetas) {
+      // La rejilla reserva la primera columna al icono: sin él, el texto cae en 2.75rem y parte las palabras.
+      expect(t.firstElementChild?.classList.contains('icono-acceso')).withContext(t.textContent ?? '').toBeTrue();
+      expect(t.querySelector('.icono-acceso svg path')?.getAttribute('d')).toBeTruthy();
+      expect(t.querySelector('.acceso-contenido h3')?.textContent?.trim()).toBeTruthy();
+      expect(t.querySelector('.acceso-accion')?.textContent).toContain('Consultar');
+    }
+  });
+
   it('mantiene la portada sin búsqueda ficticia ni ilustraciones detrás del contenido', async () => {
     expect(raiz().querySelector('app-dashboard-inicio input')).toBeNull();
     expect(raiz().querySelector('.ciudad-inicio')).toBeNull();
