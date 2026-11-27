@@ -7,13 +7,26 @@ $front = Split-Path -Parent $PSScriptRoot
 $state = if ($StateDirectory) { [IO.Path]::GetFullPath($StateDirectory) } else { Join-Path $front '.prisaly-local' }
 $configPath = Join-Path $state 'config.json'
 $cfg = if (Test-Path -LiteralPath $configPath) { Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json }
-$pgPort = if ($null -ne $cfg.postgresPort) { [int]$cfg.postgresPort } else { 5435 }
+$profile = if ($cfg.profile) { [string]$cfg.profile } else { 'academico' }
+if ($profile -cnotin 'academico','demo-ops85') { throw "Perfil local no admitido: $profile" }
+$demo = $profile -ceq 'demo-ops85'
+$pgVolume = if ($demo) { 'prisaly_ops85_demo_pg_data' } else { 'prisaly_pg_data' }
+$pgProbeUser = if ($demo) { 'prisaly_app' } else { 'prisaly' }
+$secretName = if ($demo) { 'ops85-app.dpapi' } else { 'prisaly-app.dpapi' }
+$pgPort = if ($demo) { 55440 } elseif ($null -ne $cfg.postgresPort) { [int]$cfg.postgresPort } else { 5435 }
 if ($pgPort -lt 1 -or $pgPort -gt 65535 -or $pgPort -in 4200,8080,8898,8899) {
     throw 'Puerto PostgreSQL inválido o reservado por otro componente de PRISALY.'
 }
 $ports = [ordered]@{Angular=4200; Backend=8080; PostgreSQL=$pgPort; PlayerPS2=8898; StreamerPS2=8899}
+$mailSmtp = 11028
+$mailWeb = 18028
+if ($demo) {
+    $ports['MailpitSMTP'] = $mailSmtp
+    $ports['MailpitWeb'] = $mailWeb
+}
 function Listener($port) { Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue }
 if ($Mode -eq 'status') {
+    Write-Host "Perfil configurado: $profile · volumen previsto: $pgVolume"
     foreach ($name in $ports.Keys) {
         $owners = @(Listener $ports[$name] | Select-Object -ExpandProperty OwningProcess -Unique)
         [pscustomobject]@{ Servicio=$name; Puerto=$ports[$name]; PID=($owners -join ',') }
@@ -41,6 +54,7 @@ $sim = $Mode -ne 'backend'
 $children = [Collections.Generic.List[Diagnostics.Process]]::new()
 $compose = @()
 $containerId = $null
+$mailContainerId = $null
 $handle = [IO.File]::Open($lock,'OpenOrCreate','ReadWrite','None')
 try {
     Remove-Item -LiteralPath $stop -ErrorAction SilentlyContinue
@@ -69,7 +83,7 @@ try {
         $jar = [IO.Path]::GetFullPath($cfg.backendJar)
         $java = (Get-Command java.exe).Source
         Need (Join-Path $backend 'mvnw.cmd')
-        $credentialPath = Join-Path $state 'prisaly-app.dpapi'
+        $credentialPath = Join-Path $state $secretName
         Need $credentialPath
         $credential = ConvertTo-SecureString (Get-Content -LiteralPath $credentialPath -Raw).Trim()
         if ($env:APP_PORT -and $env:APP_PORT -ne '8080') { throw 'APP_PORT debe ser 8080 para development.' }
@@ -82,6 +96,7 @@ try {
     }
     $required = @()
     if($db){$required += $pgPort,8080}
+    if($db -and $demo){$required += $mailSmtp,$mailWeb}
     if($sim){$required += 8898,8899}
     if($Mode -in 'all','check'){$required += 4200}
     foreach($port in $required){ if(Listener $port){throw "Puerto $port ocupado. Se conserva la instancia existente."} }
@@ -95,16 +110,21 @@ try {
             Start-Process -FilePath $desktop -WindowStyle Hidden
             Wait-Ready 'Docker' { & $docker info --format '{{.ServerVersion}}' 2>$null | Out-Null; $LASTEXITCODE -eq 0 } 120
         }
-        & $docker volume inspect prisaly_pg_data 2>$null | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw 'Falta el volumen prisaly_pg_data ya provisionado. Este arranque no ejecuta migraciones.' }
-        $existing = & $docker ps -aq --filter 'volume=prisaly_pg_data'
-        if ($LASTEXITCODE -ne 0 -or $existing) { throw 'El contenedor prisaly-postgres ya existe o Docker no pudo identificarlo.' }
+        & $docker volume inspect $pgVolume 2>$null | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "Falta el volumen $pgVolume ya provisionado. Este arranque no ejecuta migraciones." }
+        $existing = & $docker ps -aq --filter "volume=$pgVolume"
+        if ($LASTEXITCODE -ne 0 -or $existing) { throw "El volumen $pgVolume ya está asociado a un contenedor o Docker no pudo identificarlo." }
         # Arranque directo del clúster existente, sin pasar por el inicializador de la imagen.
-        $containerId = & $docker run -d --pull never -p "127.0.0.1:${pgPort}:5432" --mount 'type=volume,src=prisaly_pg_data,dst=/var/lib/postgresql/data' --health-cmd 'pg_isready -U prisaly -d prisaly' --health-interval 2s --entrypoint gosu postgres:16.15 postgres postgres -D /var/lib/postgresql/data -c listen_addresses=*
+        $containerId = & $docker run -d --pull never -p "127.0.0.1:${pgPort}:5432" --mount "type=volume,src=$pgVolume,dst=/var/lib/postgresql/data" --health-cmd "pg_isready -U $pgProbeUser -d prisaly" --health-interval 2s --entrypoint gosu postgres:16.15 postgres postgres -D /var/lib/postgresql/data -c listen_addresses=*
         if ($LASTEXITCODE -ne 0 -or $containerId -notmatch '^[a-f0-9]{64}$') { throw 'Falló el arranque de PostgreSQL.' }
         Wait-Ready 'PostgreSQL' { (& $docker inspect --format '{{.State.Health.Status}}' $containerId 2>$null) -eq 'healthy' }
-        & $docker exec $containerId psql -v ON_ERROR_STOP=1 -U prisaly -d prisaly -c 'SELECT current_database(), 1' *> (Join-Path $logs 'postgres-conexion.log')
+        & $docker exec $containerId psql -v ON_ERROR_STOP=1 -U $pgProbeUser -d prisaly -c 'SELECT current_database(), 1' *> (Join-Path $logs 'postgres-conexion.log')
         if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL anunció salud, pero falló SELECT 1.' }
+        if ($demo) {
+            $mailContainerId = & $docker run -d --pull never -p "127.0.0.1:${mailSmtp}:1025" -p "127.0.0.1:${mailWeb}:8025" axllent/mailpit:v1.31.2
+            if ($LASTEXITCODE -ne 0 -or $mailContainerId -notmatch '^[a-f0-9]{64}$') { throw 'Falló el arranque de Mailpit.' }
+            Wait-Ready 'Mailpit' { (& $docker inspect --format '{{.State.Health.Status}}' $mailContainerId 2>$null) -eq 'healthy' }
+        }
         if (!(Test-Path -LiteralPath $jar -PathType Leaf)) {
             Push-Location -LiteralPath $backend
             try {
@@ -121,7 +141,28 @@ try {
             SPRING_JPA_HIBERNATE_DDL_AUTO='validate'
             SERVER_ADDRESS='127.0.0.1'
         }
-        try { Start-Owned 'backend' $java @('-jar',('"' + $jar + '"')) $backend $backendEnv }
+        $backendArguments = @('-jar',('"' + $jar + '"'))
+        if ($demo) {
+            $backendEnv['SPRING_MAIL_HOST'] = '127.0.0.1'
+            $backendEnv['SPRING_MAIL_PORT'] = [string]$mailSmtp
+            $backendArguments += @(
+                '--prisaly.m4.schema-contract=bd0052-v013-integral'
+                '--prisaly.cors.allowed-origins=http://localhost:4200'
+                '--prisaly.m7.correo.remitente=no-reply@prisaly.test'
+                '--prisaly.m7.worker.enabled=false'
+                '--prisaly.m7.codigo-acceso.worker.enabled=true'
+                '--prisaly.m7.codigo-acceso.worker.intervalo-ms=3000'
+                '--prisaly.m7.codigo-acceso.worker.lote=20'
+                '--prisaly.m1.student-access.enabled=true'
+                '--prisaly.m1.student-access.cookie-segura=false'
+                '--prisaly.m1.activacion-docente.enabled=true'
+                '--prisaly.m1.activacion-docente.vigencia=PT2H'
+                '--prisaly.m1.activacion-docente.remitente=no-reply@prisaly.test'
+                '--prisaly.m1.activacion-docente.enlace=http://localhost:4200/activacion-docente'
+                '--prisaly.m1.alta-estudiantes.enabled=true'
+            )
+        }
+        try { Start-Owned 'backend' $java $backendArguments $backend $backendEnv }
         finally { $backendEnv.Clear(); $credential.Dispose() }
         Wait-Ready 'Backend' {
             $response = & curl.exe --noproxy '*' --fail --silent --max-time 3 http://127.0.0.1:8080/api/health
@@ -167,6 +208,10 @@ try {
         & $docker logs $containerId *> (Join-Path $logs 'postgres.log')
         & $docker stop $containerId | Out-Null
         & $docker rm $containerId | Out-Null
+    }
+    if ($mailContainerId -match '^[a-f0-9]{64}$') {
+        & $docker stop $mailContainerId | Out-Null
+        & $docker rm $mailContainerId | Out-Null
     }
     Remove-Item -LiteralPath $stop -ErrorAction SilentlyContinue
     $handle.Dispose()
