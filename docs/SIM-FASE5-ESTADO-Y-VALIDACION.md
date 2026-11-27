@@ -1,3 +1,5 @@
+> **OBSOLETO (DC-SIM-LIMPIEZA-01, 26/11/2026):** documento histórico del simulador 2D/2.5D, ya retirado. El único simulador oficial es MUNDO-24 (ver `docs/SIMULADOR-2D5-RETIRADO.md`).
+
 # PRISALY — Fase 5: preparación y validación del estado existente
 
 **Estado: preparación técnica verificada; integración gráfica real todavía no realizada.** Nicolás confirmó durante esta intervención que Cristian aún no ha entregado el paquete y que no se necesita por ahora. Se conserva la escena técnica y se aplaza la aceptación visual. No se generaron nuevos escenarios, edificios ni imágenes sustitutas.

@@ -141,7 +141,7 @@ const MENSAJES_POLITICA: Readonly<Record<CodigoPoliticaContrasena, string>> = {
 export function mensajeActivacion(r: ResultadoActivacion): string {
   switch (r.tipo) {
     case 'activada':
-      return 'El servidor confirmó la activación. Ya puedes iniciar sesión con tu correo y la nueva contraseña.';
+      return 'Cuenta activada correctamente. Inicia sesión con tu correo y la nueva contraseña. Tus herramientas dependerán de los permisos asignados.';
     case 'codigo-invalido':
       return 'El código de activación no es válido: puede haber caducado, haberse usado o haber sido revocado. Pide al administrador una nueva invitación.';
     case 'datos-invalidos':
@@ -174,6 +174,13 @@ export function mensajeActivacion(r: ResultadoActivacion): string {
   template: `
     <main class="acceso">
       <section class="tarjeta" aria-labelledby="titulo-activacion">
+        <img
+          src="images/prisaly-logo.png"
+          alt="PRISALY"
+          width="96"
+          height="72"
+          style="object-fit:contain"
+        />
         <h1 id="titulo-activacion">Activar cuenta docente</h1>
         @if (!habilitada) {
           <p role="status" class="aviso" data-prueba="activacion-no-habilitada">
@@ -206,7 +213,7 @@ export function mensajeActivacion(r: ResultadoActivacion): string {
             <label for="contrasena-activacion">Nueva contraseña</label>
             <input
               id="contrasena-activacion"
-              type="password"
+              [type]="mostrarPassword() ? 'text' : 'password'"
               formControlName="password"
               autocomplete="new-password"
               aria-describedby="politica-contrasena"
@@ -214,10 +221,13 @@ export function mensajeActivacion(r: ResultadoActivacion): string {
             <small id="politica-contrasena"
               >Mínimo 12 caracteres. Evita contraseñas comunes y tu correo.</small
             >
+            <button type="button" (click)="mostrarPassword.set(!mostrarPassword())">
+              {{ mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña' }}
+            </button>
             <label for="confirmacion-activacion">Repite la contraseña</label>
             <input
               id="confirmacion-activacion"
-              type="password"
+              [type]="mostrarPassword() ? 'text' : 'password'"
               formControlName="confirmacion"
               autocomplete="new-password"
             />
@@ -229,7 +239,7 @@ export function mensajeActivacion(r: ResultadoActivacion): string {
             <p role="alert" class="error" data-prueba="error-activacion">{{ mensaje() }}</p>
           }
         }
-        <a routerLink="/login" class="volver">← Volver al inicio de sesión</a>
+        @if (estado() !== 'activada') { <a routerLink="/login" class="volver">← Volver al inicio de sesión</a> }
       </section>
     </main>
   `,
@@ -306,6 +316,7 @@ export class ActivacionDocente implements OnInit {
   private readonly location = inject(Location);
   protected readonly habilitada = inject(CAPACIDADES_DC99).activacionDocente;
 
+  protected readonly mostrarPassword = signal(false);
   protected readonly estado = signal<'formulario' | 'enviando' | 'error' | 'activada'>(
     'formulario',
   );

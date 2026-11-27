@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "pwsh.exe -NoProfile -File scripts/start-local.ps1",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
@@ -14,7 +14,15 @@
     "memory:export:svg": "node ../.opencode/memory/visual/tools/export-svg.mjs",
     "memory:export:graphml": "node ../.opencode/memory/visual/tools/export-graphml.mjs",
     "memory:preview": "node ../.opencode/memory/visual/tools/preview-json.mjs",
-    "memory:visual-preview": "node ../.opencode/memory/visual/tools/preview-json.mjs"
+    "memory:visual-preview": "node ../.opencode/memory/visual/tools/preview-json.mjs",
+    "start:angular": "ng serve",
+    "start:backend": "pwsh.exe -NoProfile -File scripts/start-local.ps1 -Mode backend",
+    "start:simulator": "pwsh.exe -NoProfile -File scripts/start-local.ps1 -Mode simulator",
+    "stop": "pwsh.exe -NoProfile -File scripts/start-local.ps1 -Mode stop",
+    "status": "pwsh.exe -NoProfile -File scripts/start-local.ps1 -Mode status",
+    "up": "npm start",
+    "down": "npm run stop",
+    "check": "pwsh.exe -NoProfile -File scripts/start-local.ps1 -Mode check"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
@@ -27,7 +35,6 @@
     "@angular/router": "^22.2.0",
     "@epicgames-ps/lib-pixelstreamingfrontend-ue5.8": "0.1.4",
     "animejs": "^4.5.0",
-    "phaser": "^3.90.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

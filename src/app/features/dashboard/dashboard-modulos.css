@@ -27,7 +27,7 @@
   border-radius: 1.5rem;
   background:
     radial-gradient(ellipse at 100% 0, #10d9f433, transparent 65%),
-    linear-gradient(110deg, #052650, #0755b8), #052650;
+    linear-gradient(110deg, var(--p-azul-profundo), #0755b8), var(--p-azul-profundo);
   color: #fff;
   box-shadow: var(--modulo-sombra);
 }

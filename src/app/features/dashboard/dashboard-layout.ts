@@ -12,6 +12,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
 import { M1_PERSONAL_LOCAL } from '../autenticacion/m1-personal-http';
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
+import { VigilanciaAccesoPersonal } from '../autenticacion/vigilancia-acceso-personal';
 import { EstadoAccesoPersonalPanel } from '../autenticacion/estado-acceso-personal';
 import { EstadoVerificacionAcceso } from '../autenticacion/estado-verificacion-acceso';
 import {
@@ -53,8 +54,16 @@ import {
   ],
 })
 export class DashboardLayout {
+  protected readonly inicialUsuario = computed(() => {
+    const e = this.sesion?.estado();
+    return e?.tipo === 'valida'
+      ? (Array.from(e.identidad.nombre.trim())[0] ?? 'P').toLocaleUpperCase()
+      : 'P';
+  });
   protected readonly qaPersonal = inject(M1_PERSONAL_LOCAL);
   protected readonly sesion = this.qaPersonal ? inject(SesionPersonalM1) : null;
+  /** I-08: garantiza la vigilancia también en pantallas sin guard de sección (Inicio, perfil). */
+  private readonly vigilancia = this.qaPersonal ? inject(VigilanciaAccesoPersonal) : null;
   private readonly destroyRef = inject(DestroyRef);
   protected cerrarSesion(): void {
     this.sesion

@@ -1,7 +1,7 @@
 /**
  * Puente de integración experimental, importado del prototipo aislado F1.
  *
- * - No depende de Angular ni de Phaser; no implementa ControlMundo ni sustituye FabricaMundo.
+ * - No depende de Angular.
  * - La pausa reversible y la posición del contrato actual no tienen equivalencia completa
  *   en el protocolo candidato. Resolver esa diferencia requiere una decisión explícita.
  *
@@ -52,6 +52,8 @@ export class PuenteUnreal {
   private readonly recibidos = new Set<string>();
   private reloj: () => number;
   private quitarOyentes: Array<() => void>;
+  /** Protocolo v1.1 (CB-04): contexto visual vigente; viaja en el sobre y filtra hechos de contextos anteriores. */
+  private contextoVisual: string | null = null;
 
   constructor(private transporte: Transporte, private esquemas: Esquemas, private op: OpcionesAdaptador) {
     this.reloj = op.reloj ?? Date.now;
@@ -63,6 +65,19 @@ export class PuenteUnreal {
 
   get bloqueado(): boolean { return this._bloqueado; }
   get ordenesPendientes(): number { return this.pendientes.size; }
+  get contexto(): string | null { return this.contextoVisual; }
+
+  /**
+   * v1.1: fija el contexto visual (`cv-` + 32 hex, opaco: nunca un id académico). Las órdenes siguientes lo llevan
+   * en `contexto`, incluido el `caso.configurar` que lo abre, y se ignoran los mensajes de Unreal de otro contexto.
+   * `null` vuelve al comportamiento v1 (sin contexto).
+   */
+  fijarContexto(contexto: string | null): void {
+    if (contexto !== null && !/^cv-[0-9a-f]{32}$/.test(contexto)) {
+      throw new ErrorOrden('CONTEXTO_INVALIDO', 'el contexto visual debe ser cv- seguido de 32 hex');
+    }
+    this.contextoVisual = contexto;
+  }
 
   /** Suscripcion a hechos de Unreal (zona.entro, interactuable.activado, ...). */
   suscribir(oyente: (m: Mensaje) => void): () => void {
@@ -82,7 +97,8 @@ export class PuenteUnreal {
     }
     const m: Mensaje = {
       v: VERSION_PROTOCOLO, tipo, id: `a-${this.prefijoConexion}${String(++this.n).padStart(6, '0')}`,
-      correlacion: null, sesion: this.op.sesion, ts: this.reloj(), origen: 'angular', datos,
+      correlacion: null, sesion: this.op.sesion, ts: this.reloj(), origen: 'angular',
+      ...(this.contextoVisual ? { contexto: this.contextoVisual } : {}), datos,
     };
     const r = validarObjeto(this.esquemas, m);
     if (!r.ok) {
@@ -151,6 +167,14 @@ export class PuenteUnreal {
     if (m.sesion !== this.op.sesion) { this.log('entrada', m.tipo, m.id, m.correlacion, 'IGNORADO:SESION_AJENA'); return; }
     if (m.origen !== 'unreal') { this.log('entrada', m.tipo, m.id, m.correlacion, 'IGNORADO:ORIGEN'); return; }
     if (this.recibidos.has(m.id)) { this.log('entrada', m.tipo, m.id, m.correlacion, 'IGNORADO:DUPLICADO'); return; }
+    // Unreal etiqueta todo con su contexto vigente, también mundo.listo y las respuestas. Un puente nuevo (otra
+    // conexión, otra vista previa) aún no conoce ese contexto: el saludo y las respuestas a órdenes propias
+    // pendientes (id con prefijo aleatorio de esta conexión) no pueden ser de un contexto anterior y se aceptan.
+    const respuestaPropia = (m.tipo === 'orden.ack' || m.tipo === 'orden.error') && this.pendientes.has(m.correlacion ?? '');
+    if (m.contexto && m.contexto !== this.contextoVisual && m.tipo !== 'mundo.listo' && !respuestaPropia) {
+      this.log('entrada', m.tipo, m.id, m.correlacion, 'IGNORADO:CONTEXTO_AJENO');
+      return;
+    }
     this.recibidos.add(m.id);
     if (this.recibidos.size > 256) this.recibidos.delete(this.recibidos.values().next().value!);
 

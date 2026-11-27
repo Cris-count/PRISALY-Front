@@ -92,6 +92,24 @@ describe('DC-FE-60 acceso estudiantil real (DD-02 B)', () => {
     }
   });
 
+  it('FE-UX-03: un 429 al SOLICITAR es la espera de reenvío (con Retry-After), no intentos agotados', () => {
+    const http = configurar();
+    const api = TestBed.inject(AccesoEstudianteApi);
+    const casos: [Record<string, string>, unknown][] = [
+      [{ 'Retry-After': '60' }, { tipo: 'espera-reenvio', segundos: 60 }],
+      [{}, { tipo: 'espera-reenvio', segundos: null }],
+      [{ 'Retry-After': 'mañana' }, { tipo: 'espera-reenvio', segundos: null }],
+    ];
+    for (const [headers, esperado] of casos) {
+      let r: unknown;
+      api.solicitar('estudiante@example.invalid').subscribe((x) => (r = x));
+      http
+        .expectOne((q) => q.url.endsWith('v1/acceso-estudiante/solicitar'))
+        .flush({ code: 'AUTH_RATE_LIMITED' }, { status: 429, statusText: 'Too Many Requests', headers });
+      expect(r).withContext(JSON.stringify(headers)).toEqual(esperado);
+    }
+  });
+
   it('la ruta no existe fuera de los builds QA', async () => {
     configurar(false);
     const router = TestBed.inject(Router);

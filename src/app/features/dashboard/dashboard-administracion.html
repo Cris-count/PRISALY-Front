@@ -1,222 +1,33 @@
-<div class="administracion modulo-admin">
-  <a class="regreso" routerLink="/dashboard">← Volver al dashboard</a>
-  <header class="cabecera-admin modulo-hero">
+<main class="administracion modulo-admin">
+  <a class="regreso" routerLink="/dashboard">← Inicio</a>
+  <header class="cabecera-admin">
     <div>
-      <p class="ceja">COMUNIDAD ACADÉMICA / ADMINISTRACIÓN</p>
-      <h1 id="titulo-administracion">Gestión de <span>usuarios y docentes</span></h1>
-      <p class="descripcion">
-        Un espacio para organizar la información docente, sus responsabilidades y la futura consulta
-        de roles y permisos institucionales.
-      </p>
+      <p class="ceja">ADMINISTRACIÓN</p>
+      <h1>Gestión de usuarios</h1>
+      <p>Registra cuentas, consulta su acceso y administra permisos.</p>
     </div>
-    <div class="campus-admin" aria-hidden="true">
-      <svg viewBox="0 0 1000 667" preserveAspectRatio="xMidYMid meet" focusable="false">
-        <image
-          href="images/inicio-campus.webp"
-          width="1000"
-          height="667"
-          preserveAspectRatio="xMidYMid meet"
-        />
-        <image
-          href="images/prisaly-logo.png"
-          x="400"
-          y="126"
-          width="190"
-          height="143"
-          preserveAspectRatio="xMidYMid meet"
-        />
-      </svg>
-    </div>
-    @if (operativo()) {
-      <p class="sello-demo">ADMINISTRACIÓN<span>Sesión verificada por el servidor</span></p>
-    } @else {
-      <p class="sello-demo">
-        ENTORNO DEMOSTRATIVO<span>Sin sesión administrativa autenticada</span>
-      </p>
-    }
   </header>
-  <app-panel-administracion-m1 />
-  <!-- FE-61 · P-78: deshabilitado salvo capacidad explícita del entorno y del Backend. -->
-  <app-panel-estudiantes-m1 />
-
-  @if (!operativo()) {
-    <app-estado-panel
-      class="aviso-integracion"
-      estado="pendiente"
-      mensaje="Interfaz de presentación. La gestión de usuarios, docentes, roles y permisos está pendiente de integración; no permite operaciones administrativas."
-    />
-
-    <div class="areas-admin">
-      <section class="panel-admin modulo-panel docentes" aria-labelledby="titulo-docentes">
-        <div class="cabecera-panel">
-          <span class="numero icono-docentes" aria-hidden="true"
-            ><svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M2 9 12 4l10 5-10 5L2 9M6 11v6c4 3 8 3 12 0v-6M22 9v8" /></svg
-          ></span>
-          <div>
-            <p class="ceja">INFORMACIÓN INSTITUCIONAL</p>
-            <h2 id="titulo-docentes">Gestión de docentes</h2>
-          </div>
-        </div>
-        <p>
-          Preparación del listado, la búsqueda y los filtros para una futura consulta autorizada.
-        </p>
-        <div class="filtros-admin" aria-describedby="nota-filtros">
-          <div>
-            <label for="buscar-docente">Buscar docente</label>
-            <input
-              id="buscar-docente"
-              type="search"
-              placeholder="Nombre o correo institucional"
-              disabled
-              aria-describedby="nota-filtros"
-            />
-          </div>
-          <div>
-            <label for="estado-docente">Filtrar por estado</label>
-            <select id="estado-docente" disabled aria-describedby="nota-filtros">
-              <option>Catálogo pendiente</option>
-            </select>
-          </div>
-        </div>
-        <p class="nota" id="nota-filtros">
-          Búsqueda y filtros de presentación · pendientes de integración.
-        </p>
-        <table>
-          <caption>
-            Listado futuro de docentes · sin registros consultados
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Docente</th>
-              <th scope="col">Estado</th>
-              <th scope="col">Responsabilidades</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="fila-vacia">
-              <td colspan="3">
-                <app-estado-panel
-                  estado="sin-datos"
-                  mensaje="Esta demostración no consulta ni contiene registros docentes. La información estará disponible tras su integración institucional."
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="acciones-admin" aria-describedby="nota-acciones-docentes">
-          <button type="button" disabled aria-describedby="nota-acciones-docentes">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg
-            ><span class="accion-texto">Registrar docente <small>Pendiente</small></span>
-          </button>
-          <button type="button" disabled aria-describedby="nota-acciones-docentes">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16-1 5 5-1L21 7l-4-4Z" /></svg
-            ><span class="accion-texto">Editar información <small>Pendiente</small></span>
-          </button>
-        </div>
-        <p class="nota" id="nota-acciones-docentes">
-          Implementación pendiente. No se crean cuentas ni se modifica información.
-        </p>
-      </section>
-
-      <section class="panel-admin modulo-panel roles" aria-labelledby="titulo-roles">
-        <div class="cabecera-panel">
-          <span class="numero icono-roles" aria-hidden="true"
-            ><svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2 3 6v6c0 5 9 10 9 10s9-5 9-10V6z" /></svg
-          ></span>
-          <div>
-            <p class="ceja">ACCESO INSTITUCIONAL</p>
-            <h2 id="titulo-roles">Roles y permisos</h2>
-          </div>
-        </div>
-        <p>
-          La consulta requerirá una sesión autorizada. Esta vista no acredita identidad ni
-          privilegios administrativos.
-        </p>
-        <dl class="catalogos">
-          <div>
-            <dt>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0M17 3a4 4 0 0 1 0 8"
-                /></svg
-              >Roles
-            </dt>
-            <dd>Catálogo pendiente de integración.</dd>
-          </div>
-          <div>
-            <dt>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M14 4a6 6 0 1 1-4 10L3 21H1v-3l7-7a6 6 0 0 1 6-7Z" />
-                <circle cx="16" cy="8" r="1" /></svg
-              >Permisos
-            </dt>
-            <dd>Consulta pendiente de integración.</dd>
-          </div>
-        </dl>
-        <p class="nota">
-          No se han consultado roles ni permisos. No hay asignación ni revocación habilitadas.
-        </p>
-        <div class="acciones-admin" aria-describedby="nota-acciones-roles">
-          <button type="button" disabled aria-describedby="nota-acciones-roles">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M10 15v6" /></svg
-            ><span class="accion-texto">Administrar roles <small>Pendiente</small></span>
-          </button>
-          <button type="button" disabled aria-describedby="nota-acciones-roles">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" /></svg
-            ><span class="accion-texto">Consultar permisos <small>Pendiente</small></span>
-          </button>
-        </div>
-        <p class="nota" id="nota-acciones-roles">
-          Acciones previstas · requieren integración y autorización institucional.
-        </p>
-      </section>
-    </div>
-
-    <section class="panel-admin modulo-panel vista-previa" aria-labelledby="titulo-vista-previa">
-      <div class="cabecera-panel">
-        <h2 id="titulo-vista-previa">Vista previa de estados</h2>
-        <span class="chip-ejemplo">Ejemplo de diseño</span>
-      </div>
-      <table aria-describedby="nota-vista-previa">
-        <caption id="nota-vista-previa">
-          Ejemplo visual estático · No corresponde a una cuenta ni a un registro docente.
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Tipo</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Última actualización</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Docente de ejemplo</td>
-            <td><span class="chip-tipo">Docente · ilustrativo</span></td>
-            <td><span class="chip-pendiente">Pendiente · ejemplo</span></td>
-            <td>—</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-    <details class="panel-admin modulo-panel estados-demo">
-      <summary>Otros ejemplos de estados <span>Ejemplos de diseño</span></summary>
-      <p>
-        Estos ejemplos muestran presentaciones futuras. No representan consultas, errores ni
-        decisiones de acceso ocurridos en esta demostración.
-      </p>
-      <div class="ejemplos-admin">
-        @for (ejemplo of ejemplos; track ejemplo.estado) {
-          <section [attr.aria-labelledby]="'ejemplo-' + ejemplo.estado">
-            <h3 [id]="'ejemplo-' + ejemplo.estado">Ejemplo · {{ ejemplo.titulo }}</h3>
-            <app-estado-panel [estado]="ejemplo.estado" [mensaje]="ejemplo.mensaje" />
-          </section>
-        }
-      </div>
-    </details>
+  @if (operativo()) {
+    <nav class="pestanas" aria-label="Gestión administrativa">
+      @for (p of pestanas; track p.id) {
+        <button
+          type="button"
+          class="pestana"
+          (click)="pestana.set(p.id)"
+          [attr.aria-pressed]="pestana() === p.id"
+          [attr.aria-current]="pestana() === p.id ? 'page' : null"
+        >
+          {{ p.etiqueta }}
+        </button>
+      }
+    </nav>
+    @for (vistaActual of [pestana()]; track vistaActual) {
+      <app-panel-administracion-m1 [vista]="vistaActual" />
+      @if (vistaActual === 'estudiantes') {
+        <app-panel-estudiantes-m1 [soloAlta]="true" />
+      }
+    }
+  } @else {
+    <p role="status">La gestión requiere una sesión administrativa verificada.</p>
   }
-</div>
+</main>

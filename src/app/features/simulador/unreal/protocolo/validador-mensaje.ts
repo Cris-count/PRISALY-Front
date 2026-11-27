@@ -42,6 +42,8 @@ export interface Mensaje<D = Record<string, unknown>> {
   sesion: string;
   ts: number;
   origen: Origen;
+  /** v1.1 (CB-04): contexto visual opaco `cv-<32 hex>`, opcional. */
+  contexto?: string;
   datos: D;
 }
 

@@ -29,8 +29,8 @@ import { VigilanciaAccesoPersonal } from './vigilancia-acceso-personal';
     .aviso-verificacion {
       margin: 0 0 1rem;
       padding: 0.75rem 1rem;
-      border-left: 4px solid #87500a;
-      background: #fff3db;
+      border: 1px solid var(--color-aviso, #87500a);
+      background: var(--color-aviso-fondo, #fff3db);
       color: #4a2c05;
       border-radius: 0.5rem;
     }

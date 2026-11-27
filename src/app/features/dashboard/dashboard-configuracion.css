@@ -30,7 +30,7 @@
   align-items: center;
   padding: 0;
   min-height: var(--vista-banner-min);
-  background: linear-gradient(105deg, #052650, #0755b8 65%, #a9dbfa);
+  background: linear-gradient(105deg, var(--p-azul-profundo), #0755b8 65%, #a9dbfa);
   border-radius: var(--vista-banner-radio);
   border: 1px solid #c7d5e8;
   box-shadow: 0 10px 25px #123c7326;
@@ -50,29 +50,10 @@
   line-height: 1.12;
   margin: 0.25rem 0;
 }
-.config-hero h1 span {
-  color: #ffba50;
-}
 .config-hero .descripcion {
   margin: var(--vista-aviso-gap) 0;
   font-size: var(--t-base);
   line-height: 1.5;
-}
-.hero-linea {
-  display: block;
-  width: 5rem;
-  height: 0.2rem;
-  background: #ffb52e;
-  border-radius: 1rem;
-}
-.config-ilustracion {
-  display: block;
-  width: 78%;
-  justify-self: end;
-  height: var(--vista-banner-arte);
-  fill: none;
-  stroke: none;
-  pointer-events: none;
 }
 .configuracion .estado {
   padding: 0.4rem 1rem;
@@ -180,9 +161,6 @@
   .hero-texto {
     padding: 1.3rem;
   }
-  .config-ilustracion {
-    width: 100%;
-  }
 }
 @container (max-width: 35rem) {
   .config-tarjeta {
@@ -203,9 +181,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
-.config-ilustracion {
-  mask-image: linear-gradient(90deg, transparent, #000 10%);
-}
 
 .configuracion .regreso {
   padding-block: 0.1rem;
@@ -214,6 +189,27 @@
 /* Al apilar el banner, el texto permanece sobre la zona azul de alto contraste. */
 @container (max-width: 55rem) {
   .config-hero.modulo-hero {
-    background: linear-gradient(110deg, #052650, #0755b8);
+    background: linear-gradient(110deg, var(--p-azul-profundo), #0755b8);
   }
+}
+
+/*
+ * FE-UX-04C (I-05): el encabezado de Configuración era la única sección con ilustración y título bicolor. Se alinea
+ * con el banner de Inicio (FE-UX-02): azul institucional, texto blanco en un solo color, borde inferior naranja.
+ * El aviso «Entorno demostrativo» sigue debajo: la vista no habilita operaciones reales.
+ */
+.config-hero.modulo-hero {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  padding: 1.75rem 2rem;
+  background: linear-gradient(100deg, var(--p-azul-profundo) 10%, #0755b8), var(--p-azul-profundo);
+  border-radius: 1rem;
+  box-shadow: inset 0 -4px var(--p-acento-banner);
+  color: #fff;
+}
+.config-hero .hero-texto {
+  padding: 0;
+}
+.config-hero .descripcion {
+  color: #e8f2ff;
 }

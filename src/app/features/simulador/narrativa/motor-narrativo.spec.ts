@@ -1,4 +1,4 @@
-import { GUION_DEMOSTRACION } from '../demo/guion-demostracion';
+import { GUION_DEMOSTRACION } from '../testing/guion-narrativo.fixture';
 import { MotorNarrativo } from './motor-narrativo';
 import { ConsecuenciaNarrativa } from './narrativa.models';
 

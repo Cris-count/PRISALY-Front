@@ -46,7 +46,7 @@ export function seccionesPorRol(
   ).map((s) =>
     // DC-FE-60: etiqueta del panel administrador.
     rol === 'ADMINISTRADOR' && s.ruta === 'usuarios-docentes'
-      ? { ...s, titulo: 'Gestión de docentes' }
+      ? { ...s, titulo: 'Gestión de usuarios' }
       : s,
   );
 }
@@ -81,7 +81,7 @@ export interface OpcionEstudiante {
   readonly icono: string;
   /** Sección de la página `Mi espacio de aprendizaje` a la que se desplaza. */
   readonly ancla?: string;
-  /** Ruta propia (simulador de demostración, protegido por `requiereEntornoDemostracion`). */
+  /** Ruta propia (visor de MUNDO-24, protegido por `requiereAccesoSimulador`). */
   readonly ruta?: string;
 }
 
@@ -128,7 +128,7 @@ export const NAVEGACION_ESTUDIANTE: readonly OpcionEstudiante[] = [
   },
   {
     titulo: 'Simulador',
-    ruta: '/simulador-integrado',
+    ruta: '/simulador-unreal',
     icono:
       'M6 11h4M8 9v4M15 12h.01M18 10h.01M17.3 5H6.7a4 4 0 0 0-4 3.6L2 15a3 3 0 0 0 5.3 2.2L9 15h6l1.7 2.2A3 3 0 0 0 22 15l-.7-6.4a4 4 0 0 0-4-3.6',
   },

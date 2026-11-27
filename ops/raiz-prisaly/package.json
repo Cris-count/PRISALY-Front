@@ -1,0 +1,12 @@
+{
+  "name": "prisaly-local",
+  "private": true,
+  "scripts": {
+    "start": "node ops/start-local.mjs",
+    "up": "node ops/start-local.mjs",
+    "status": "node ops/start-local.mjs status",
+    "check": "node ops/start-local.mjs check",
+    "down": "node ops/start-local.mjs stop",
+    "stop": "node ops/start-local.mjs stop"
+  }
+}

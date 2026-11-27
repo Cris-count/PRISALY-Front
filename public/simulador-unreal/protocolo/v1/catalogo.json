@@ -86,6 +86,13 @@
       "esquema": "tipos/estado.restaurar.schema.json",
       "descripcion": "Redibuja estados visuales desde el estado de Angular. Idempotente."
     },
+    "caso.configurar": {
+      "origen": "angular",
+      "requiereAck": true,
+      "esRespuesta": false,
+      "esquema": "tipos/caso.configurar.schema.json",
+      "descripcion": "Aplica la configuracion visual de un contexto: edificios habilitados y NPC activos. ACK solo tras aplicarla entera."
+    },
     "interactuable.estado": {
       "origen": "angular",
       "requiereAck": true,

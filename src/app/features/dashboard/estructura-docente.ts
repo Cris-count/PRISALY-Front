@@ -33,7 +33,6 @@ export interface BloqueDocente {
     li {
       padding: 1rem;
       border: 1px solid var(--p-borde);
-      border-left: 3px solid var(--p-azul);
       border-radius: 0.5rem;
       background: var(--p-fondo);
     }

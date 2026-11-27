@@ -1,0 +1,24 @@
+services:
+  visor:
+    image: prisaly-cierre-visor:qa
+    build:
+      context: .
+      args:
+        SOURCE_REV: ${SOURCE_REV:-sin-identificar}
+    ports:
+      - "127.0.0.1:4200:80"
+    labels:
+      com.prisaly.instance: cierre-sim-20261126
+    networks:
+      - apiqa
+      - edge
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+networks:
+  edge: {}
+  apiqa:
+    external: true
+    name: prisaly-dc105-local_local

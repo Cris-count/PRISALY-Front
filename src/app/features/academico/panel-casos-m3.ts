@@ -13,6 +13,7 @@ import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
 import { aFalloAcademico, esUuid, mensajeFallo, UUID_RE } from './academico-http';
 import { CasoDocente, CasoPatch, CasosM3Api } from './casos-m3.api';
 import { CasosSesionStore } from './casos-sesion.store';
+import { ConstructorCasoVisual } from './constructor-caso-visual';
 import { PARAM_CASO, ParametroRecorrido, SELECCION_INVALIDADA } from './contexto-recorrido';
 
 type Aviso = { tipo: 'exito' | 'error' | 'info'; texto: string } | null;
@@ -35,7 +36,7 @@ const MENSAJES_M3: Readonly<Record<string, string>> = {
  */
 @Component({
   selector: 'app-panel-casos-m3',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ConstructorCasoVisual],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './panel-casos-m3.html',
   styleUrl: './panel-academico.css',
@@ -48,6 +49,8 @@ export class PanelCasosM3 {
 
   protected readonly sesionValida = computed(() => this.sesion.estado().tipo === 'valida');
   protected readonly caso = signal<CasoDocente | null>(null);
+  /** CB-05A: el constructor visual (y su consulta de narrativa) solo se abre a petición del docente para ese caso. */
+  protected readonly constructorDe = signal<string | null>(null);
   protected readonly etag = signal<string | null>(null);
   protected readonly ocupado = signal(false);
   protected readonly aviso = signal<Aviso>(null);

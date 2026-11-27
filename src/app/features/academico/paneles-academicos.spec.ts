@@ -74,31 +74,23 @@ beforeEach(() => (http = undefined as unknown as HttpTestingController));
 afterEach(() => http?.verify());
 
 describe('FE-53-A PanelAdministracionM1', () => {
-  it('sin sesión válida no consulta ni muestra acciones', () => {
-    const f = montar(PanelAdministracionM1);
-    estado.set({ tipo: 'no-autenticada' } as EstadoSesionPersonal);
+  beforeEach(() => {});
+  function seleccionar(f: ComponentFixture<PanelAdministracionM1>, id = OTRO) {
+    (f.componentInstance as any).seleccionarUsuario({
+      idUsuario: id,
+      rol: 'DOCENTE',
+      nombre: 'Docente QA',
+      correo: 'docente@example.invalid',
+      estado: 'Activo',
+      credencialPersonalConfigurada: false,
+      estadoInvitacion: 'NO_EMITIDA',
+    });
+    http.expectOne(`${B}/v1/admin/usuarios/${id}/permisos`).flush({ items: [] });
     f.detectChanges();
-    expect(texto(f)).toContain('Inicia sesión de personal');
-    expect(boton(f, 'Consultar roles')).toBeUndefined();
-  });
-
-  it('consulta el catálogo real y lo presenta', () => {
-    const f = montar(PanelAdministracionM1);
-    boton(f, 'Consultar roles y permisos')!.click();
-    http!
-      .expectOne(`${B}/v1/admin/roles`)
-      .flush({ items: [{ idRol: 1, nombre: 'ADMINISTRADOR' }] });
-    http
-      .expectOne(`${B}/v1/admin/permisos`)
-      .flush({ items: [{ idPermiso: 7, codigo: 'CREAR_CASO', nombre: 'Crear caso' }] });
-    f.detectChanges();
-    expect(texto(f)).toContain('ADMINISTRADOR');
-    expect(texto(f)).toContain('CREAR_CASO');
-  });
-
-  it('refleja la separación de funciones: sin autoasignación de PUBLICAR_CASO/ARCHIVAR_CASO', () => {
-    const f = montar(PanelAdministracionM1);
-    boton(f, 'Consultar roles y permisos')!.click();
+  }
+  function catalogo(f: ComponentFixture<PanelAdministracionM1>, propio = false) {
+    seleccionar(f, propio ? YO : OTRO);
+    boton(f, 'Cargar catálogo')!.click();
     http.expectOne(`${B}/v1/admin/roles`).flush({ items: [] });
     http.expectOne(`${B}/v1/admin/permisos`).flush({
       items: [
@@ -107,28 +99,37 @@ describe('FE-53-A PanelAdministracionM1', () => {
       ],
     });
     f.detectChanges();
-    escribir(f, 'input[formControlName="idUsuario"]', YO);
-    enviar(f, 0);
-    http.expectOne(`${B}/v1/admin/usuarios/${YO}/permisos`).flush({ items: [] });
+  }
+  it('sin sesión válida no consulta ni muestra acciones', () => {
+    const f = montar(PanelAdministracionM1);
+    estado.set({ tipo: 'no-autenticada' } as EstadoSesionPersonal);
     f.detectChanges();
-    expect(texto(f)).toContain('Es tu propio usuario');
-    expect(texto(f)).toContain('No permitido (separación de funciones)');
-    // CREAR_CASO no está sujeto a separación de funciones en la política vigente.
-    expect(boton(f, 'Asignar')!.disabled).toBeFalse();
+    expect(texto(f)).toContain('cuenta administradora');
+    expect(f.nativeElement.querySelector('button')).toBeNull();
+    http.expectNone(() => true);
   });
-
+  it('consulta el catálogo real y presenta nombres comprensibles', () => {
+    const f = montar(PanelAdministracionM1);
+    catalogo(f);
+    expect(texto(f)).toContain('Crear caso');
+    expect(texto(f)).toContain('Publicar caso');
+    expect(texto(f)).not.toContain(OTRO);
+  });
+  it('refleja la separación de funciones sin autoasignación de publicación', () => {
+    const f = montar(PanelAdministracionM1);
+    catalogo(f, true);
+    const filas = [...f.nativeElement.querySelectorAll('tbody tr')] as HTMLTableRowElement[];
+    expect(
+      filas.find((x) => x.textContent?.includes('Publicar caso'))!.querySelector('button')!
+        .disabled,
+    ).toBeTrue();
+    expect(
+      filas.find((x) => x.textContent?.includes('Crear caso'))!.querySelector('button')!.disabled,
+    ).toBeFalse();
+  });
   it('asigna a otro usuario y vuelve a leer los permisos efectivos', () => {
     const f = montar(PanelAdministracionM1);
-    boton(f, 'Consultar roles y permisos')!.click();
-    http.expectOne(`${B}/v1/admin/roles`).flush({ items: [] });
-    http
-      .expectOne(`${B}/v1/admin/permisos`)
-      .flush({ items: [{ idPermiso: 7, codigo: 'CREAR_CASO', nombre: 'Crear caso' }] });
-    f.detectChanges();
-    escribir(f, 'input[formControlName="idUsuario"]', OTRO);
-    enviar(f, 0);
-    http.expectOne(`${B}/v1/admin/usuarios/${OTRO}/permisos`).flush({ items: [] });
-    f.detectChanges();
+    catalogo(f);
     boton(f, 'Asignar')!.click();
     http
       .expectOne({ method: 'PUT', url: `${B}/v1/admin/usuarios/${OTRO}/permisos/7` })
@@ -137,39 +138,41 @@ describe('FE-53-A PanelAdministracionM1', () => {
       .expectOne(`${B}/v1/admin/usuarios/${OTRO}/permisos`)
       .flush({ items: [{ idPermiso: 7, codigo: 'CREAR_CASO', nombre: 'Crear caso' }] });
     f.detectChanges();
-    expect(texto(f)).toContain('Permiso CREAR_CASO asignado');
+    expect(texto(f)).toContain('asignado');
     expect(boton(f, 'Revocar')).toBeDefined();
   });
-
   it('muestra el rechazo del Backend y no un éxito', () => {
     const f = montar(PanelAdministracionM1);
-    boton(f, 'Consultar roles y permisos')!.click();
+    seleccionar(f);
+    boton(f, 'Cargar catálogo')!.click();
     http
       .expectOne(`${B}/v1/admin/roles`)
       .flush({ code: 'ADMIN_REQUIRED' }, { status: 403, statusText: 'Forbidden' });
     expect(http.expectOne(`${B}/v1/admin/permisos`).cancelled).toBeTrue();
     f.detectChanges();
     expect(texto(f)).toContain('No tienes acceso');
-    expect(texto(f)).toContain('HTTP 403');
+    expect(texto(f)).not.toContain('asignado');
   });
-
-  it('alta de docente informa la limitación D-05', () => {
+  it('alta de docente identifica por nombre y correo, sin mostrar UUID', () => {
     const f = montar(PanelAdministracionM1);
     escribir(f, 'input[formControlName="nombre"]', 'Docente QA');
     escribir(f, 'input[formControlName="correo"]', 'docente@example.invalid');
     enviar(f, 1);
-    http.expectOne({ method: 'POST', url: `${B}/v1/admin/docentes` }).flush(
-      {
-        idUsuario: OTRO,
-        nombre: 'Docente QA',
-        correo: 'docente@example.invalid',
-        estado: 'Activo',
-      },
-      { status: 201, statusText: 'Created' },
-    );
+    http
+      .expectOne({ method: 'POST', url: `${B}/v1/admin/docentes` })
+      .flush(
+        {
+          idUsuario: OTRO,
+          nombre: 'Docente QA',
+          correo: 'docente@example.invalid',
+          estado: 'Activo',
+        },
+        { status: 201, statusText: 'Created' },
+      );
     f.detectChanges();
-    expect(texto(f)).toContain('D-05');
-    expect(texto(f)).toContain(OTRO);
+    expect(texto(f)).toContain('Docente QA');
+    expect(texto(f)).toContain('docente@example.invalid');
+    expect(texto(f)).not.toContain(OTRO);
   });
 });
 

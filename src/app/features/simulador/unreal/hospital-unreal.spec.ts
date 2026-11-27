@@ -12,7 +12,7 @@ describe('HospitalUnreal con narrativa y libreta reales, transporte simulado', (
   let esquemas: Esquemas;
   let hospital: HospitalUnreal, libreta: LibretaStore, narrativa: CoordinadorNarrativoInteriores;
   let puente: PuenteUnreal, canal: CanalMemoria, ordenes: Mensaje[], numero: number;
-  let rechazar: string | null, retener: string | null;
+  let rechazar: string | null, retener: string | null, codigoRechazo: string;
   const sesion = { sesion: 'ses-hospital-0001', casoId: 'caso-demo-01', streamerId: 'prueba', urlSenalizacion: 'ws://127.0.0.1:8888' };
   const emitir = (tipo: string, datos: Record<string, unknown>, extras: Partial<Mensaje> = {}) => {
     canal.unreal.enviar(JSON.stringify({ v: 1, tipo, datos, id: `u-${String(++numero).padStart(6, '0')}`, correlacion: null, sesion: sesion.sesion, ts: 1, origen: 'unreal', ...extras }));
@@ -44,7 +44,7 @@ describe('HospitalUnreal con narrativa y libreta reales, transporte simulado', (
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [HospitalUnreal, LibretaStore, AdaptadorPistasNarrativas, CoordinadorNarrativoInteriores] });
     hospital = TestBed.inject(HospitalUnreal); libreta = TestBed.inject(LibretaStore); narrativa = TestBed.inject(CoordinadorNarrativoInteriores);
-    numero = 0; ordenes = []; rechazar = retener = null;
+    numero = 0; ordenes = []; rechazar = retener = null; codigoRechazo = 'ORDEN_NO_SOPORTADA';
     canal = new CanalMemoria();
     puente = new PuenteUnreal(canal.angular, esquemas, { sesion: sesion.sesion });
     hospital.vincular(puente, sesion);
@@ -52,7 +52,7 @@ describe('HospitalUnreal con narrativa y libreta reales, transporte simulado', (
     canal.unreal.alRecibir(texto => {
       const orden = JSON.parse(texto) as Mensaje; ordenes.push(orden);
       if (retener === orden.tipo) return;
-      emitir(rechazar === orden.tipo ? 'orden.error' : 'orden.ack', rechazar === orden.tipo ? { codigo: 'ORDEN_NO_SOPORTADA' } : {}, { correlacion: orden.id });
+      emitir(rechazar === orden.tipo ? 'orden.error' : 'orden.ack', rechazar === orden.tipo ? { codigo: codigoRechazo } : {}, { correlacion: orden.id });
     });
   });
   afterEach(() => { hospital.desvincular(); puente.destruir(); });
@@ -62,6 +62,34 @@ describe('HospitalUnreal con narrativa y libreta reales, transporte simulado', (
     emitir('interactuable.activado', { interactuableId: 'desconocido', categoria: 'npc' });
     await vaciarCola();
     expect(ordenes.length).toBe(0); expect(libreta.estado().pistas.length).toBe(0);
+  });
+
+  it('G4-V11: el aviso sigue a interactuable.disponible/no_disponible y desaparece al cambiar de espacio', async () => {
+    expect(hospital.aviso(true)).toBeNull();
+    emitir('interactuable.disponible', { interactuableId: 'hosp-puerta', categoria: 'puerta' }); await vaciarCola();
+    expect(hospital.aviso(true)).toEqual({ tipo: 'accion', tecla: 'E', texto: 'Entrar a Hospital Central' });
+    expect(hospital.aviso(false)).toBeNull(); // sin vídeo conectado no se promete ninguna tecla
+    emitir('interactuable.no_disponible', { interactuableId: 'otro-id' }); await vaciarCola();
+    expect(hospital.aviso(true)).not.toBeNull(); // solo lo retira el mismo interactuable
+    await entrar();
+    expect(hospital.aviso(true)).toBeNull(); // edificio.entro deja atrás la puerta
+    emitir('interactuable.disponible', { interactuableId: 'hosp-npc-doctor', categoria: 'npc' }); await vaciarCola();
+    expect(hospital.aviso(true)).toEqual({ tipo: 'accion', tecla: 'E', texto: 'Conversar con Dr. Mendoza' });
+    activarDoctor(); await vaciarCola();
+    expect(hospital.aviso(true)).toEqual({ tipo: 'informacion', texto: 'Continúa el diálogo en el panel de conversación' });
+    emitir('interactuable.no_disponible', { interactuableId: 'hosp-npc-doctor' }); await vaciarCola();
+    await hospital.cerrarConversacion();
+    expect(hospital.aviso(true)).toBeNull();
+  });
+
+  it('G4-V11: una puerta fuera de los edificios del caso no ofrece E y su rechazo se explica como restricción', async () => {
+    hospital.zonasHabilitadas.set(new Set(['policia_entrada']));
+    emitir('interactuable.disponible', { interactuableId: 'hosp-puerta', categoria: 'puerta' }); await vaciarCola();
+    expect(hospital.aviso(true)).toEqual({ tipo: 'restriccion', texto: 'Este edificio no forma parte de tu investigación' });
+    rechazar = 'puerta.abrir'; codigoRechazo = 'EDIFICIO_RESTRINGIDO';
+    activarPuerta(); await vaciarCola();
+    expect(hospital.enInterior()).toBeFalse();
+    expect(hospital.error()).toBe('Este edificio no forma parte de tu investigación: Hospital Central no está disponible en este caso.');
   });
 
   it('envía puerta.abrir una vez y espera edificio.entro, no solo el ack', async () => {

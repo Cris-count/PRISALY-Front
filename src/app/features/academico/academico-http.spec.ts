@@ -42,6 +42,10 @@ describe('Académico: transporte de credencial acotado', () => {
 
   it('acepta solo las plantillas publicadas por método', () => {
     expect(esRutaAcademicaAutorizada('GET', 'v1/admin/roles')).toBeTrue();
+    // I-08: listado de usuarios exacto (la consulta ?q= se quita antes de comparar); nada por prefijo.
+    expect(esRutaAcademicaAutorizada('GET', 'v1/admin/usuarios')).toBeTrue();
+    expect(esRutaAcademicaAutorizada('DELETE', 'v1/admin/usuarios')).toBeFalse();
+    expect(esRutaAcademicaAutorizada('GET', 'v1/admin/usuarios/otra-cosa')).toBeFalse();
     expect(esRutaAcademicaAutorizada('PUT', `v1/admin/usuarios/${ID}/permisos/3`)).toBeTrue();
     expect(esRutaAcademicaAutorizada('PUT', `v1/casos/${ID}/rubrica`)).toBeTrue();
     expect(esRutaAcademicaAutorizada('PATCH', `m4/sesiones/${ID}/estado`)).toBeTrue();
@@ -49,6 +53,14 @@ describe('Académico: transporte de credencial acotado', () => {
     expect(esRutaAcademicaAutorizada('GET', `v1/estudiantes/intentos/${ID}`)).toBeFalse();
     expect(esRutaAcademicaAutorizada('POST', `v1/casos/${ID}/archivar`)).toBeFalse();
     expect(esRutaAcademicaAutorizada('GET', 'v1/casos/no-uuid')).toBeFalse();
+  });
+
+  it('CB-05A: transporta la credencial al borrador de la narrativa, pero no a su publicación', () => {
+    expect(esRutaAcademicaAutorizada('GET', `v1/casos/${ID}/narrativa`)).toBeTrue();
+    expect(esRutaAcademicaAutorizada('PUT', `v1/casos/${ID}/narrativa`)).toBeTrue();
+    expect(esRutaAcademicaAutorizada('POST', `v1/casos/${ID}/narrativa/publicar`)).toBeFalse();
+    expect(esRutaAcademicaAutorizada('DELETE', `v1/casos/${ID}/narrativa`)).toBeFalse();
+    expect(esRutaAcademicaAutorizada('GET', 'v1/casos/no-uuid/narrativa')).toBeFalse();
   });
 
   it('calcula la ruta relativa solo dentro de la base configurada', () => {

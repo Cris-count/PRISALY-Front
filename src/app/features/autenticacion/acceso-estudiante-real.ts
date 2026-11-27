@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, Injectable, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, map, Observable, of } from 'rxjs';
 import { API_CONFIG, construirUrlApi } from '../../core/config/api.config';
 
@@ -21,6 +21,8 @@ export type ResultadoAcceso =
   | { readonly tipo: 'datos-invalidos' }
   | { readonly tipo: 'denegado' }
   | { readonly tipo: 'demasiados-intentos' }
+  /** FE-UX-03 (obs. 1 de DC-OPS-81): un 429 al SOLICITAR es la espera mínima entre códigos (D-B2.1). */
+  | { readonly tipo: 'espera-reenvio'; readonly segundos: number | null }
   | { readonly tipo: 'no-disponible' };
 
 export function clasificarErrorAcceso(error: unknown): ResultadoAcceso {
@@ -34,7 +36,18 @@ export function clasificarErrorAcceso(error: unknown): ResultadoAcceso {
   return { tipo: 'no-disponible' };
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * Solicitud de código: el 429 es la espera de reenvío (no intentos agotados). Los segundos salen de
+ * `Retry-After` cuando es un entero razonable; el cuerpo es el mismo para cualquier correo (D-B2.2).
+ */
+export function clasificarErrorSolicitud(error: unknown): ResultadoAcceso {
+  const r = clasificarErrorAcceso(error);
+  if (r.tipo !== 'demasiados-intentos' || !(error instanceof HttpErrorResponse)) return r;
+  const s = Number(error.headers?.get('Retry-After'));
+  return { tipo: 'espera-reenvio', segundos: Number.isInteger(s) && s > 0 && s <= 3600 ? s : null };
+}
+
+const UUID =/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable({ providedIn: 'root' })
 export class AccesoEstudianteApi {
@@ -60,7 +73,7 @@ export class AccesoEstudianteApi {
               }
             : { tipo: 'no-disponible' };
         }),
-        catchError((e) => of(clasificarErrorAcceso(e))),
+        catchError((e) => of(clasificarErrorSolicitud(e))),
       );
   }
 
@@ -105,6 +118,11 @@ const MENSAJES: Readonly<Record<string, string>> = {
           solo puede usarse una vez.
         </p>
         @if (paso() === 'correo') {
+          @if (sinSesion) {
+            <p role="status" class="ok" data-prueba="aviso-sin-sesion">
+              Para abrir tu portal necesitas una sesión activa. Solicita un código con tu correo institucional.
+            </p>
+          }
           <form [formGroup]="formCorreo" (ngSubmit)="solicitar()" novalidate>
             <label for="correo-acceso">Correo electrónico</label>
             <input id="correo-acceso" type="email" formControlName="correo" autocomplete="email" />
@@ -134,6 +152,7 @@ const MENSAJES: Readonly<Record<string, string>> = {
           <p role="status" class="ok" data-prueba="cuenta-activada">
             Código validado por el servidor. Tu sesión estudiantil está abierta.
           </p>
+          <a routerLink="/estudiante/portal" class="ir-portal" data-prueba="ir-portal">Ir a mis convocatorias</a>
         }
         @if (error()) {
           <p role="alert" class="error" data-prueba="error-acceso">{{ error() }}</p>
@@ -210,6 +229,10 @@ const MENSAJES: Readonly<Record<string, string>> = {
 })
 export class AccesoEstudianteReal {
   private readonly api = inject(AccesoEstudianteApi);
+  private readonly router = inject(Router);
+  /** FE-UX-03: llegada desde el portal sin sesión estudiantil (401). */
+  protected readonly sinSesion =
+    inject(ActivatedRoute).snapshot.queryParamMap.get('aviso') === 'sesion-estudiante';
   protected readonly paso = signal<'correo' | 'codigo' | 'activa'>('correo');
   protected readonly enviando = signal(false);
   protected readonly error = signal('');
@@ -237,6 +260,14 @@ export class AccesoEstudianteReal {
       this.paso.set('codigo');
     } else if (r.tipo === 'sesion-abierta') {
       this.paso.set('activa');
+      // DC-DEMO-112: con la sesión estudiantil abierta por el servidor, se continúa en el portal.
+      void this.router.navigate(['/estudiante/portal']);
+    } else if (r.tipo === 'espera-reenvio') {
+      this.error.set(
+        r.segundos
+          ? `Ya enviamos un código a este correo. Podrás solicitar otro en ${r.segundos} segundos; mientras tanto, revisa tu bandeja de entrada.`
+          : 'Ya enviamos un código a este correo. Espera un momento antes de solicitar otro y revisa tu bandeja de entrada.',
+      );
     } else {
       this.error.set(MENSAJES[r.tipo]);
     }

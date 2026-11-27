@@ -210,3 +210,59 @@ summary:focus-visible {
     padding: 1.2rem;
   }
 }
+
+/*
+ * FE-UX-04A (I-04): las tres vistas se presentaban como barras apiladas a todo el ancho y sin estado activo visible.
+ * Barra de pestañas horizontal; la activa usa el tono «activo» de la identidad (naranja suave, texto oscuro) y además
+ * peso y subrayado inferior completo, para no depender solo del color.
+ */
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+  padding: 0.25rem;
+  border: 1px solid var(--p-borde, #c7d5e8);
+  border-radius: 0.75rem;
+  background: #fff;
+  width: fit-content;
+  max-width: 100%;
+}
+.pestanas .pestana {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 2.65rem;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--p-sec, #344968);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pestanas .pestana:hover {
+  background: var(--p-suave, #edf4ff);
+  color: var(--p-texto, #172b4d);
+}
+.pestanas .pestana[aria-pressed='true'] {
+  border-color: #f2c28e;
+  background: var(--p-activo-fondo, #ffead4);
+  color: var(--p-activo-texto, #713600);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.35em;
+}
+.pestanas .pestana:focus-visible {
+  outline: 3px solid #b45309;
+  outline-offset: 2px;
+}
+@media (max-width: 30rem) {
+  .pestanas {
+    width: 100%;
+  }
+  .pestanas .pestana {
+    flex: 1 1 auto;
+  }
+}

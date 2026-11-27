@@ -23,7 +23,7 @@
   border-radius: 1.5rem;
   background:
     radial-gradient(ellipse at -15% 140%, #ffac26 0 27%, transparent 27.5%),
-    linear-gradient(105deg, #052650, #0863cc 52%, #d1efff);
+    linear-gradient(105deg, var(--p-azul-profundo), #0863cc 52%, #d1efff);
   box-shadow: 0 8px 20px #123c7318;
 }
 .ceja {
@@ -209,6 +209,6 @@ svg {
 /* Al apilar el banner, el texto permanece sobre la zona azul de alto contraste. */
 @container (max-width: 36rem) {
   .banner-convocatorias {
-    background: linear-gradient(110deg, #052650, #0755b8);
+    background: linear-gradient(110deg, var(--p-azul-profundo), #0755b8);
   }
 }

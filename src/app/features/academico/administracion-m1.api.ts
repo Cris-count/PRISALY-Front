@@ -107,10 +107,54 @@ function leerEstudiante(v: unknown): EstudianteRegistrado {
  * API administrativa de M1 (`/v1/admin`). El Backend exige el rol ADMINISTRADOR y aplica la
  * política de permisos (sin autoasignación); Angular no concede ni infiere privilegios.
  */
+export interface UsuarioAdministrativo {
+  readonly idUsuario: string;
+  readonly idEstudiante: string | null;
+  readonly nombre: string;
+  readonly correo: string;
+  readonly rol: string;
+  readonly estado: string;
+  readonly credencialPersonalConfigurada: boolean;
+  readonly estadoInvitacion: string;
+}
+export interface PaginaUsuarios {
+  readonly items: readonly UsuarioAdministrativo[];
+  readonly hayMas: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdministracionM1Api {
   private readonly http = inject(HttpClient);
   private readonly api = inject(API_CONFIG);
+
+  buscarUsuarios(q: string, rol: string, offset = 0): Observable<PaginaUsuarios> {
+    return this.get(
+      `v1/admin/usuarios?q=${encodeURIComponent(q.trim())}&rol=${encodeURIComponent(rol)}&limite=25&offset=${offset}`,
+    ).pipe(
+      map((v) => {
+        const raw = v as { items?: unknown; hayMas?: unknown };
+        if (typeof raw.hayMas !== 'boolean') throw respuestaInvalida();
+        const usuarios = items(raw).map((value) => {
+          const u = value as UsuarioAdministrativo;
+          if (
+            !u ||
+            !esUuid(u.idUsuario) ||
+            !texto(u.nombre) ||
+            !texto(u.correo) ||
+            !texto(u.rol) ||
+            !texto(u.estado) ||
+            typeof u.credencialPersonalConfigurada !== 'boolean' ||
+            !texto(u.estadoInvitacion) ||
+            (u.idEstudiante !== null && !esUuid(u.idEstudiante))
+          )
+            throw respuestaInvalida();
+          return u;
+        });
+        return { items: usuarios, hayMas: raw.hayMas };
+      }),
+      catchError((e: unknown) => throwError(() => aFalloAcademico(e))),
+    );
+  }
 
   roles(): Observable<RolResumen[]> {
     return this.get('v1/admin/roles').pipe(map((v) => items(v).map(leerRol)));

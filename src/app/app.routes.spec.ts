@@ -30,19 +30,20 @@ describe('Rutas públicas de presentación', () => {
     });
   });
 
-  for (const ruta of ['/', '/login', '/dashboard', '/simulador', '/simulador-unreal', '/simulador-tecnico-2d5', '/simulador-integrado', '/ruta-inexistente']) {
+  // DC-SIM-LIMPIEZA-01: las direcciones del simulador 2D/2.5D retirado llevan al visor de MUNDO-24.
+  const RUTAS_SIMULADOR = ['/simulador', '/simulador-unreal', '/simulador-tecnico-2d5', '/simulador-integrado'];
+
+  for (const ruta of ['/', '/login', '/dashboard', ...RUTAS_SIMULADOR, '/ruta-inexistente']) {
     it(`resuelve ${ruta} hacia el inicio público sin atribuir identidad ni iniciar intentos`, async () => {
       const harness = await RouterTestingHarness.create(ruta);
-      const esUnreal = ruta === '/simulador' || ruta === '/simulador-unreal';
-      const esTecnico = ruta === '/simulador-tecnico-2d5';
-      const esIntegrado = ruta === '/simulador-integrado';
+      const esUnreal = RUTAS_SIMULADOR.includes(ruta);
       const esDashboard = ruta === '/dashboard';
       expect(TestBed.inject(Router).url).toBe(
-        esUnreal ? '/simulador-unreal' : esTecnico ? '/simulador-tecnico-2d5' : esIntegrado ? '/simulador-integrado' : esDashboard ? '/dashboard' : '/login',
+        ruta === '/' ? '/acceso' : esUnreal ? '/simulador-unreal' : esDashboard ? '/dashboard' : '/login',
       );
       expect(
         harness.routeNativeElement?.querySelector(
-          esUnreal ? '#titulo-disponibilidad' : esTecnico ? '#simulador-titulo' : esIntegrado ? '.pantalla-inicio-integrada' : esDashboard ? '#bienvenida-dashboard' : 'form',
+          ruta === '/' ? 'h1' : esUnreal ? '#titulo-disponibilidad' : esDashboard ? '#bienvenida-dashboard' : 'form',
         ),
       ).not.toBeNull();
       for (const operacion of Object.values(gateway)) {
@@ -51,23 +52,16 @@ describe('Rutas públicas de presentación', () => {
     });
   }
 
-  it('presenta la escena técnica sin mapa anterior ni consultas académicas', async () => {
-    const harness = await RouterTestingHarness.create('/simulador-tecnico-2d5');
-    const pantalla = harness.routeNativeElement as HTMLElement;
-    expect(pantalla.textContent).toContain('Ciudad PRISALY');
-    expect(pantalla.textContent).toContain('Selecciona un lugar o camino.');
-    expect(pantalla.querySelector('[role="application"]')).not.toBeNull();
-    expect(pantalla.querySelector('img, svg, app-mapa-interactivo, app-recorrido-mapa')).toBeNull();
-    for (const operacion of Object.values(gateway)) expect(operacion).not.toHaveBeenCalled();
-  });
-
-  it('el acceso principal al simulador abre Unreal y nunca arranca el mapa Phaser como alternativa automática', async () => {
-    const harness = await RouterTestingHarness.create('/simulador');
-    const pantalla = harness.routeNativeElement as HTMLElement;
-    expect(TestBed.inject(Router).url).toBe('/simulador-unreal');
-    expect(pantalla.textContent).toContain('Ciudad 3D pendiente de habilitación');
-    expect(pantalla.textContent).toContain('Pixel Streaming');
-    expect(pantalla.querySelector('canvas, app-visor-ciudad-2d5')).toBeNull();
-    expect(pantalla.querySelector('video')).toBeNull();
-  });
+  for (const ruta of RUTAS_SIMULADOR) {
+    it(`${ruta} abre el visor de MUNDO-24 y nunca un simulador 2D/2.5D`, async () => {
+      const harness = await RouterTestingHarness.create(ruta);
+      const pantalla = harness.routeNativeElement as HTMLElement;
+      expect(TestBed.inject(Router).url).toBe('/simulador-unreal');
+      expect(pantalla.textContent).toContain('Ciudad 3D pendiente de habilitación');
+      expect(pantalla.textContent).toContain('Pixel Streaming');
+      expect(pantalla.textContent).not.toContain('2.5D');
+      expect(pantalla.querySelector('canvas, app-visor-ciudad-2d5, app-simulador-temporal, app-simulador-integrado-page')).toBeNull();
+      expect(pantalla.querySelector('video')).toBeNull();
+    });
+  }
 });

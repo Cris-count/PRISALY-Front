@@ -56,7 +56,7 @@ describe('PuenteUnreal con el protocolo candidato real', () => {
     } finally { siguiente.destruir(); }
   });
 
-  it('rechaza un destino con formato de Phaser sin enviarlo a Unreal', async () => {
+  it('rechaza un destino que no es una zona de MUNDO-24 sin enviarlo a Unreal', async () => {
     await expectAsync(puente.enviar('avatar.irA', { zoneId: 'hospital-prueba' })).toBeRejected();
     expect(canal.enviados).toBe(0);
   });
@@ -116,5 +116,110 @@ describe('PuenteUnreal con el protocolo candidato real', () => {
     spyOn(canal.angular, 'enviar').and.throwError('canal cerrado');
     await expectAsync(puente.enviar('avatar.irA', { zoneId: 'hospital_entrada' })).toBeRejected();
     expect(puente.ordenesPendientes).toBe(0);
+  });
+});
+
+describe('PuenteUnreal con el protocolo v1.1 (caso.configurar y contexto, CB-04)', () => {
+  let esquemas: Esquemas;
+  let canal: CanalMemoria;
+  let puente: PuenteUnreal;
+  const sesion = 'sesion-prueba-0001';
+  const contexto = 'cv-3f9c2e7d1b4a6c80a1b2c3d4e5f60718';
+  // datos de ejemplos/validos/caso.configurar.caso-a.json del protocolo (MUNDO-24 78297ef).
+  const metaHospitalMedico = {
+    idContextoVisual: contexto,
+    versionCatalogo: 'catalogo-visual-1',
+    hashCatalogo: 'bfa39caac8aaf2afb9c1177ac8024de14cac6a47a320f49e8b4813579ec7ccfe',
+    huella: 'dfcd097048fa6419b906964eba95cb2ad494801ff3059fba1f4984861eed63aa',
+    edificiosHabilitados: ['hospital_entrada', 'policia_entrada'],
+    npcsActivos: ['hosp-npc-doctor', 'pol-npc-oficial'],
+  };
+  const deUnreal = (tipo: string, datos: Record<string, unknown>, extras: Partial<Mensaje> = {}): Mensaje =>
+    ({ v: 1, id: `u-${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`, tipo, datos, correlacion: null, sesion, ts: 1, origen: 'unreal', ...extras });
+  const turno = () => new Promise<void>((resolver) => setTimeout(resolver, 0));
+
+  beforeAll(async () => { esquemas = await cargarEsquemasBrowser(); });
+  beforeEach(() => {
+    canal = new CanalMemoria();
+    puente = new PuenteUnreal(canal.angular, esquemas, { sesion, timeoutAckMs: 20 });
+  });
+  afterEach(() => puente?.destruir());
+
+  it('carga caso.configurar desde el catálogo real y conserva v=1', () => {
+    expect(esquemas.catalogo.tipos['caso.configurar']?.requiereAck).toBeTrue();
+    expect(esquemas.catalogo.tipos['caso.configurar']?.origen).toBe('angular');
+  });
+
+  it('sin contexto, las órdenes v1 salen igual que antes (sin campo contexto)', async () => {
+    let enviado: Mensaje | null = null;
+    canal.unreal.alRecibir((texto) => {
+      enviado = JSON.parse(texto) as Mensaje;
+      canal.unreal.enviar(JSON.stringify(deUnreal('orden.ack', {}, { correlacion: enviado.id })));
+    });
+    await puente.enviar('avatar.irA', { zoneId: 'hospital_entrada' });
+    expect(enviado!.v).toBe(1);
+    expect('contexto' in enviado!).toBeFalse();
+  });
+
+  it('envía caso.configurar con sobre.contexto y acepta el ACK con contexto', async () => {
+    let enviado: Mensaje | null = null;
+    canal.unreal.alRecibir((texto) => {
+      enviado = JSON.parse(texto) as Mensaje;
+      canal.unreal.enviar(JSON.stringify(deUnreal('orden.ack', {}, { correlacion: enviado.id, contexto })));
+    });
+    puente.fijarContexto(contexto);
+    const ack = await puente.enviar('caso.configurar', metaHospitalMedico);
+    expect(enviado!.v).toBe(1);
+    expect(enviado!.tipo).toBe('caso.configurar');
+    expect(enviado!.contexto).toBe(contexto);
+    expect(ack?.correlacion).toBe(enviado!.id);
+  });
+
+  it('rechaza localmente un caso.configurar inválido y no lo envía', async () => {
+    let enviados = 0;
+    canal.unreal.alRecibir(() => enviados++);
+    puente.fijarContexto(contexto);
+    const { hashCatalogo, ...sinHash } = metaHospitalMedico;
+    void hashCatalogo;
+    await expectAsync(puente.enviar('caso.configurar', sinHash)).toBeRejectedWith(jasmine.objectContaining({ codigo: 'DATOS_INVALIDOS' }));
+    await expectAsync(puente.enviar('caso.configurar', { ...metaHospitalMedico, nombres: { 'hosp-npc-doctor': 'Dr. Martinez' } }))
+      .toBeRejectedWith(jasmine.objectContaining({ codigo: 'DATOS_INVALIDOS' }));
+    expect(enviados).toBe(0);
+  });
+
+  it('no acepta un identificador académico como contexto visual', () => {
+    expect(() => puente.fijarContexto('6f1f7c5e-9a2b-4c3d-8e4f-0a1b2c3d4e5f')).toThrow();
+    expect(() => puente.fijarContexto('intento-7f1c0b2a')).toThrow();
+    expect(puente.contexto).toBeNull();
+  });
+
+  it('ignora los hechos de otro contexto y entrega los del contexto vigente', async () => {
+    const recibidos: string[] = [];
+    puente.suscribir((m) => recibidos.push(`${m.tipo}:${m.contexto ?? '-'}`));
+    puente.fijarContexto(contexto);
+    canal.unreal.enviar(JSON.stringify(deUnreal('zona.entro', { zoneId: 'hospital_entrada' }, { contexto: 'cv-ffffffffffffffffffffffffffffffff' })));
+    canal.unreal.enviar(JSON.stringify(deUnreal('zona.entro', { zoneId: 'hospital_entrada' }, { contexto })));
+    await turno();
+    expect(recibidos).toEqual([`zona.entro:${contexto}`]);
+  });
+
+  it('CB-05A: un puente nuevo acepta mundo.listo y el ACK de su orden aunque Unreal siga en un contexto anterior', async () => {
+    const anterior = 'cv-ffffffffffffffffffffffffffffffff';
+    const recibidos: string[] = [];
+    puente.suscribir((m) => recibidos.push(m.tipo));
+    canal.unreal.alRecibir((texto) => {
+      const orden = JSON.parse(texto) as Mensaje;
+      canal.unreal.enviar(JSON.stringify(deUnreal('orden.ack', {}, { correlacion: orden.id, contexto: anterior })));
+    });
+    canal.unreal.enviar(JSON.stringify(deUnreal('mundo.listo', { versionContenido: 'prototipo-0.1.2' }, { contexto: anterior })));
+    canal.unreal.enviar(JSON.stringify(deUnreal('zona.entro', { zoneId: 'hospital_entrada' }, { contexto: anterior })));
+    await turno();
+    const ack = await puente.enviar('sesion.iniciar', { casoId: 'caso-demo-01', preferencias: { reducirMovimiento: false, invertirCamara: false } });
+    expect(ack?.tipo).toBe('orden.ack');
+    expect(recibidos).toEqual(['mundo.listo']); // los hechos del contexto anterior siguen descartándose
+    // Un ACK ajeno (sin orden pendiente) con otro contexto tampoco se acepta.
+    canal.unreal.enviar(JSON.stringify(deUnreal('orden.ack', {}, { correlacion: 'a-0000000000000000999999', contexto: anterior })));
+    await turno();
+    expect(puente.registro.entradas.at(-1)?.resultado).toBe('IGNORADO:CONTEXTO_AJENO');
   });
 });

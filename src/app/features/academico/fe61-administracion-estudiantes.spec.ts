@@ -233,7 +233,8 @@ describe('FE-61 P-78 PanelEstudiantesM1', () => {
     f.detectChanges();
     const texto = raiz(f).textContent ?? '';
     expect(texto).toContain(E);
-    expect(texto).toContain('No se creó credencial ni se activó el acceso estudiantil');
+    expect(texto).toContain('Acceso habilitado (DD-02)');
+    expect(texto).toContain('No hay contraseña');
   });
 
   it('valida el formulario sin llamar al servidor', () => {

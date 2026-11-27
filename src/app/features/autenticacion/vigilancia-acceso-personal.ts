@@ -106,6 +106,18 @@ export class VigilanciaAccesoPersonal {
       alLimpiar(() => clearInterval(id));
     });
 
+    // I-08 (FE-UX-03): una sesión confirmada que pasa a `expirada` (el interceptor retiró la credencial
+    // tras un 401) deja de mostrarse como verificada en CUALQUIER pantalla de personal, también en las
+    // no vigiladas (Inicio, perfil): se informa y se va al acceso una sola vez. Un 403 (`acceso-denegado`)
+    // o un fallo de red/500 (`error-servicio`) no son vencimiento y no cierran la sesión.
+    let anterior = untracked(() => this.sesion.estado().tipo);
+    effect(() => {
+      const tipo = this.sesion.estado().tipo;
+      const previo = anterior;
+      anterior = tipo;
+      if (previo === 'valida' && tipo === 'expirada') untracked(() => this.cerrar(null));
+    });
+
     // Cierre de la vista cuando la identidad ya no cumple el requisito.
     effect(() => {
       const ruta = this.vigilada();
@@ -183,11 +195,21 @@ export class VigilanciaAccesoPersonal {
     this.fallosTemporales.set(0);
   }
 
+  /** Aviso del acceso cuando la sesión venció (I-08). Lo lee `LoginPage`; no contiene datos personales. */
+  static readonly AVISO_SESION_VENCIDA = 'sesion-vencida';
+
   private cerrar(aviso: string | null): void {
     this.detener();
-    void this.router.navigate(
-      aviso === null ? ['/login'] : ['/dashboard'],
-      aviso === null ? { replaceUrl: true } : { queryParams: { aviso }, replaceUrl: true },
-    );
+    if (aviso === null) {
+      // Sin sesión: al acceso. Si venció, con un aviso explicativo (sin bucle: el acceso no está vigilado).
+      const vencida = this.sesion.estado().tipo === 'expirada';
+      if (this.router.url.split(/[?#]/, 1)[0] === '/login') return;
+      void this.router.navigate(['/login'], {
+        replaceUrl: true,
+        ...(vencida ? { queryParams: { aviso: VigilanciaAccesoPersonal.AVISO_SESION_VENCIDA } } : {}),
+      });
+      return;
+    }
+    void this.router.navigate(['/dashboard'], { queryParams: { aviso }, replaceUrl: true });
   }
 }

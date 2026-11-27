@@ -1,0 +1,297 @@
+<div class="portal">
+  <header class="barra">
+    <div class="marca">
+      <img class="logo" src="images/prisaly-logo.png" alt="PRISALY" width="76" height="56" />
+      <div>
+        <strong>PRISALY</strong>
+        <span class="sub">Portal del estudiante</span>
+      </div>
+    </div>
+    <button type="button" class="secundario" (click)="salir()" data-prueba="portal-salir">
+      Cerrar sesión
+    </button>
+  </header>
+
+  <main class="contenido" aria-live="polite">
+    @if (aviso(); as a) {
+      <p
+        class="aviso"
+        [class]="'aviso ' + a.tipo"
+        [attr.role]="a.tipo === 'error' ? 'alert' : 'status'"
+        data-prueba="portal-aviso"
+      >
+        {{ a.texto }}
+      </p>
+    }
+
+    @switch (vista()) {
+      @case ('convocatorias') {
+        <section aria-labelledby="titulo-convocatorias">
+          <div class="encabezado">
+            <div>
+              <h1 id="titulo-convocatorias">Mis convocatorias</h1>
+              <p class="descripcion">Sesiones académicas a las que tu docente te convocó.</p>
+            </div>
+            <button
+              type="button"
+              class="secundario"
+              (click)="cargarConvocatorias()"
+              [disabled]="cargando()"
+            >
+              Actualizar
+            </button>
+          </div>
+
+          @if (cargando() && !convocatorias()) {
+            <div class="cargando" role="status">
+              <span class="spinner" aria-hidden="true"></span> Cargando convocatorias…
+            </div>
+          } @else if (convocatorias(); as lista) {
+            @if (lista.length === 0) {
+              <div class="vacio" data-prueba="portal-sin-convocatorias">
+                Aún no tienes convocatorias. Cuando tu docente te convoque, aparecerán aquí.
+              </div>
+            } @else {
+              <ul class="tarjetas">
+                @for (c of lista; track c.idConvocatoria) {
+                  <li class="tarjeta" data-prueba="portal-convocatoria">
+                    <div class="tarjeta-cabecera">
+                      <h2>Sesión académica</h2>
+                      <span class="estado" [attr.data-estado]="c.estadoSesion">{{
+                        estadoSesion(c)
+                      }}</span>
+                    </div>
+                    <dl class="datos">
+                      <div>
+                        <dt>Inicio</dt>
+                        <dd>{{ fecha(c.inicioPrevisto) }}</dd>
+                      </div>
+                      <div>
+                        <dt>Fin</dt>
+                        <dd>{{ fecha(c.finPrevisto) }}</dd>
+                      </div>
+                      <div>
+                        <dt>Tiempo máximo</dt>
+                        <dd>{{ minutos(c.tiempoMaximoParticipacionSegundos) }}</dd>
+                      </div>
+                    </dl>
+                    <div class="acciones">
+                      <button
+                        type="button"
+                        (click)="entrar(c)"
+                        [disabled]="cargando()"
+                        data-prueba="portal-entrar"
+                      >
+                        {{ c.estadoSesion === 'EnCurso' ? 'Iniciar o continuar' : 'Abrir' }}
+                      </button>
+                      @if (intentoGuardado(c); as id) {
+                        <button
+                          type="button"
+                          class="secundario"
+                          (click)="verResultado(id)"
+                          [disabled]="cargando()"
+                          data-prueba="portal-ver-resultado"
+                        >
+                          Ver resultado
+                        </button>
+                      }
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          }
+        </section>
+      }
+
+      @case ('intento') {
+        @if (contenido(); as c) {
+          <section aria-labelledby="titulo-caso">
+            <div class="encabezado">
+              <div>
+                <p class="etiqueta">Caso situacional</p>
+                <h1 id="titulo-caso">{{ c.caso.titulo }}</h1>
+                @if (intento()?.limiteTemporal) {
+                  <p class="descripcion">
+                    Tienes hasta {{ fecha(intento()!.limiteTemporal) }} para finalizar.
+                  </p>
+                }
+              </div>
+              <div class="progreso" aria-label="Progreso">
+                <span>{{ respondidas() }} / {{ totalPreguntas() }} respondidas</span>
+                <div class="barra-progreso"><div [style.width.%]="progreso()"></div></div>
+              </div>
+            </div>
+
+            <aside
+              class="simulador"
+              data-prueba="portal-simulador"
+              [attr.data-estado]="simulador()"
+            >
+              <div>
+                <strong>Simulación 3D</strong>
+                @switch (simulador()) {
+                  @case ('configuracion-pendiente') {
+                    <span
+                      >MUNDO-24 está pendiente de entrega y configuración en este equipo. Puedes
+                      continuar con la actividad aquí.</span
+                    >
+                  }
+                  @case ('contexto-pendiente') {
+                    <span
+                      >Aún no hay una sesión visual asignada a este caso. Continúa con el recorrido
+                      académico.</span
+                    >
+                  }
+                  @case ('comprobando') {
+                    <span role="status"
+                      >Comprobando la conexión con la sesión visual asignada…</span
+                    >
+                  }
+                  @case ('senalizacion-disponible') {
+                    <span
+                      >La señalización responde. La conexión de Unreal y su integración académica
+                      todavía deben verificarse.</span
+                    >
+                  }
+                  @default {
+                    <span
+                      >No fue posible conectar con el entorno 3D. Tus respuestas y tu actividad
+                      académica siguen disponibles aquí.</span
+                    >
+                  }
+                }
+              </div>
+              <div class="acciones">
+                <button
+                  type="button"
+                  class="secundario"
+                  (click)="comprobarSimulador()"
+                  [disabled]="simulador() === 'comprobando'"
+                >
+                  Reintentar
+                </button>
+                <button
+                  type="button"
+                  (click)="abrirSimulador()"
+                  [disabled]="!visorQaHabilitado"
+                  title="Pendiente de entrega y asignación académica de MUNDO-24"
+                  data-prueba="portal-abrir-simulador"
+                >
+                  Abrir simulación 3D
+                </button>
+              </div>
+            </aside>
+
+            @if (c.caso.historia) {
+              <article class="historia">
+                <h2>Historia</h2>
+                <p>{{ c.caso.historia }}</p>
+              </article>
+            }
+
+            @for (e of c.caso.escenarios; track e.idEscenario) {
+              <article class="escenario">
+                <h2>{{ e.titulo ?? 'Escenario ' + e.orden }}</h2>
+                @if (e.contexto) {
+                  <p class="contexto">{{ e.contexto }}</p>
+                }
+                @if (e.instrucciones) {
+                  <p class="instrucciones">{{ e.instrucciones }}</p>
+                }
+                @for (p of e.preguntas; track p.idPregunta) {
+                  <fieldset class="pregunta" data-prueba="portal-pregunta">
+                    <legend>{{ p.orden }}. {{ p.enunciado }}</legend>
+                    @for (o of p.opciones; track o.idOpcion) {
+                      <label
+                        class="opcion"
+                        [class.elegida]="opcionElegida(p.idPregunta) === o.idOpcion"
+                      >
+                        <input
+                          type="radio"
+                          [name]="'p-' + p.idPregunta"
+                          [checked]="opcionElegida(p.idPregunta) === o.idOpcion"
+                          [disabled]="guardando() !== null"
+                          (change)="elegir(p.idPregunta, o.idOpcion)"
+                          data-prueba="portal-opcion"
+                        />
+                        <span>{{ o.texto }}</span>
+                      </label>
+                    }
+                    @if (guardando() === p.idPregunta) {
+                      <span class="guardando" role="status">Guardando…</span>
+                    } @else if (opcionElegida(p.idPregunta)) {
+                      <span class="guardado">✓ Respuesta guardada</span>
+                    }
+                  </fieldset>
+                }
+              </article>
+            }
+
+            <div class="pie">
+              <button type="button" class="secundario" (click)="volver()" [disabled]="cargando()">
+                Volver
+              </button>
+              <button
+                type="button"
+                (click)="finalizar()"
+                [disabled]="cargando() || guardando() !== null"
+                data-prueba="portal-finalizar"
+              >
+                {{ cargando() ? 'Finalizando…' : 'Finalizar intento' }}
+              </button>
+            </div>
+          </section>
+        }
+      }
+
+      @case ('finalizado') {
+        <section class="centro" aria-labelledby="titulo-finalizado">
+          <div class="icono-ok" aria-hidden="true">✓</div>
+          <h1 id="titulo-finalizado">Intento finalizado</h1>
+          <p class="descripcion">
+            Tus respuestas quedaron registradas. Tu docente evaluará el intento y publicará la
+            calificación.
+          </p>
+          <div class="acciones">
+            <button
+              type="button"
+              (click)="verResultado()"
+              [disabled]="cargando()"
+              data-prueba="portal-consultar-resultado"
+            >
+              {{ cargando() ? 'Consultando…' : 'Consultar mi resultado' }}
+            </button>
+            <button type="button" class="secundario" (click)="volver()">Mis convocatorias</button>
+          </div>
+        </section>
+      }
+
+      @case ('resultado') {
+        @if (resultado(); as r) {
+          <section class="centro" aria-labelledby="titulo-resultado" data-prueba="portal-resultado">
+            <p class="etiqueta">Resultado publicado</p>
+            <h1 id="titulo-resultado">Tu calificación</h1>
+            <div class="nota">
+              <span class="valor" data-prueba="portal-nota">{{ r.valor.toFixed(1) }}</span>
+              <span class="escala">escala {{ r.escala }}</span>
+            </div>
+            <p class="descripcion">
+              Publicada el {{ fecha(r.fechaLiberacion) }}
+              @if (r.caracter) {
+                · {{ r.caracter }}
+              }
+            </p>
+            @if (r.retroalimentacionGeneral) {
+              <article class="retro">
+                <h2>Retroalimentación de tu docente</h2>
+                <p data-prueba="portal-retro">{{ r.retroalimentacionGeneral }}</p>
+              </article>
+            }
+            <button type="button" class="secundario" (click)="volver()">Mis convocatorias</button>
+          </section>
+        }
+      }
+    }
+  </main>
+</div>

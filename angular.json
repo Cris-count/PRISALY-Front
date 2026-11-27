@@ -50,6 +50,17 @@
               ],
               "outputHashing": "all"
             },
+            "demo-ops85": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.ops85.ts"
+                }
+              ]
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -93,6 +104,42 @@
                   "with": "src/environments/environment.qa-navegacion.ts"
                 }
               ]
+            },
+            "dc106-qa": {
+              "optimization": true,
+              "sourceMap": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.dc106-qa.ts"
+                }
+              ]
+            },
+            "test": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            },
+            "laboratorio": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.laboratorio.ts"
+                }
+              ]
+            },
+            "dc106-qa-sim": {
+              "optimization": true,
+              "sourceMap": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.dc106-qa-sim.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -102,6 +149,10 @@
           "configurations": {
             "production": {
               "buildTarget": "PRISALY-Front:build:production"
+            },
+            "demo-ops85": {
+              "buildTarget": "PRISALY-Front:build:demo-ops85",
+              "proxyConfig": "proxy.ops85.json"
             },
             "development": {
               "buildTarget": "PRISALY-Front:build:development"
@@ -114,6 +165,16 @@
             },
             "qa-navegacion": {
               "buildTarget": "PRISALY-Front:build:qa-navegacion"
+            },
+            "dc106-qa": {
+              "buildTarget": "PRISALY-Front:build:dc106-qa",
+              "proxyConfig": "proxy.dc106-qa.json"
+            },
+            "laboratorio": {
+              "buildTarget": "PRISALY-Front:build:laboratorio"
+            },
+            "dc106-qa-sim": {
+              "buildTarget": "PRISALY-Front:build:dc106-qa-sim"
             }
           },
           "defaultConfiguration": "development"
@@ -121,7 +182,8 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "runner": "karma"
+            "runner": "karma",
+            "buildTarget": "PRISALY-Front:build:test"
           }
         }
       }

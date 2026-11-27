@@ -1,3 +1,5 @@
+> **OBSOLETO (DC-SIM-LIMPIEZA-01, 26/11/2026):** documento histórico del simulador 2D/2.5D, ya retirado. El único simulador oficial es MUNDO-24 (ver `docs/SIMULADOR-2D5-RETIRADO.md`).
+
 # PRISALY — Fase 4C: integración gráfica preparada
 
 Estado: contrato y adaptador preparados; integración y aceptación gráfica de recursos reales pendientes de Cristian. La calibración técnica 4B se conserva como base. Este documento actualiza el estado descrito en `SIM-PROPUESTA-VISUAL-2D5-FASE4.md`.

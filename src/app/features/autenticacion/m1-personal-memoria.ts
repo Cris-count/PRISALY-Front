@@ -1,8 +1,20 @@
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 
-/** Única credencial de personal en memoria. No se serializa ni se expone en estados de UI.
- * Se pierde al destruir el inyector o recargar. No determina la vigencia en Backend.
+/** Única credencial de personal. No se expone en estados de UI ni determina la vigencia en Backend.
+ * DC-114: para sobrevivir a una recarga se conserva SOLO el token de acceso en `sessionStorage` (ámbito de la
+ * pestaña, se borra al cerrarla). Nunca se guarda la contraseña. Al restaurar, la sesión se revalida con
+ * `GET /v1/personal/me` antes de considerarse válida, y se borra al cerrar sesión o ante un 401.
  */
+const CLAVE_SESION = 'prisaly.personal.sesion';
+
+function almacen(): Storage | null {
+  try {
+    return typeof sessionStorage === 'undefined' ? null : sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class CredencialPersonalMemoria {
   #token: string | null = null;
@@ -10,12 +22,20 @@ export class CredencialPersonalMemoria {
   readonly revision = this.cambio.asReadonly();
 
   constructor() {
+    const guardado = almacen()?.getItem(CLAVE_SESION) ?? null;
+    if (esTokenPersonal(guardado)) this.#token = guardado;
     inject(DestroyRef).onDestroy(() => this.limpiar());
+  }
+
+  /** Hay una credencial restaurada o vigente que aún debe confirmarse con `/me`. */
+  hayCredencial(): boolean {
+    return this.#token !== null;
   }
 
   guardar(token: string): void {
     if (!esTokenPersonal(token)) throw new Error('Credencial de personal no válida.');
     this.#token = token;
+    almacen()?.setItem(CLAVE_SESION, token);
     this.cambio.update((valor) => valor + 1);
   }
 
@@ -25,6 +45,7 @@ export class CredencialPersonalMemoria {
   }
 
   limpiar(): void {
+    almacen()?.removeItem(CLAVE_SESION);
     if (this.#token === null) return;
     this.#token = null;
     this.cambio.update((valor) => valor + 1);

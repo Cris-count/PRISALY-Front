@@ -146,6 +146,15 @@
             </button>
           </div>
         </form>
+        @if (constructorDe() === c.idCaso) {
+          <app-constructor-caso-visual [idCaso]="c.idCaso" />
+        } @else {
+          <div class="acciones">
+            <button type="button" (click)="constructorDe.set(c.idCaso)" data-prueba="abrir-constructor-visual">
+              Diseñar el caso en la ciudad 3D
+            </button>
+          </div>
+        }
       </div>
     }
   }

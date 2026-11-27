@@ -38,6 +38,9 @@ const RUTAS_AUTORIZADAS: readonly { metodo: string; ruta: RegExp }[] = [
   { metodo: 'POST', ruta: /^v1\/admin\/docentes$/ },
   { metodo: 'GET', ruta: /^v1\/admin\/roles$/ },
   { metodo: 'GET', ruta: /^v1\/admin\/permisos$/ },
+  // I-08 (FE-UX-03): consulta paginada de usuarios (ConsultaUsuariosController, rol ADMINISTRADOR).
+  // Sin esta entrada la petición salía sin Bearer y su 401 se mostraba como sesión vencida.
+  { metodo: 'GET', ruta: /^v1\/admin\/usuarios$/ },
   { metodo: 'GET', ruta: new RegExp(`^v1/admin/usuarios/${UUID}/permisos$`) },
   { metodo: 'PUT', ruta: new RegExp(`^v1/admin/usuarios/${UUID}/permisos/\\d+$`) },
   { metodo: 'DELETE', ruta: new RegExp(`^v1/admin/usuarios/${UUID}/permisos/\\d+$`) },
@@ -53,6 +56,9 @@ const RUTAS_AUTORIZADAS: readonly { metodo: string; ruta: RegExp }[] = [
   { metodo: 'POST', ruta: new RegExp(`^v1/casos/${UUID}/publicar$`) },
   { metodo: 'GET', ruta: new RegExp(`^v1/casos/${UUID}/rubrica$`) },
   { metodo: 'PUT', ruta: new RegExp(`^v1/casos/${UUID}/rubrica$`) },
+  // CB-02/CB-05A (prisaly.m3.narrativa.publicacion.enabled, apagado por defecto): borrador de la narrativa.
+  { metodo: 'GET', ruta: new RegExp(`^v1/casos/${UUID}/narrativa$`) },
+  { metodo: 'PUT', ruta: new RegExp(`^v1/casos/${UUID}/narrativa$`) },
   { metodo: 'POST', ruta: /^m4\/sesiones$/ },
   { metodo: 'GET', ruta: /^m4\/sesiones$/ },
   { metodo: 'GET', ruta: new RegExp(`^m4/sesiones/${UUID}$`) },

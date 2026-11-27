@@ -300,7 +300,7 @@ describe('Ciclo M1 aislado con Backend simulado', () => {
     expect(sesion.estado().tipo).toBe('cierre-no-confirmado');
     expect(sesion.tienePermisos(['CREAR_CASO'])).toBeFalse();
   });
-  it('no abre autenticaciones concurrentes ni guarda contraseñas o tokens en storage/cookies', () => {
+  it('no abre autenticaciones concurrentes y solo conserva el token de sesión según DC-114, nunca contraseñas ni cookies', () => {
     preparar();
     const guardar = spyOn(Storage.prototype, 'setItem');
     const cookie = spyOnProperty(Document.prototype, 'cookie', 'set');
@@ -309,7 +309,7 @@ describe('Ciclo M1 aislado con Backend simulado', () => {
     sesion.autenticar(datos).subscribe({ error: (e) => (error = e) });
     expect(error?.tipo).toBe('operacion-en-curso');
     http.expectOne(`${raiz}/me`).flush(identidad);
-    expect(guardar).not.toHaveBeenCalled();
+    expect(guardar).toHaveBeenCalledOnceWith('prisaly.personal.sesion', autenticacion.accessToken);
     expect(cookie).not.toHaveBeenCalled();
     expect(JSON.stringify(sesion.estado())).not.toMatch(/credencial-ficticia|solo-prueba/);
     expect(JSON.stringify(memoria)).not.toContain(autenticacion.accessToken);

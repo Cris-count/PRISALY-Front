@@ -111,7 +111,7 @@
     <div class="lateral-pie">
       <div class="nota-demo">
         <span class="resumen-demo"
-          ><span class="punto" aria-hidden="true"></span>Interfaz de demostración</span
+          ><span class="punto" aria-hidden="true"></span>Entorno local de pruebas</span
         >
         <p>
           {{
@@ -145,14 +145,16 @@
           </button>
         }
       </div>
-      <a
-        class="volver"
-        routerLink="/login"
-        aria-label="Volver al inicio de sesión"
-        title="Volver al inicio de sesión"
-        ><span aria-hidden="true">←</span>
-        <span class="nav-texto">Volver al inicio de sesión</span></a
-      >
+      @if (sesion?.estado()?.tipo !== 'valida') {
+        <a
+          class="volver"
+          routerLink="/login"
+          aria-label="Volver al inicio de sesión"
+          title="Volver al inicio de sesión"
+          ><span aria-hidden="true">←</span>
+          <span class="nav-texto">Volver al inicio de sesión</span></a
+        >
+      }
       <button class="cerrar-menu" type="button" (click)="cerrarMenu()">Cerrar menú</button>
     </div>
   </aside>
@@ -222,8 +224,9 @@
     }
     <div class="identificacion">
       <span class="insignia">{{ qaPersonal ? 'QA DE PERSONAL' : 'ENTORNO DE DEMOSTRACIÓN' }}</span>
+      <a class="enlace-perfil" routerLink="/dashboard/perfil">Mi perfil</a>
       <div class="perfil">
-        <span class="avatar" aria-hidden="true">P</span>
+        <span class="avatar" aria-hidden="true">{{ inicialUsuario() }}</span>
         @if (sesion?.estado(); as estado) {
           <div>
             {{ estado.tipo === 'valida' ? estado.identidad.nombre : 'Sesión no verificada'

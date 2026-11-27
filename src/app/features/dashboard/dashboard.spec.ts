@@ -58,42 +58,29 @@ describe('Dashboard público de demostración', () => {
     expect(TestBed.inject(Router).url).toBe('/dashboard');
     expect(raiz().querySelectorAll('.acceso').length).toBe(DASHBOARD_NAVEGACION.length);
     expect(raiz().textContent).toContain('Sin sesión autenticada');
-    expect(raiz().textContent).toContain('Interfaz de demostración');
+    expect(raiz().textContent).toContain('Entorno local de pruebas');
     expect(raiz().querySelector('form')).toBeNull();
     expect(raiz().querySelector('table')).toBeNull();
     expect(raiz().querySelector('img')?.getAttribute('src')).toBe('images/prisaly-logo.png');
   });
 
-  it('mantiene la búsqueda de Inicio como presentación y las ilustraciones fuera de la interacción', async () => {
-    const busqueda = raiz().querySelector('.busqueda-inicio')!;
-    expect(busqueda.getAttribute('role')).toBe('note');
-    expect(busqueda.textContent).toContain('No disponible');
-    expect(busqueda.querySelector('input, button, a')).toBeNull();
-    for (const selector of ['.ciudad-inicio', '.emblema-institucional']) {
-      expect(raiz().querySelector(selector)?.getAttribute('aria-hidden')).toBe('true');
-      const ilustracion = raiz().querySelector(selector + ' img, ' + selector + ' image');
-      expect(ilustracion?.getAttribute('src') ?? ilustracion?.getAttribute('href')).toMatch(
-        /^images\/inicio-/,
-      );
+  it('FE-UX-02: cada tarjeta de acceso lleva su icono y su contenido en columnas separadas', () => {
+    const tarjetas = Array.from(raiz().querySelectorAll<HTMLElement>('.acceso'));
+    expect(tarjetas.length).toBeGreaterThan(0);
+    for (const t of tarjetas) {
+      // La rejilla reserva la primera columna al icono: sin él, el texto cae en 2.75rem y parte las palabras.
+      expect(t.firstElementChild?.classList.contains('icono-acceso')).withContext(t.textContent ?? '').toBeTrue();
+      expect(t.querySelector('.icono-acceso svg path')?.getAttribute('d')).toBeTruthy();
+      expect(t.querySelector('.acceso-contenido h3')?.textContent?.trim()).toBeTruthy();
+      expect(t.querySelector('.acceso-accion')?.textContent).toContain('Consultar');
     }
-    expect(raiz().querySelector('.emblema-institucional image')?.getAttribute('href')).toBe(
-      'images/inicio-campus.webp',
-    );
-    expect(raiz().querySelectorAll('.emblema-institucional image')[1]?.getAttribute('href')).toBe(
-      'images/prisaly-logo.png',
-    );
-    expect(
-      raiz().querySelector('.emblema-institucional svg')?.getAttribute('preserveAspectRatio'),
-    ).toBe('xMidYMid meet');
-    expect(raiz().querySelector('.accion')?.getAttribute('href')).toBe(
-      '/dashboard/casos-academicos',
-    );
-    await pulsar('.accion');
+  });
+
+  it('mantiene la portada sin búsqueda ficticia ni ilustraciones detrás del contenido', async () => {
+    expect(raiz().querySelector('app-dashboard-inicio input')).toBeNull();
+    expect(raiz().querySelector('.ciudad-inicio')).toBeNull();
+    await pulsar('.acceso[href="/dashboard/casos-academicos"]');
     expect(TestBed.inject(Router).url).toBe('/dashboard/casos-academicos');
-    expect(raiz().querySelector('.busqueda-inicio')).toBeNull();
-    expect(raiz().querySelector('nav [aria-current="page"]')?.getAttribute('href')).toBe(
-      '/dashboard/casos-academicos',
-    );
   });
 
   it('contrae y expande conservando nombres accesibles, navegación y estado local', async () => {
@@ -230,7 +217,7 @@ describe('Dashboard público de demostración', () => {
             .withContext(ruta + ' / compacto=' + contraido)
             .toEqual(referencia);
           expect(lateral.querySelector('.nota-demo')?.textContent).toContain(
-            'Interfaz de demostración',
+            'Entorno local de pruebas',
           );
           expect(lateral.querySelector('.volver')?.getAttribute('href')).toBe('/login');
           expect(raiz().querySelector('.area h1')).not.toBeNull();
@@ -257,7 +244,7 @@ describe('Dashboard público de demostración', () => {
       await pulsar(`nav a[href="/dashboard/${seccion.ruta}"]`);
       expect(TestBed.inject(Router).url).toBe(`/dashboard/${seccion.ruta}`);
       expect(raiz().querySelector('h1')?.textContent).toBe(
-        seccion.ruta === 'usuarios-docentes' ? 'Gestión de usuarios y docentes' : seccion.titulo,
+        seccion.ruta === 'usuarios-docentes' ? 'Gestión de usuarios' : seccion.titulo,
       );
       expect(raiz().querySelector('.titulo-pantalla')?.textContent).toBe(seccion.titulo);
       expect(raiz().querySelector('nav [aria-current="page"]')?.textContent).toContain(
@@ -266,7 +253,11 @@ describe('Dashboard público de demostración', () => {
       expect(raiz().querySelectorAll('.alcance').length).toBe(
         seccion.ruta === 'configuracion' ? 6 : 0,
       );
-      expect(raiz().textContent).toContain('Implementación pendiente');
+      expect(raiz().textContent).toContain(
+        seccion.ruta === 'usuarios-docentes'
+          ? 'sesión administrativa verificada'
+          : 'Implementación pendiente',
+      );
       await pulsar('.regreso');
       expect(TestBed.inject(Router).url).toBe('/dashboard');
     });
@@ -294,15 +285,7 @@ describe('Dashboard público de demostración', () => {
     expect(
       Array.from(raiz().querySelectorAll('.acceso'), (enlace) => enlace.getAttribute('href')),
     ).toEqual(DASHBOARD_NAVEGACION.map((seccion) => `/dashboard/${seccion.ruta}`));
-    expect(raiz().querySelector('.accion')?.getAttribute('href')).toBe(
-      '/dashboard/casos-academicos',
-    );
-    expect(raiz().querySelector('.notificaciones-inicio')?.getAttribute('aria-label')).toBe(
-      'Notificaciones demostrativas no disponibles',
-    );
-    expect(
-      raiz().querySelector('.notificaciones-inicio button, .notificaciones-inicio a'),
-    ).toBeNull();
+    expect(raiz().querySelector('.accion')).toBeNull();
     await pulsar('.acceso[href="/dashboard/casos-academicos"]');
     expect(raiz().querySelector('h1')?.textContent).toBe('Casos académicos');
     expect(raiz().querySelector('.notificaciones-inicio')).toBeNull();
@@ -320,97 +303,29 @@ describe('Dashboard público de demostración', () => {
     expect(raiz().querySelectorAll('nav').length).toBe(1);
     expect(raiz().querySelectorAll('.superior').length).toBe(1);
     await harness.navigateByUrl('/dashboard/usuarios-docentes');
-    expect(raiz().querySelector('h1')?.textContent).toBe('Gestión de usuarios y docentes');
-    expect(raiz().textContent).toContain('Sin sesión administrativa autenticada');
+    expect(raiz().querySelector('h1')?.textContent).toBe('Gestión de usuarios');
+    expect(raiz().textContent).toContain(
+      'La gestión requiere una sesión administrativa verificada.',
+    );
     await pulsar('nav a[href="/dashboard/sesiones"]');
     expect(raiz().querySelector('h1')?.textContent).toBe('Sesiones');
   });
 
-  it('mantiene deshabilitadas las acciones y filtros administrativos sin modificar ni persistir datos', async () => {
+  it('no publica controles administrativos ni persiste datos sin sesión', async () => {
     await harness.navigateByUrl('/dashboard/usuarios-docentes');
-    const pagina = raiz().querySelector('app-dashboard-administracion')!;
-    const guardar = spyOn(Storage.prototype, 'setItem');
-    const borrar = spyOn(Storage.prototype, 'removeItem');
-    const vaciar = spyOn(Storage.prototype, 'clear');
-    const contenido = pagina.innerHTML;
-    const acciones = pagina.querySelectorAll<HTMLButtonElement>('.acciones-admin button');
-    expect(Array.from(acciones, (boton) => boton.textContent!.replace(/\s+/g, ' ').trim())).toEqual(
-      [
-        'Registrar docente Pendiente',
-        'Editar información Pendiente',
-        'Administrar roles Pendiente',
-        'Consultar permisos Pendiente',
-      ],
-    );
-    for (const control of pagina.querySelectorAll<
-      HTMLInputElement | HTMLSelectElement | HTMLButtonElement
-    >('input, select, button')) {
-      expect(control.disabled).toBeTrue();
-      expect(pagina.querySelector(`#${control.getAttribute('aria-describedby')}`)).not.toBeNull();
-      control.click();
-    }
-    expect(pagina.querySelector('label[for="buscar-docente"]')).not.toBeNull();
-    expect(pagina.querySelector('label[for="estado-docente"]')).not.toBeNull();
-    await harness.fixture.whenStable();
-    harness.detectChanges();
-    expect(pagina.innerHTML).toBe(contenido);
-    expect(TestBed.inject(Router).url).toBe('/dashboard/usuarios-docentes');
-    for (const operacion of [guardar, borrar, vaciar]) {
-      expect(operacion).not.toHaveBeenCalled();
-    }
+    const p = raiz().querySelector('app-dashboard-administracion')!;
+    expect(p.querySelectorAll('input,select,button,form,table').length).toBe(0);
+    expect(p.textContent).toContain('sesión administrativa verificada');
   });
-
-  it('presenta docentes vacíos y catálogos pendientes sin inventar registros o privilegios', async () => {
+  it('no presenta registros o privilegios ficticios', async () => {
     await harness.navigateByUrl('/dashboard/usuarios-docentes');
-    const pagina = raiz().querySelector('app-dashboard-administracion')!;
-    expect(pagina.querySelectorAll('.docentes tbody tr:not(.fila-vacia)').length).toBe(0);
-    expect(pagina.querySelectorAll('.docentes tbody .fila-vacia').length).toBe(1);
-    expect(pagina.querySelector('.fila-vacia td')?.getAttribute('colspan')).toBe('3');
-    expect(pagina.querySelectorAll('.docentes th[scope="col"]').length).toBe(3);
-    expect(pagina.querySelectorAll('.vista-previa th[scope="col"]').length).toBe(4);
-    expect(pagina.querySelectorAll('.vista-previa tbody tr').length).toBe(1);
-    expect(pagina.querySelector('.vista-previa')?.textContent).toContain(
-      'No corresponde a una cuenta ni a un registro docente',
-    );
-    expect(
-      pagina.querySelector('.docentes app-estado-panel [role="status"]')?.textContent,
-    ).toContain('Esta demostración no consulta ni contiene registros docentes');
-    expect(pagina.querySelector('.roles')?.textContent).toContain(
-      'La consulta requerirá una sesión autorizada',
-    );
-    expect(pagina.querySelector('.roles')?.textContent).toContain(
-      'No se han consultado roles ni permisos',
-    );
-    expect(
-      pagina.querySelector(':scope > .administracion > app-estado-panel')?.textContent,
-    ).toContain('Integración pendiente');
-    expect(pagina.querySelector('form, [data-id-docente], [data-id-usuario]')).toBeNull();
-    expect(pagina.querySelector<HTMLInputElement>('input')?.value).toBe('');
+    expect(raiz().querySelector('app-panel-administracion-m1')).toBeNull();
+    expect(raiz().querySelector('app-dashboard-administracion table')).toBeNull();
   });
-
-  it('expone los estados de carga, vacío, error y acceso restringido solo como ejemplos desplegables', async () => {
+  it('no presenta ejemplos de errores como estados operativos', async () => {
     await harness.navigateByUrl('/dashboard/usuarios-docentes');
-    const ejemplos = raiz().querySelector<HTMLDetailsElement>('.estados-demo')!;
-    expect(ejemplos.open).toBeFalse();
-    expect(ejemplos.querySelector<HTMLElement>('[role="alert"]')!.checkVisibility()).toBeFalse();
-    expect(
-      raiz().querySelector(
-        'app-dashboard-administracion > .administracion > app-estado-panel [aria-busy="true"]',
-      ),
-    ).toBeNull();
-    await pulsar('.estados-demo summary');
-    expect(ejemplos.open).toBeTrue();
-    expect(ejemplos.querySelectorAll('.ejemplos-admin section').length).toBe(4);
-    expect(ejemplos.textContent?.replace(/\s+/g, ' ')).toContain(
-      'No representan consultas, errores ni decisiones de acceso',
-    );
-    expect(ejemplos.querySelector('[aria-busy="true"]')?.textContent).toContain(
-      'No hay una consulta en curso',
-    );
-    expect(ejemplos.querySelector('[role="alert"]')?.textContent).toContain(
-      'No se ha producido ningún fallo',
-    );
-    expect(ejemplos.textContent).toContain('No se ha evaluado ninguna autorización');
+    expect(raiz().querySelector('.estados-demo')).toBeNull();
+    expect(raiz().querySelector('app-dashboard-administracion [aria-busy="true"]')).toBeNull();
   });
 
   it('abre el panel estudiantil directamente dentro del único layout existente', async () => {
@@ -815,7 +730,9 @@ describe('Dashboard público de demostración', () => {
               const estilo = ventana.getComputedStyle(panel);
               expect(estilo.getPropertyValue(`border-${lado}-style`)).toBe('solid');
               expect(estilo.getPropertyValue(`border-${lado}-width`)).toBe(grosorOriginal);
-              expect(estilo.getPropertyValue(`border-${lado}-color`)).toBe('rgb(199, 213, 232)');
+              expect(estilo.getPropertyValue(`border-${lado}-color`)).toBe(
+                panel.matches('.bienvenida') ? 'rgb(219, 226, 236)' : 'rgb(199, 213, 232)',
+              );
             }
           }
           const paneles = Array.from(
@@ -885,7 +802,7 @@ describe('Dashboard público de demostración', () => {
             const banner = doc.querySelector<HTMLElement>(
               '.bienvenida, .cabecera-admin, .casos .cabecera-docente, .banner-rubricas, .banner-sesiones, .banner-convocatorias, .config-hero, .bienvenida-estudiante',
             )!;
-            expect(banner.getBoundingClientRect().height).toBeGreaterThanOrEqual(170);
+            expect(banner.getBoundingClientRect().height).toBeGreaterThanOrEqual(96);
             expect(banner.getBoundingClientRect().height).toBeLessThanOrEqual(200);
             const margenIzquierdo =
               banner.getBoundingClientRect().left -
@@ -899,9 +816,9 @@ describe('Dashboard público de demostración', () => {
             expect(doc.querySelectorAll('.tarjetas > .acceso').length).toBe(
               DASHBOARD_NAVEGACION.length,
             );
-            expect(doc.querySelector('.acceso--estudiante')?.getAttribute('href')).toBe(
-              '/dashboard/estudiante',
-            );
+            expect(
+              doc.querySelector('.acceso[href="/dashboard/estudiante"]')?.getAttribute('href'),
+            ).toBe('/dashboard/estudiante');
             // Inicio conserva su escala y permite scroll vertical natural, sin comprimirlo.
             const paginaInicio = doc.querySelector<HTMLElement>('app-dashboard-inicio .pagina')!;
             const paginaRect = paginaInicio.getBoundingClientRect();
@@ -911,7 +828,9 @@ describe('Dashboard público de demostración', () => {
             // El layout actual deja 32px de aire sin desplazar todo con un margen adicional.
             expect(paginaRect.top - barraSuperior.bottom).toBeGreaterThanOrEqual(32 * escala);
             const pieInicio = doc.querySelector('.pie-pagina')!.getBoundingClientRect();
-            const aprendizaje = doc.querySelector('.acceso--estudiante')!.getBoundingClientRect();
+            const aprendizaje = doc
+              .querySelector('.acceso[href="/dashboard/estudiante"]')!
+              .getBoundingClientRect();
             expect(pieInicio.top).toBeGreaterThanOrEqual(aprendizaje.bottom);
             expect(pieInicio.bottom).toBeLessThanOrEqual(paginaRect.bottom + 1);
             expect(ventana.getComputedStyle(paginaInicio).maxHeight).toBe('none');
@@ -922,15 +841,9 @@ describe('Dashboard público de demostración', () => {
             }
           }
           if (ruta === '/dashboard' && ancho >= 1440) {
-            const bannerInicio = doc.querySelector('.bienvenida')!.getBoundingClientRect();
-            const ciudad = doc.querySelector('.ciudad-inicio')!.getBoundingClientRect();
-            expect(ciudad.top).toBeGreaterThanOrEqual(bannerInicio.bottom);
-            expect(
-              ventana.getComputedStyle(doc.querySelector('.ciudad-inicio')!).pointerEvents,
-            ).toBe('none');
-            for (const tarjeta of doc.querySelectorAll('.acceso')) {
-              expect(tarjeta.getBoundingClientRect().height).toBeGreaterThanOrEqual(144);
-            }
+            expect(doc.querySelector('.ciudad-inicio')).toBeNull();
+            for (const tarjeta of doc.querySelectorAll('.acceso'))
+              expect(tarjeta.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
           }
           expect(ventana.getComputedStyle(lateral).display).toBe(ancho <= 800 ? 'none' : 'flex');
           lateral.classList.add('lateral--abierta');
@@ -956,40 +869,10 @@ describe('Dashboard público de demostración', () => {
           }
           expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
           contenedor.classList.remove('dashboard--compacto');
-          const onda = doc.querySelector<SVGElement>('.ondas-fondo')!;
-          const animacion = ventana.getComputedStyle(onda).animationName;
-          if (ventana.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            expect(animacion).toBe('none');
-          } else {
-            // Angular antepone el ámbito del componente al nombre del keyframe.
-            expect(animacion).toMatch(/oleaje-institucional$/);
-            const capas = Array.from(onda.querySelectorAll('path')).slice(0, 3);
-            const animaciones = onda.getAnimations({ subtree: true });
-            expect(animaciones.length).toBe(4);
-            const duraciones = animaciones.map((animada) => animada.effect!.getTiming().duration);
-            expect(new Set(duraciones).size).toBe(4);
-            // Muestreo determinista: demuestra movimiento real sin esperar frames de Chrome.
-            for (const animada of animaciones) {
-              animada.pause();
-              animada.currentTime = 0;
-            }
-            const iniciales = capas.map((capa) => capa.getBoundingClientRect());
-            for (const animada of animaciones) animada.currentTime = 3000;
-            capas.forEach((capa, indice) => {
-              const final = capa.getBoundingClientRect();
-              expect(Math.hypot(final.x - iniciales[indice].x, final.y - iniciales[indice].y))
-                .withContext(`${ruta} ${ancho}px: movimiento perceptible de capa ${indice + 1}`)
-                .toBeGreaterThan(6);
-            });
-            expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
-          }
           const fondo = doc.querySelector<HTMLElement>('.fondo-dashboard')!;
+          expect(ventana.getComputedStyle(fondo).display).toBe('none');
           expect(ventana.getComputedStyle(fondo).pointerEvents).toBe('none');
-          expect(ventana.getComputedStyle(fondo).animationName).toBe('none');
-          expect(
-            Math.abs(fondo.getBoundingClientRect().width - doc.documentElement.clientWidth),
-          ).toBeLessThan(1);
-          expect(fondo.querySelectorAll('path').length).toBe(4);
+          expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(ventana.innerWidth);
           // Contraste WCAG AA para textos peque?os sobre las superficies claras.
           function luminancia(color: string): number {
             const canales = color

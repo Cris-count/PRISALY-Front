@@ -1,3 +1,5 @@
+> **OBSOLETO (DC-SIM-LIMPIEZA-01, 26/11/2026):** documento histórico del simulador 2D/2.5D, ya retirado. El único simulador oficial es MUNDO-24 (ver `docs/SIMULADOR-2D5-RETIRADO.md`).
+
 # PRISALY — Propuesta técnica del mundo 2.5D y prueba de movimiento
 
 **Estado:** diseño local para revisión; no es contrato aprobado, implementación, esquema de base de datos ni especificación REST. Fecha: 15 de noviembre de 2026. Se conserva la pantalla temporal de `/simulador` y todo el trabajo local existente.
