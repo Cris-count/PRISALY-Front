@@ -84,7 +84,7 @@ describe('SimuladorUnrealPage — modo académico del estudiante (CB-07)', () =>
     };
     const enviados = () => canal.emitUIInteraction.calls.allArgs().map(([m]) => m as Mensaje);
     const guiones = () => (pagina.hospital as unknown as { guionesCaso: ReadonlyMap<string, GuionNarrativo> | null }).guionesCaso;
-    return { pagina, mundoListo, enviados, guiones, m3 };
+    return { pagina, mundoListo, enviados, guiones, m3, fixture };
   }
 
   it('lee la narrativa fijada de M5 (no M3) y configura MUNDO-24 sin identificadores académicos', async () => {
@@ -156,5 +156,27 @@ describe('SimuladorUnrealPage — modo académico del estudiante (CB-07)', () =>
     expect(p.enviados().some((m) => m.tipo === 'caso.configurar')).toBeFalse();
     expect(p.guiones()!.size).toBe(0);
     expect(p.pagina.error()).toBeTruthy();
+  });
+
+  it('FE-UX-09 (R07-IMP): el panel identifica el caso, no muestra edificios de demostración antes de aplicarlo y explica los excluidos', async () => {
+    const portal = { narrativa: jasmine.createSpy('narrativa').and.returnValue(of(narrativa())) };
+    const p = preparar(portal);
+    p.fixture.detectChanges();
+    const raiz = p.fixture.nativeElement as HTMLElement;
+    const dato = (d: string) => raiz.querySelector(`[data-prueba="${d}"]`)?.textContent?.trim() ?? null;
+    expect(dato('caso-investigacion')).toBe('Caso: Caso de validación CB-07');
+    // Antes de que la ciudad aplique el caso no se enseñan los edificios ni personajes de la demostración.
+    expect(raiz.querySelectorAll('.edificio').length).toBe(0);
+    expect(raiz.textContent).not.toContain('Dr. Mendoza');
+    expect(dato('objetivo')).toContain('Conecta la ciudad 3D');
+    await p.pagina.conectar();
+    await p.mundoListo();
+    p.fixture.detectChanges();
+    const edificios = [...raiz.querySelectorAll('.edificio h3')].map((h) => h.textContent?.trim());
+    expect(edificios).toEqual(['Hospital Central', 'Comisaría Sectorial']);
+    expect(dato('objetivo')).toContain('conversa con los 2 personajes del caso');
+    expect(dato('siguiente-paso')).toBe('Siguiente: ve a Hospital Central y conversa con Dr. Martínez.');
+    expect(dato('fuera-del-caso')).toContain('Fiscalía de Turno');
+    p.pagina.desconectar();
   });
 });

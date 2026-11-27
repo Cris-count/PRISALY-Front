@@ -705,4 +705,45 @@ describe('SimuladorUnrealPage', () => {
       prueba.pagina.desconectar();
     });
   });
+
+  describe('FE-UX-09 · panel de investigación (R07-IMP)', () => {
+    const texto = (prueba: ReturnType<typeof preparar>, dato: string) =>
+      (prueba.fixture.nativeElement.querySelector(`[data-prueba="${dato}"]`) as HTMLElement | null)?.textContent?.trim() ?? null;
+
+    it('demostración: identifica el recorrido, fija el objetivo y orienta al siguiente paso según dónde está', async () => {
+      const prueba = preparar();
+      prueba.fixture.detectChanges();
+      expect(texto(prueba, 'caso-investigacion')).toBe('Recorrido demostrativo');
+      expect(texto(prueba, 'objetivo')).toContain('conversa con los 4 personajes de la demostración');
+      expect(texto(prueba, 'progreso')).toContain('0 de 4');
+      expect(texto(prueba, 'siguiente-paso')).toBe('Siguiente: ve a Hospital Central y conversa con Dr. Mendoza.');
+      expect(texto(prueba, 'fuera-del-caso')).toBeNull();
+
+      await entrarAlDoctor(prueba);
+      prueba.pagina.hospital.avanzarDialogo();
+      await prueba.fixture.whenStable();
+      prueba.fixture.detectChanges();
+      expect(texto(prueba, 'siguiente-paso')).toBe('Siguiente: retoma la conversación con Dr. Mendoza; acércate y pulsa E.');
+      const actual = prueba.fixture.nativeElement.querySelector('.edificio.actual') as HTMLElement;
+      expect(actual.textContent).toContain('Hospital Central');
+      expect(actual.textContent).toContain('Estás aquí');
+      expect(actual.textContent).toContain('Conversación en curso');
+      prueba.pagina.desconectar();
+    });
+
+    it('no repite fuera de la libreta la lista de pistas (sin duplicados visuales)', async () => {
+      const prueba = preparar();
+      await entrarAlDoctor(prueba);
+      prueba.pagina.hospital.avanzarDialogo();
+      prueba.pagina.hospital.avanzarDialogo();
+      prueba.pagina.hospital.elegir('consultar-expediente');
+      await prueba.fixture.whenStable();
+      prueba.fixture.detectChanges();
+      const raiz = prueba.fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('#pistas-hospital')).toBeNull();
+      expect(raiz.textContent!.split('Historia Clínica de Emergencia').length - 1).toBe(1); // solo el aviso de la conversación
+      expect(texto(prueba, 'progreso')).toContain('1 pista en tu libreta');
+      prueba.pagina.desconectar();
+    });
+  });
 });
