@@ -12,10 +12,12 @@ describe('ConstructorCasoVisual (FE-UX-06)', () => {
   let guardados: object[];
   /** DC-MVP-09-R12: el servidor no expone la narrativa (flag M3 apagado) y responde 404. */
   let narrativa404 = false;
-  beforeEach(() => (narrativa404 = false));
+  /** Versión publicada que devuelve el servidor al leer la narrativa. */
+  let publicadoInicial: GuionGuardado | null = null;
+  beforeEach(() => { narrativa404 = false; publicadoInicial = null; });
 
   async function crear() {
-    respuesta = { idCaso: ID, borrador: null, publicado: null };
+    respuesta = { idCaso: ID, borrador: null, publicado: publicadoInicial };
     guardados = [];
     const api: Pick<CasosM3Api, 'narrativa' | 'guardarNarrativa'> = {
       narrativa: () => (narrativa404 ? throwError(() => new HttpErrorResponse({ status: 404 })) : of(respuesta)),
@@ -23,7 +25,7 @@ describe('ConstructorCasoVisual (FE-UX-06)', () => {
         guardados.push(doc);
         const g: GuionGuardado = { idGuion: '6a1d2b3c-4e5f-4a7b-8c9d-0e1f2a3b4c5d', version: guardados.length, estado: 'Borrador',
           hashDefinicion: 'b'.repeat(64), fechaActualizacion: '', definicion: doc as Record<string, unknown> };
-        respuesta = { idCaso: ID, borrador: g, publicado: null };
+        respuesta = { idCaso: ID, borrador: g, publicado: respuesta.publicado };
         return of(g);
       },
     };
@@ -116,5 +118,79 @@ describe('ConstructorCasoVisual (FE-UX-06)', () => {
   it('contarIntervenciones separa por líneas en blanco e ignora espacios', () => {
     expect(contarIntervenciones('')).toBe(0);
     expect(contarIntervenciones('Uno.\n\n  \nDos.\n\nTres.')).toBe(3);
+  });
+
+  describe('R07-IMP · orientación, validación y versiones', () => {
+    it('orienta al docente con el siguiente paso de cada etapa hasta la vista previa', async () => {
+      const t = await crear();
+      const paso = () => t.$('siguiente-paso').textContent!.trim();
+      expect(paso()).toBe('Siguiente: elige al menos un edificio donde ocurre el caso.');
+      t.clic('edificio-hospital_entrada');
+      expect(paso()).toBe('Siguiente: elige qué personajes participan en los edificios del caso.');
+      t.clic('puesto-hosp-npc-doctor');
+      expect(paso()).toBe('Siguiente: escribe el nombre de cada personaje.');
+      t.escribir('nombre-hosp-npc-doctor', 'Dra. López');
+      expect(paso()).toBe('Siguiente: escribe el diálogo de cada personaje.');
+      t.escribir('dialogo-hosp-npc-doctor', 'Hola.');
+      expect(paso()).toBe('Siguiente: guarda el caso para poder abrir la vista previa.');
+      t.clic('guardar-narrativa');
+      expect(paso()).toBe('El caso está guardado. Abre la vista previa para recorrerlo en la ciudad 3D.');
+    });
+
+    it('muestra el error junto al campo al salir de él, sin rutas internas, y lo retira al corregirlo', async () => {
+      const t = await crear();
+      t.clic('edificio-hospital_entrada');
+      t.clic('puesto-hosp-npc-doctor');
+      expect(t.$('error-nombre-hosp-npc-doctor')).toBeNull(); // todavía no lo ha tocado
+      t.$('nombre-hosp-npc-doctor').dispatchEvent(new Event('blur')); t.f.detectChanges();
+      expect(t.$('error-nombre-hosp-npc-doctor').textContent).toContain('Falta el nombre del personaje.');
+      expect(t.$('nombre-hosp-npc-doctor').getAttribute('aria-invalid')).toBe('true');
+      expect(t.$('nombre-hosp-npc-doctor').getAttribute('aria-describedby')).toBe('error-nombre-hosp-npc-doctor');
+      const revision = t.$('errores-locales').textContent!;
+      expect(revision).toContain('Médico · Hospital: Falta el nombre del personaje.');
+      expect(revision).not.toMatch(/\(|\[|_/); // ni rutas ni claves internas
+      t.escribir('nombre-hosp-npc-doctor', 'Dra. López');
+      expect(t.$('error-nombre-hosp-npc-doctor')).toBeNull();
+      expect(t.$('nombre-hosp-npc-doctor').getAttribute('aria-invalid')).toBeNull();
+      expect(t.$('errores-locales').textContent).toContain('Dra. López · Hospital: Falta el diálogo del personaje.');
+    });
+
+    it('diferencia el borrador guardado de la versión publicada, sin datos técnicos', async () => {
+      publicadoInicial = { idGuion: '6a1d2b3c-4e5f-4a7b-8c9d-0e1f2a3b4c5d', version: 2, estado: 'Publicado',
+        hashDefinicion: 'c'.repeat(64), fechaActualizacion: '', definicion: {} };
+      const t = await crear();
+      expect(t.$('version-borrador').textContent!.trim()).toBe('Todavía no guardado');
+      expect(t.$('version-publicada').textContent!.trim()).toBe('Versión 2');
+      t.clic('edificio-hospital_entrada');
+      t.clic('puesto-hosp-npc-doctor');
+      t.escribir('nombre-hosp-npc-doctor', 'Dra. López');
+      t.escribir('dialogo-hosp-npc-doctor', 'Hola.');
+      t.clic('guardar-narrativa');
+      expect(t.$('version-borrador').textContent!.trim()).toBe('Versión 1');
+      t.escribir('nombre-hosp-npc-doctor', 'Dra. López Ruiz');
+      expect(t.$('version-borrador').textContent).toContain('tus cambios aún no están en ella');
+      expect(t.$('version-publicada').textContent!.trim()).toBe('Versión 2');
+      expect(t.$('narrativa-guardada').textContent).not.toContain('huella');
+      expect(t.$('narrativa-guardada').textContent).not.toContain('c'.repeat(12));
+    });
+
+    it('sin versión publicada lo dice; si el catálogo no carga lo explica y permite reintentar', async () => {
+      const real = window.fetch.bind(window);
+      let fallar = true;
+      spyOn(window, 'fetch').and.callFake((...args: Parameters<typeof fetch>) =>
+        fallar ? Promise.resolve(new Response('', { status: 503 })) : real(...args));
+      const t = await crear();
+      expect(t.$('catalogo-fallido').getAttribute('role')).toBe('alert');
+      expect(t.raiz.textContent).not.toContain('Cargando el catálogo visual');
+      fallar = false;
+      t.clic('reintentar-catalogo');
+      for (let i = 0; i < 100 && !t.$('edificio-hospital_entrada'); i++) {
+        await new Promise((r) => setTimeout(r, 20));
+        t.f.detectChanges();
+      }
+      expect(t.$('edificio-hospital_entrada')).toBeTruthy();
+      expect(t.$('catalogo-fallido')).toBeNull();
+      expect(t.$('version-publicada').textContent!.trim()).toBe('Sin versión publicada todavía');
+    });
   });
 });

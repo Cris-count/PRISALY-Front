@@ -43,11 +43,14 @@ export const contarIntervenciones = (dialogo: string) => dialogo.split(/\n\s*\n/
       <ol class="etapas" aria-label="Etapas del constructor" data-prueba="etapas">
         @for (e of etapas(); track e.numero) {
           <li class="etapa" [attr.data-estado]="e.estado">
-            <span class="etapa-numero" aria-hidden="true">{{ e.estado === 'completa' ? '✓' : e.numero }}</span>
+            <span class="etapa-numero" aria-hidden="true">@if (e.estado === 'completa') {<svg viewBox="0 0 16 16" width="12" height="12" focusable="false"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>} @else {<span>{{ e.numero }}</span>}</span>
             <span class="etapa-texto"><strong>{{ e.numero }}. {{ e.titulo }}</strong><small>{{ textoEstado[e.estado] }} · {{ e.detalle }}</small></span>
           </li>
         }
       </ol>
+      @if (siguientePaso(); as paso) {
+        <p class="siguiente-paso" data-prueba="siguiente-paso">{{ paso }}</p>
+      }
 
       @if (noDisponible()) {
         <p class="mensaje" role="status" data-prueba="diseno-no-disponible">
@@ -90,12 +93,16 @@ export const contarIntervenciones = (dialogo: string) => dialogo.split(/\n\s*\n/
                   </label>
                   @if (personajes()[p.clave]; as per) {
                     <div class="campos campos-puesto">
-                      <label>Nombre del personaje <input [value]="per.nombre" (input)="editar(p.clave, 'nombre', $event)" maxlength="120" [disabled]="bloqueado()" [attr.data-prueba]="'nombre-' + p.npcId" /></label>
+                      <label>Nombre del personaje <input [value]="per.nombre" (input)="editar(p.clave, 'nombre', $event)" (blur)="tocar(p.clave, 'nombre')" maxlength="120" [disabled]="bloqueado()"
+                        [attr.aria-invalid]="errorCampo(p.clave, 'nombre') ? 'true' : null" [attr.aria-describedby]="errorCampo(p.clave, 'nombre') ? 'error-nombre-' + p.npcId : null" [attr.data-prueba]="'nombre-' + p.npcId" /></label>
+                      @if (errorCampo(p.clave, 'nombre'); as err) { <small class="error-campo-texto" [id]="'error-nombre-' + p.npcId" [attr.data-prueba]="'error-nombre-' + p.npcId">{{ err }}</small> }
                       <label>Rol <input [value]="per.rol" (input)="editar(p.clave, 'rol', $event)" maxlength="120" [disabled]="bloqueado()" [attr.data-prueba]="'rol-' + p.npcId" /></label>
                       <label class="campo-dialogo">Diálogo
-                        <textarea rows="4" [value]="per.dialogo" (input)="editar(p.clave, 'dialogo', $event)" [disabled]="bloqueado()"
-                          [attr.aria-describedby]="'ayuda-' + p.npcId" [attr.data-prueba]="'dialogo-' + p.npcId"></textarea>
+                        <textarea rows="4" [value]="per.dialogo" (input)="editar(p.clave, 'dialogo', $event)" (blur)="tocar(p.clave, 'dialogo')" [disabled]="bloqueado()"
+                          [attr.aria-invalid]="errorCampo(p.clave, 'dialogo') ? 'true' : null"
+                          [attr.aria-describedby]="'ayuda-' + p.npcId + (errorCampo(p.clave, 'dialogo') ? ' error-dialogo-' + p.npcId : '')" [attr.data-prueba]="'dialogo-' + p.npcId"></textarea>
                       </label>
+                      @if (errorCampo(p.clave, 'dialogo'); as err) { <small class="error-campo-texto" [id]="'error-dialogo-' + p.npcId" [attr.data-prueba]="'error-dialogo-' + p.npcId">{{ err }}</small> }
                       <small class="etiqueta-real" [id]="'ayuda-' + p.npcId">Una línea en blanco separa las intervenciones · {{ contarIntervenciones(per.dialogo) }} {{ contarIntervenciones(per.dialogo) === 1 ? 'intervención' : 'intervenciones' }}</small>
                     </div>
                   }
@@ -138,13 +145,19 @@ export const contarIntervenciones = (dialogo: string) => dialogo.split(/\n\s*\n/
           @else if (hayCambios()) { Guarda los cambios: la vista previa muestra la versión guardada en el servidor. }
           @else { La vista previa usa exactamente la versión guardada. }
         </p>
-        @if (guardado(); as g) {
-          <p class="etiqueta-real" data-prueba="narrativa-guardada">
-            Guardado en el servidor: versión {{ g.version }} · {{ g.estado }} · huella <span class="mono">{{ g.hashDefinicion.slice(0, 12) }}…</span>
-          </p>
-        }
+        <dl class="versiones" data-prueba="narrativa-guardada">
+          <div><dt>Borrador en el servidor</dt>
+            <dd data-prueba="version-borrador">@if (guardado(); as g) { Versión {{ g.version }}{{ hayCambios() ? ' · tus cambios aún no están en ella' : '' }} } @else { Todavía no guardado }</dd></div>
+          <div><dt>Versión publicada</dt>
+            <dd data-prueba="version-publicada">@if (publicado(); as pub) { Versión {{ pub.version }} } @else { Sin versión publicada todavía }</dd></div>
+        </dl>
+      } @else if (catalogoFallido()) {
+        <div class="mensaje error" role="alert" data-prueba="catalogo-fallido">
+          <p>No se pudo cargar el catálogo de edificios y personajes de la ciudad 3D.</p>
+          <button type="button" (click)="cargarCatalogo()" data-prueba="reintentar-catalogo">Volver a intentar</button>
+        </div>
       } @else {
-        <p class="mensaje">Cargando el catálogo visual…</p>
+        <p class="mensaje" role="status">Cargando el catálogo visual…</p>
       }
     </section>
   `,
@@ -178,6 +191,12 @@ export const contarIntervenciones = (dialogo: string) => dialogo.split(/\n\s*\n/
     .campos-puesto { margin: .5rem 0 0 1.6rem; }
     .resumen { margin: 0; padding-left: 1.1rem; display: grid; gap: .35rem; }
     .resumen ul { margin: .2rem 0 0; padding-left: 1rem; }
+    .siguiente-paso { margin: 0; padding: .6rem .8rem; border: 1px solid var(--color-borde, #d5d9e0); border-radius: .5rem; background: var(--p-suave, #edf4ff); }
+    .error-campo-texto { display: block; margin-top: .25rem; color: var(--color-error, #b42318); font-weight: 600; }
+    [aria-invalid='true'] { border-color: var(--color-error, #b42318); }
+    .versiones { display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin: 0; }
+    .versiones dt { font-size: .875rem; color: var(--color-texto-suave, #52606d); }
+    .versiones dd { margin: 0; font-weight: 600; }
     @media (max-width: 30rem) { .campos-puesto { margin-left: 0; } }
   `],
 })
@@ -204,6 +223,11 @@ export class ConstructorCasoVisual {
    */
   protected readonly noDisponible = signal(false);
   protected readonly bloqueado = computed(() => this.ocupado() || this.noDisponible());
+  /** Versión publicada de la narrativa (la del servidor); distinta del borrador que edita el docente. */
+  protected readonly publicado = signal<GuionGuardado | null>(null);
+  protected readonly catalogoFallido = signal(false);
+  /** Campos que el docente ya dejó: sus errores se muestran junto al campo. */
+  private readonly tocados = signal<ReadonlySet<string>>(new Set());
 
   private readonly seleccion = computed<SeleccionCaso>(() => {
     const cat = this.catalogo()?.catalogo;
@@ -278,10 +302,42 @@ export class ConstructorCasoVisual {
     }));
   });
 
+  /** Qué hacer ahora, según la primera etapa sin completar. */
+  protected readonly siguientePaso = computed(() => {
+    if (this.noDisponible() || !this.catalogo()) return null;
+    const pendiente = this.etapas().find((e) => e.estado !== 'completa');
+    switch (pendiente?.numero) {
+      case 2: return 'Siguiente: elige al menos un edificio donde ocurre el caso.';
+      case 3: return 'Siguiente: elige qué personajes participan en los edificios del caso.';
+      case 4: return 'Siguiente: escribe el nombre de cada personaje.';
+      case 5: return 'Siguiente: escribe el diálogo de cada personaje.';
+      case 6: return 'Siguiente: corrige lo indicado en la revisión.';
+      case 7: return 'Siguiente: guarda el caso para poder abrir la vista previa.';
+      case undefined: return 'El caso está guardado. Abre la vista previa para recorrerlo en la ciudad 3D.';
+      default: return null;
+    }
+  });
+
   constructor() {
-    cargarCatalogoVisual().then((c) => this.catalogo.set(c),
-      () => this.aviso.set({ tipo: 'error', texto: 'No se pudo cargar el catálogo visual.' }));
+    this.cargarCatalogo();
     effect(() => this.recuperar(this.idCaso()));
+  }
+
+  protected cargarCatalogo(): void {
+    this.catalogoFallido.set(false);
+    cargarCatalogoVisual().then((c) => this.catalogo.set(c), () => this.catalogoFallido.set(true));
+  }
+
+  protected tocar(clave: string, campo: 'nombre' | 'dialogo'): void {
+    this.tocados.update((t) => new Set(t).add(`${clave}:${campo}`));
+  }
+
+  /** Error de un campo del personaje, solo si el docente ya salió de él. */
+  protected errorCampo(clave: string, campo: 'nombre' | 'dialogo'): string | null {
+    if (!this.tocados().has(`${clave}:${campo}`)) return null;
+    const codigos = campo === 'nombre' ? ['NOMBRE_REQUERIDO'] : ['DIALOGO_REQUERIDO', 'TEXTO_DEMASIADO_LARGO', 'MARCADO_NO_PERMITIDO'];
+    const err = this.erroresLocales().find((e) => e.campo === clave && codigos.includes(e.codigo));
+    return err ? this.textoError(err.codigo) : null;
   }
 
   protected capacidad(edificio: string): number {
@@ -314,7 +370,27 @@ export class ConstructorCasoVisual {
     this.personajes.update((m) => ({ ...m, [clave]: { ...m[clave], [campo]: valor } }));
   }
 
+  /** Error en lenguaje del docente, con el personaje o edificio al que se refiere (nunca la ruta interna). */
   protected describir(e: { campo: string; codigo: string }): string {
+    const donde = this.lugarDe(e.campo);
+    return donde ? `${donde}: ${this.textoError(e.codigo)}` : this.textoError(e.codigo);
+  }
+
+  private lugarDe(campo: string): string | null {
+    const cat = this.catalogo()?.catalogo;
+    if (!cat) return null;
+    const servidor = /^personajes\[(\d+)\]/.exec(campo);
+    const clave = servidor ? this.seleccion().personajes[Number(servidor[1])]?.puesto : campo;
+    const puesto = cat.puestos.find((p) => p.clave === clave);
+    if (puesto) {
+      const edificio = cat.edificios.find((x) => x.clave === puesto.edificio)?.nombre ?? '';
+      const nombre = this.personajes()[puesto.clave]?.nombre.trim();
+      return `${nombre || (this.modelos[puesto.modelo] ?? puesto.modelo)} · ${edificio}`;
+    }
+    return cat.edificios.find((x) => x.clave === clave)?.nombre ?? null;
+  }
+
+  private textoError(codigo: string): string {
     const textos: Record<string, string> = {
       EDIFICIO_REQUERIDO: 'Elige al menos un edificio.',
       CAPACIDAD_EXCEDIDA: 'Hay más personajes que puestos en ese edificio.',
@@ -324,8 +400,9 @@ export class ConstructorCasoVisual {
       DIALOGO_REQUERIDO: 'Falta el diálogo del personaje.',
       TEXTO_DEMASIADO_LARGO: 'Cada intervención admite hasta 1000 caracteres.',
       MARCADO_NO_PERMITIDO: 'El texto no puede contener etiquetas.',
+      RECURSO_VISUAL_NO_CATALOGADO: 'Ese elemento no existe en el catálogo de la ciudad 3D.',
     };
-    return `${textos[e.codigo] ?? e.codigo} (${e.campo})`;
+    return textos[codigo] ?? 'Revisa este dato.';
   }
 
   protected guardar(): void {
@@ -340,6 +417,7 @@ export class ConstructorCasoVisual {
       .subscribe({
         next: (n) => {
           this.aplicar(n.borrador);
+          this.publicado.set(n.publicado);
           this.ocupado.set(false);
           this.aviso.set({ tipo: 'exito', texto: 'Caso guardado y verificado en el servidor.' });
         },
@@ -356,7 +434,7 @@ export class ConstructorCasoVisual {
     this.ocupado.set(true);
     this.noDisponible.set(false);
     this.api.narrativa(idCaso).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (n) => { this.aplicar(n.borrador); this.ocupado.set(false); },
+      next: (n) => { this.aplicar(n.borrador); this.publicado.set(n.publicado); this.ocupado.set(false); },
       error: (e: unknown) => {
         if (aFalloAcademico(e).estado === 404) {
           this.ocupado.set(false);
@@ -381,7 +459,7 @@ export class ConstructorCasoVisual {
     const errores: ErrorGuion[] = erroresGuion(e);
     if (errores.length) {
       // FE-UX-06 (DC-MVP-09-R07-IMP): el docente lee qué corregir, no el código interno de validación.
-      this.aviso.set({ tipo: 'error', texto: `El servidor no guardó el caso. Corrige: ${errores.map((x) => this.describir(x)).join(' ')}` });
+      this.aviso.set({ tipo: 'error', texto: `El servidor no guardó el caso. Corrige: ${errores.map((x) => this.describir(x)).join(' · ')}` });
       return;
     }
     const fallo = aFalloAcademico(e);
