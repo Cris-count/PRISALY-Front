@@ -1,0 +1,67 @@
+# DC-DEPLOY-01 · nginx del Frontend en Railway.
+# Mismo origen: el navegador llama a /api en el dominio HTTPS del Frontend y nginx lo reenvía al Backend por la red
+# privada (BACKEND_INTERNO, p. ej. http://backend.railway.internal:8080). El navegador nunca ve el dominio interno.
+server {
+    listen ${PORT};
+    listen [::]:${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    server_tokens off;
+    client_max_body_size 1m;
+
+    # Railway termina TLS; estas cabeceras se aplican a todas las respuestas del Frontend.
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Frame-Options DENY always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
+    # Resolución dinámica: el Backend puede arrancar después que nginx sin tumbarlo.
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
+
+    # Healthcheck propio del Frontend (no consulta el Backend ni expone datos).
+    location = /salud {
+        default_type text/plain;
+        add_header Cache-Control "no-store" always;
+        return 200 "ok\n";
+    }
+
+    location /api/ {
+        set $backend ${BACKEND_INTERNO};
+        proxy_pass $backend$request_uri;
+        proxy_http_version 1.1;
+        # Host público: el Backend compara el Origin con CORS_ORIGINS (dominio del Frontend).
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Authorization $http_authorization;
+        proxy_set_header Cookie $http_cookie;
+        proxy_buffering off;
+        # Plan Free: el Backend duerme cuando está inactivo y tarda en despertar (arranque de Spring Boot).
+        proxy_read_timeout 120s;
+        proxy_connect_timeout 90s;
+        add_header Cache-Control "no-store" always;
+    }
+
+    # Recursos con huella: caché larga.
+    location ~* \.(?:js|css|woff2?|ttf|png|jpg|jpeg|gif|svg|ico|webp|glb|json)$ {
+        try_files $uri =404;
+        expires 7d;
+        add_header Cache-Control "public" always;
+        add_header X-Content-Type-Options nosniff always;
+    }
+
+    # SPA: rutas de Angular y recarga directa.
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache" always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options DENY always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+        add_header Strict-Transport-Security "max-age=31536000" always;
+    }
+}
