@@ -34,6 +34,7 @@ describe('FE-61 capacidades DC-99', () => {
       consultaParticipaciones: false,
       reporteParticipacion: false,
       participacionHttp: false,
+      listadoCasos: false,
     });
     expect(
       leerCapacidadesDc99({
@@ -49,6 +50,7 @@ describe('FE-61 capacidades DC-99', () => {
       consultaParticipaciones: false,
       reporteParticipacion: false,
       participacionHttp: false,
+      listadoCasos: false,
     });
     expect(leerCapacidadesDc99({ participacionHttp: true }).participacionHttp).toBeTrue();
   });
@@ -61,6 +63,7 @@ describe('FE-61 capacidades DC-99', () => {
       consultaParticipaciones: false,
       reporteParticipacion: false,
       participacionHttp: false,
+      listadoCasos: false,
     });
   });
 });

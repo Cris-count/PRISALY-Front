@@ -14,6 +14,7 @@ import { aFalloAcademico, esUuid, mensajeFallo, UUID_RE } from './academico-http
 import { CambiosSinGuardarService } from './cambios-sin-guardar';
 import { CasoDocente, CasoPatch, CasosM3Api } from './casos-m3.api';
 import { CasosSesionStore } from './casos-sesion.store';
+import { CAPACIDADES_DC99 } from './capacidades-dc99';
 import { ConstructorCasoVisual } from './constructor-caso-visual';
 import { PARAM_CASO, ParametroRecorrido, SELECCION_INVALIDADA } from './contexto-recorrido';
 
@@ -47,6 +48,8 @@ export class PanelCasosM3 {
   private readonly sesion = inject(SesionPersonalM1);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly store = inject(CasosSesionStore);
+  /** Con el listado M3 publicado, los casos propios se cargan del servidor al abrir el panel. */
+  protected readonly listadoHabilitado = inject(CAPACIDADES_DC99).listadoCasos;
 
   protected readonly sesionValida = computed(() => this.sesion.estado().tipo === 'valida');
   protected readonly caso = signal<CasoDocente | null>(null);
@@ -75,6 +78,16 @@ export class PanelCasosM3 {
 
   constructor() {
     this.cambiosSinGuardar.vincularFormularios('casos-m3', [this.formCrear, this.formEditar]);
+    if (this.listadoHabilitado && this.sesionValida()) {
+      this.api
+        .listado()
+        .pipe(takeUntilDestroyed())
+        .subscribe({
+          next: (casos) => casos.forEach((c) => this.store.recordar(c)),
+          error: (e: unknown) =>
+            this.aviso.set({ tipo: 'error', texto: `No fue posible cargar tus casos. ${mensajeFallo(aFalloAcademico(e))}` }),
+        });
+    }
     this.paramCaso
       .invalidaciones()
       .pipe(takeUntilDestroyed())

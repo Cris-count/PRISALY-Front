@@ -73,8 +73,12 @@
         </ul>
       } @else {
         <p class="etiqueta-real">
-          El servidor no publica un listado de casos: aparecerán aquí los que crees o consultes en
-          esta sesión.
+          @if (listadoHabilitado) {
+            Todavía no tienes casos propios. Crea uno con el formulario.
+          } @else {
+            El servidor no publica un listado de casos: aparecerán aquí los que crees o consultes en
+            esta sesión.
+          }
         </p>
       }
     </form>

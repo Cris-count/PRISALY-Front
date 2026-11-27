@@ -29,6 +29,8 @@ export interface CapacidadesBackendDc99 {
   readonly reporteParticipacion: boolean;
   /** GET/PUT de intento. No publica el inicio ni el fin, y no sustituye a DD-02. */
   readonly participacionHttp: boolean;
+  /** `GET /v1/casos` (M3 `CasoListadoController`, `prisaly.m3.listado.enabled`): casos propios del docente. */
+  readonly listadoCasos: boolean;
 }
 
 export function leerCapacidadesDc99(valor: unknown): CapacidadesBackendDc99 {
@@ -39,6 +41,7 @@ export function leerCapacidadesDc99(valor: unknown): CapacidadesBackendDc99 {
     consultaParticipaciones: c.consultaParticipaciones === true,
     reporteParticipacion: c.reporteParticipacion === true,
     participacionHttp: c.participacionHttp === true,
+    listadoCasos: c.listadoCasos === true,
   };
 }
 
