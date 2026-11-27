@@ -51,5 +51,14 @@
       }
     </div>
   </section>
+  @if (identidad()?.rol === 'ADMINISTRADOR') {
+    <section class="gestion-inicio" aria-labelledby="gestion-inicio-titulo">
+      <div class="seccion-cabecera gestion-cabecera">
+        <h2 id="gestion-inicio-titulo">Gestión de usuarios</h2>
+        <a routerLink="/dashboard/usuarios-docentes">Abrir la gestión completa</a>
+      </div>
+      <app-panel-administracion-m1 vista="docentes" [resumen]="true" />
+    </section>
+  }
   <footer class="pie-pagina"><span>PRISALY · Plataforma académica</span></footer>
 </main>

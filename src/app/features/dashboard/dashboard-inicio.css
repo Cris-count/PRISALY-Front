@@ -230,3 +230,18 @@ a:focus-visible {
 .pie-pagina {
   margin-top: 2rem;
 }
+/* FE-UX-04B: consulta de usuarios real en el Inicio del administrador (PanelAdministracionM1 en modo resumen). */
+.gestion-inicio {
+  margin-top: 1.5rem;
+}
+.gestion-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+.gestion-cabecera a {
+  color: var(--p-azul, #0755b8);
+  font-weight: 600;
+}

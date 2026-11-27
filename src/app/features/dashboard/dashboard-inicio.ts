@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AvisoAccesoPersonal } from '../autenticacion/aviso-acceso-personal';
+import { PanelAdministracionM1 } from '../academico/panel-administracion-m1';
 import { MAPEO_RUTAS_PERSONAL } from '../autenticacion/m1-mapeo-rutas';
 import { M1_PERSONAL_LOCAL } from '../autenticacion/m1-personal-http';
 import { SesionPersonalM1 } from '../autenticacion/m1-personal-sesion';
@@ -8,7 +9,7 @@ import { NAVEGACION_PRESENTACION, seccionesPorRol } from './navegacion-rol';
 
 @Component({
   selector: 'app-dashboard-inicio',
-  imports: [RouterLink, AvisoAccesoPersonal],
+  imports: [RouterLink, AvisoAccesoPersonal, PanelAdministracionM1],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard-inicio.html',
   styleUrls: ['./dashboard-inicio.css', './dashboard-inicio-escena.css'],

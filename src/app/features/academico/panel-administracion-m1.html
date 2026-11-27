@@ -155,7 +155,7 @@
         }
       </section>
     }
-    @if (vista() === 'docentes') {
+    @if (vista() === 'docentes' && !resumen()) {
       <form [formGroup]="formDocente" (ngSubmit)="crearDocente()" class="panel">
         <h3>Registrar docente</h3>
         <label>Nombre <input formControlName="nombre" maxlength="150" autocomplete="name" /></label>

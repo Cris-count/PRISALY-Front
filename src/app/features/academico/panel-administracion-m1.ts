@@ -58,6 +58,8 @@ export const PERMISOS_SEPARACION_FUNCIONES: readonly string[] = ['PUBLICAR_CASO'
 })
 export class PanelAdministracionM1 {
   readonly vista = input<'docentes' | 'estudiantes' | 'permisos'>('docentes');
+  /** FE-UX-04B: en el Inicio se muestra solo la consulta (búsqueda, tabla y detalle); el alta vive en Gestión de usuarios. */
+  readonly resumen = input(false);
   protected readonly busqueda = new FormControl('', {
     nonNullable: true,
     validators: [Validators.maxLength(120)],
